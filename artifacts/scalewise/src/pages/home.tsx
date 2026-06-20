@@ -729,7 +729,8 @@ export default function Home() {
         </div>
 
         <div className="container relative z-10 mx-auto px-4 md:px-6 pt-8 pb-20 sm:pb-28">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Top row: copy left, image right */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-10">
             <div className="space-y-7">
               <Reveal>
                 <span className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
@@ -748,30 +749,6 @@ export default function Home() {
                   Talk to someone who has already solved it. Not a textbook. Not a guess. Real answers, from people who have built exactly what you are building.
                 </p>
               </Reveal>
-              <Reveal delay={180}>
-                <div className="flex flex-col gap-3 w-full">
-                  <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border w-full">
-                    <Input
-                      type="text"
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleSearch()}
-                      placeholder="Search by industry or challenge, e.g. Beauty & Salons or Growth"
-                      className="border-0 shadow-none focus-visible:ring-0 text-base h-11 min-w-0"
-                    />
-                    <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0" onClick={handleSearch}>
-                      Find My Expert
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
-                      <span key={txt} className="flex items-center gap-1.5">
-                        <span className="font-bold" style={{ color: col }}>✓</span> {txt}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
             </div>
 
             <div className="relative hidden md:block">
@@ -788,6 +765,32 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Full-width search bar + trust indicators */}
+          <Reveal delay={180}>
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border w-full max-w-3xl">
+                <Input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSearch()}
+                  placeholder="Search by industry or challenge, e.g. Beauty & Salons or Growth"
+                  className="border-0 shadow-none focus-visible:ring-0 text-base h-11 min-w-0"
+                />
+                <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0" onClick={handleSearch}>
+                  Find My Expert
+                </Button>
+              </div>
+              <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
+                {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
+                  <span key={txt} className="flex items-center gap-1.5">
+                    <span className="font-bold" style={{ color: col }}>✓</span> {txt}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
