@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout } from "@workspace/api-client-react";
@@ -12,14 +11,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 
+const P = {
+  blue:   "#6395EE",
+  mblue:  "#90B8D6",
+  mgreen: "#88CFA8",
+  mint:   "#85DECB",
+};
+
+const NAV_LINKS = [
+  { href: "/experts",  label: "Browse Experts", color: P.blue   },
+  { href: "/about",    label: "About",           color: P.mblue  },
+  { href: "/faq",      label: "FAQ",             color: P.mgreen },
+  { href: "/contact",  label: "Contact",         color: P.mint   },
+];
+
 export function Navbar() {
   const { user, refetch } = useAuth();
   const logout = useLogout();
 
   const handleLogout = () => {
-    logout.mutate(undefined, {
-      onSuccess: () => refetch(),
-    });
+    logout.mutate(undefined, { onSuccess: () => refetch() });
   };
 
   return (
@@ -27,13 +38,19 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary">ScaleWise</span>
+            <span className="text-xl font-bold" style={{ color: P.blue }}>ScaleWise</span>
           </Link>
-          <div className="hidden md:flex gap-4 text-sm font-medium">
-            <Link href="/experts" className="text-muted-foreground hover:text-foreground transition-colors">Browse Experts</Link>
-            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+          <div className="hidden md:flex gap-5 text-sm font-medium">
+            {NAV_LINKS.map(({ href, label, color }) => (
+              <Link
+                key={href}
+                href={href}
+                className="transition-colors hover:opacity-80"
+                style={{ color }}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -62,7 +79,6 @@ export function Navbar() {
             </>
           ) : (
             <>
-              {/* Login — role picker dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1">
@@ -118,7 +134,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="text-xl font-bold text-primary">ScaleWise</span>
+              <span className="text-xl font-bold" style={{ color: P.blue }}>ScaleWise</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The partner you have been missing — connecting business owners with people who have actually done it.
@@ -126,7 +142,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold mb-4" style={{ color: P.blue }}>Quick Links</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/" className="hover:text-foreground transition-colors">Home</Link></li>
               <li><Link href="/experts" className="hover:text-foreground transition-colors">Browse Experts</Link></li>
@@ -137,7 +153,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">For Business Owners</h4>
+            <h4 className="font-semibold mb-4" style={{ color: P.mgreen }}>For Business Owners</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/experts" className="hover:text-foreground transition-colors">Find an Expert</Link></li>
               <li><Link href="/#how-it-works" className="hover:text-foreground transition-colors">How It Works</Link></li>
@@ -145,7 +161,7 @@ export function Footer() {
               <li><Link href="/dashboard/client" className="hover:text-foreground transition-colors">Client Dashboard</Link></li>
             </ul>
 
-            <h4 className="font-semibold mt-6 mb-4">For Experts</h4>
+            <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mint }}>For Experts</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/apply-expert" className="hover:text-foreground transition-colors">Apply as a Founding Expert</Link></li>
               <li><Link href="/dashboard/expert" className="hover:text-foreground transition-colors">Expert Dashboard</Link></li>
@@ -154,13 +170,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4" style={{ color: P.mblue }}>Legal</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
               <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
             </ul>
 
-            <h4 className="font-semibold mt-6 mb-4">Support</h4>
+            <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mblue }}>Support</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
               <li><a href="mailto:hello@scalewise.co.ke" className="hover:text-foreground transition-colors">hello@scalewise.co.ke</a></li>

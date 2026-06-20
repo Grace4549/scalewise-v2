@@ -231,27 +231,40 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
   const handlePrev = () => { prev(); resetTimer(); };
   const handleNext = () => { next(); resetTimer(); };
 
-  const palColors = [P.blue, P.mgreen, P.mint, P.mblue, P.blue];
+  const CARD_SCHEMES = [
+    { border: P.blue,   bg: "rgba(99,149,238,0.07)",   star: P.blue,   badge: "rgba(99,149,238,0.12)"  },
+    { border: P.mgreen, bg: "rgba(136,207,168,0.08)",  star: P.mgreen, badge: "rgba(136,207,168,0.14)" },
+    { border: P.mint,   bg: "rgba(133,222,203,0.08)",  star: P.mint,   badge: "rgba(133,222,203,0.14)" },
+    { border: P.mblue,  bg: "rgba(144,184,214,0.08)",  star: P.mblue,  badge: "rgba(144,184,214,0.12)" },
+  ];
 
   const getCard = (offset: -1 | 0 | 1) => {
     const idx = (current + offset + n) % n;
     const r = reviews[idx];
     const isCenter = offset === 0;
-    const col = palColors[idx % palColors.length];
+    const scheme = CARD_SCHEMES[idx % CARD_SCHEMES.length];
     return (
       <div
         key={r.id}
         style={{
-          transform:  isCenter ? "scale(1)"    : "scale(0.88)",
-          opacity:    isCenter ? 1             : 0.5,
-          transition: "all 0.45s ease",
-          flex: "0 0 33.333%",
+          transform:   isCenter ? "scale(1)"   : "scale(0.87)",
+          opacity:     isCenter ? 1            : 0.45,
+          transition:  "all 0.45s ease",
+          flex:        "0 0 33.333%",
+          background:  isCenter ? scheme.bg    : "rgba(255,255,255,0.5)",
+          borderColor: isCenter ? scheme.border : "transparent",
+          borderWidth: isCenter ? 2            : 1,
+          borderStyle: "solid",
         }}
-        className={`rounded-3xl border bg-card p-7 shadow-sm flex flex-col ${isCenter ? "shadow-lg" : ""}`}
+        className={`rounded-3xl p-7 flex flex-col ${isCenter ? "shadow-xl" : "shadow-sm bg-card"}`}
       >
+        {/* Accent bar at top */}
+        {isCenter && (
+          <div className="h-1 w-12 rounded-full mb-5" style={{ background: scheme.border }} />
+        )}
         <div className="flex gap-0.5 mb-4">
           {Array.from({ length: r.rating }).map((_, j) => (
-            <Star key={j} className="h-4 w-4 fill-current" style={{ color: col }} />
+            <Star key={j} className="h-4 w-4 fill-current" style={{ color: scheme.star }} />
           ))}
         </div>
         <p className="italic text-muted-foreground text-sm leading-relaxed flex-1">"{r.body}"</p>
@@ -266,7 +279,7 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
     return (
       <div className="grid md:grid-cols-3 gap-6">
         {reviews.map((r, i) => {
-          const col = palColors[i % palColors.length];
+          const col = CARD_SCHEMES[i % CARD_SCHEMES.length].star;
           return (
             <div key={r.id} className="p-6 rounded-3xl bg-card border shadow-sm flex flex-col">
               <div className="flex gap-0.5 mb-4">
@@ -325,6 +338,16 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
           />
         ))}
       </div>
+
+      {/* Leave a Review CTA */}
+      <div className="text-center mt-8">
+        <p className="text-sm text-muted-foreground mb-3">Had a session? Share your experience.</p>
+        <Link href="/experts">
+          <Button variant="outline" className="rounded-xl" style={{ borderColor: P.mgreen + "60", color: P.mgreen }}>
+            Leave a Review →
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -365,7 +388,11 @@ function IndustriesSection() {
     <section className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <Reveal>
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">Whatever Your Business Is, Someone Here Has Lived It</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">
+            Whatever Your Business Is,{" "}
+            <span style={{ color: P.blue }}>Someone Here</span> Has{" "}
+            <span style={{ color: P.mint }}>Lived It</span>
+          </h2>
           <p className="text-center text-muted-foreground mb-8">13 industries. Verified experts in every one.</p>
         </Reveal>
 
@@ -638,7 +665,11 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <Reveal>
             <div className="flex justify-between items-end mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold max-w-lg">The People Who Have Actually Done It</h2>
+              <h2 className="text-3xl md:text-4xl font-bold max-w-lg">
+                The People Who Have{" "}
+                <span style={{ color: P.mgreen }}>Actually</span>{" "}
+                <span style={{ color: P.blue }}>Done It</span>
+              </h2>
               <Link href="/experts">
                 <Button variant="outline" className="hidden md:flex rounded-xl">Browse All Experts →</Button>
               </Link>

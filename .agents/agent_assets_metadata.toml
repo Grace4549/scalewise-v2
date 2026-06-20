@@ -24,3 +24,21 @@ id = "1l4UD_rjZ8UQaCuwiS4uX"
 uri = "file://artifacts/scalewise/public/photos/consultation-session.png"
 type = "image"
 title = "generated_image"
+
+[[generated]]
+id = "LLHIzdvcl19TgB2vb4ttE"
+uri = "file://artifacts/scalewise/public/photos/browse-experts-hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "PAE-LfNynKjp5Y1cbkB_t"
+uri = "file://artifacts/scalewise/public/photos/about-hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nbKVYHPf5399M44XOg3zW"
+uri = "file://artifacts/scalewise/public/photos/contact-hero.png"
+type = "image"
+title = "generated_image"
