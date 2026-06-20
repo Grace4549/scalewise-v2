@@ -47,7 +47,7 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold" style={{ color: P.blue }}>ScaleWise</span>
+            <span className="text-xl font-bold sw-logo-breathe">ScaleWise</span>
           </Link>
           <div className="hidden md:flex gap-5 text-sm font-medium">
             {NAV_LINKS.map(({ href, label, color }) => (
