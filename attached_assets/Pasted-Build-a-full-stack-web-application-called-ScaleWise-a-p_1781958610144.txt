@@ -1,0 +1,43 @@
+Build a full-stack web application called ScaleWise — a premium expert marketplace connecting business owners with verified industry experts for paid consultancy and coaching sessions.
+Tech stack: Use React for the frontend, with a proper backend (Node.js/Express or similar) and a real database (PostgreSQL preferred) for users, experts, bookings, and reviews. I want full, real, exportable code that I own completely — not tied to any third-party backend service I can't access directly.
+Business model:
+
+ScaleWise has two user types: Clients (business owners seeking help) and Experts (professionals offering paid sessions). Experts apply through an application form (name, email, industry, years of experience) which goes into an admin approval queue. Experts only appear publicly once approved by an admin.
+Industries (alphabetical, exactly these 13):
+
+Agriculture & Agribusiness, Beauty & Salons, Construction & Contracting, Education & Training, E-commerce & Retail, Financial Services, Healthcare & Clinics, Hospitality & Tourism, Logistics & Transport, Manufacturing & SMEs, Real Estate, Restaurants & Food Business, Tech Startups
+Session types, exactly these three, each with its own commission rate:
+
+Business Discovery — an open conversation for when the client isn't sure of the exact problem, just wants general advice or to talk it through. 20% platform commission.
+Consultancy — focused advice for a specific, already-identified problem. 20% commission.
+Growth Strategy — a structured long-term engagement offered as either a 3-month or 6-month plan with biweekly sessions. 15% commission.
+
+Client booking flow:
+
+Sign up or log in, search or browse experts by industry (with autocomplete suggestions as they type), select an expert, view their profile (bio, years of experience, rating, reviews, pricing for the three session types), choose a session type, pick a date and time, pay securely, and receive a confirmation email with an automatically generated Google Meet link. After booking, clients and experts can message each other directly inside the platform.
+Payments: Support M-Pesa, Airtel Money, and card payments, since this platform serves business owners including those in East Africa.
+Reviews: Any visitor, even without an account, can submit a public review (name, business name optional, 1-5 star rating, written review). Reviews are visible to all visitors immediately, no approval needed.
+Admin dashboard: Approve or reject expert applications, view all bookings across the platform, see commission earned per booking, and moderate or remove reviews if needed.
+Database schema:
+
+Users table: id, email, role (client / expert / admin), name, avatar URL, bio, created_at
+Experts table: linked to Users, with headline, industry, years_experience, rating, total_sessions, skills/tags array, and pricing for each session type
+Bookings table: id, client_id, expert_id, session_type, scheduled_time, duration_minutes, status (pending / approved / completed), notes
+Reviews table: id, name, business, review text, rating, created_at
+
+Color theme:
+
+Cornflower blue: #6395EE (primary — buttons, headers, key UI elements)
+Muted blue: #90B8D6 (secondary)
+Muted green: #88CFA8 (accent, success states, badges)
+Mint green: #85DECB (accent/highlight)
+
+Visual style:
+
+Modern, artistic, high-trust feel. Soft, glowing, slowly shifting abstract gradient blob shapes in the background using only the blue/green palette above, kept subtle. Asymmetrical, architectural grid layouts rather than uniform square boxes. Expert profile cards with rounded corners (24px radius) and a soft colorful glow. Frosted-glass (backdrop-blur) panels for filter sidebars and booking modals. Smooth scroll-triggered fade and rise animations throughout. Hover micro-interactions on all cards and buttons.
+Pages needed:
+
+Homepage (short, 3 sections: hero with search, How It Works + industry browse combined, Become an Expert CTA + footer), Search & Discovery page with a glassmorphic filter sidebar, Expert Profile page with a sticky booking widget, Client Dashboard (bookings, messages), Expert Dashboard (scheduled sessions, incoming requests with approve/decline actions), Admin Dashboard, About, Contact, FAQ.
+Important — keep this honest:
+
+Do not populate any page with fake experts, fake reviews, fake testimonials, or invented statistics. Since there are zero real experts and zero real reviews right now, show honest empty states instead — for example "No experts available yet" with an "Apply as a Founding Expert" button, and "No reviews yet — be the first to leave one" with a working public review form.

@@ -1,0 +1,143 @@
+Hero section
+Eyebrow: For Business Owners Who Are Tired of Guessing
+Headline: Finally, Someone Who Gets It
+Subtext: Stuck on pricing? Losing staff? Stalled on growth? Talk to
+someone who has actually fixed this exact problem before — not a
+textbook, not a guess. Just real answers from people who have built
+what you're building.
+Search placeholder: What's keeping you up at night? Try "pricing,"
+"staff turnover," "growth"
+Primary button: Find My Person
+Secondary button: See How It Works
+
+How It Works section
+Heading: Your Solution Is One Call Away
+Subheading: No long forms. No waiting weeks for a consultant. Just
+real help, fast — book a call and start solving it today.
+
+Step 1 — Tell Us What's Wrong: Search your industry, or just describe
+the problem. We'll show you who's actually solved it.
+
+Step 2 — Pick How You Want Help: Just need to vent and think out loud?
+Go with Business Discovery. Know the exact problem? Go Consultancy.
+Building something bigger? Go Growth Strategy.
+
+Step 3 — Pay With M-Pesa: Confirm your session in seconds, right from
+your phone.
+
+Step 4 — Show Up and Get Real Answers: Your Google Meet link lands in
+your inbox. After the call, keep talking to your expert right here on
+the platform — this isn't a one-and-done.
+
+Browse Industries section
+Heading: Whatever Your Business Is, Someone Here Has Lived It
+Subheading: Salon losing money? Restaurant short on staff? Shop not
+converting online? Pick your world. We've got someone who's already
+walked through it.
+
+Featured Experts section
+Heading: The People Who've Actually Done It
+Subheading: Business owners who built, broke, fixed, and scaled — and
+are ready to walk you through it.
+Empty state message: We're hand-picking our very first experts right
+now — people who've genuinely run businesses like yours. Thank you for
+your patience as we bring them on board.
+Empty state button: Apply as a Founding Expert
+
+Reviews section
+Heading: Business Owners Just Like You, Telling It Like It Is
+Subheading: We're eager to hear how ScaleWise helped you improve, the
+problems you solved, or any feedback you have for us.
+Empty state message: Be the first to tell your story.
+Button to open form: Leave a Review
+
+About page
+Heading: We Built This Because Business Owners Deserve Better Than
+Guesswork
+Subheading: ScaleWise isn't another consulting firm. It's the partner
+you wish you had — one who has already been exactly where you are,
+and is one call away.
+
+Our Story:
+Every business owner hits a wall eventually. Maybe it's pricing that
+doesn't add up. Maybe it's a staff member who just quit, again. Maybe
+it's the quiet worry of not knowing if this business will make it
+another year.
+Most people face that wall alone, armed with nothing but Google
+searches and generic advice that was never written for their
+situation.
+ScaleWise exists so you never have to face it alone. A salon owner
+talking to someone who's run three salons. A restaurant owner learning
+from someone who's fed thousands of people, profitably. A founder
+getting real, grounded advice from someone who has actually built what
+they're trying to build.
+This is the partner you've been missing — except this one has actually
+done it.
+
+Our Mission:
+To put real, lived business experience within reach of every
+entrepreneur — not just the ones with the right connections or the
+big budgets.
+
+Our Vision:
+A world where no business owner lies awake at night wondering if
+they're the only one who can't figure this out. Because the answer is
+always just one booking away.
+
+For Business Owners:
+You've Googled it. You've asked friends who don't really know. You've
+tried to figure it out alone. It's time to talk to someone who's
+actually lived it.
+- Talk to people who've run real businesses in your exact industry —
+  not generic consultants
+- Pick the kind of help that fits today — a quick conversation, focused
+  problem-solving, or a real growth plan
+- Book and pay in minutes, meet over Google Meet, no awkward emailing
+  back and forth
+- Keep talking to your expert after the call — this isn't a one-time
+  transaction, it's a relationship
+- No retainers, no contracts, no pressure — just help when you need it
+
+For Experts:
+You didn't learn this from a textbook. You learned it the hard way —
+and that's exactly why business owners need you.
+- Get found by business owners who are specifically searching for
+  someone like you
+- Set your own price, your own hours, your own rules
+- Build real credibility through honest reviews from real clients
+- Manage everything — bookings, conversations, earnings — in one place
+- Turn your hardest lessons into someone else's shortcut, and get paid
+  for it
+
+Closing line: You're not alone in this. Not anymore.
+
+Founder's note (kept impersonal as requested, using the Base44 version)
+Heading: A Note From Our Founder
+Quote: "I kept watching business owners carry the weight of problems
+alone — pricing, growth, staff, strategy — when somewhere out there
+was someone who had already solved that exact thing. ScaleWise is me
+closing that gap, for good."
+Name: Grace Kihonge
+Role: Founder & CEO, ScaleWise
+
+Contact section (minimal, just the CTA as requested)
+Button: Email hello@scalewise.co.ke
+
+Footer — here's a fuller, stronger version, including a few things worth adding that weren't in earlier drafts:
+Tagline: The partner you've been missing — connecting business owners
+with people who have actually done it.
+
+Quick Links: Home · Browse Experts · About · FAQ · Become an Expert
+
+For Business Owners: Find an Expert · How It Works · Leave a Review
+
+For Experts: Apply as a Founding Expert · Become an Expert
+
+Legal: Terms of Service · Privacy Policy
+
+Support: Contact Us · hello@scalewise.co.ke
+
+Closing line above the copyright bar: Your business doesn't have to
+figure this out alone. Neither do you.
+
+Copyright: © 2026 ScaleWise. All rights reserved.

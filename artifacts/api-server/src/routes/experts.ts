@@ -1,0 +1,408 @@
+import { Router, type IRouter } from "express";
+import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@workspace/db";
+import { eq, ilike, and, or, sql } from "drizzle-orm";
+import { requireAuth } from "../lib/auth";
+import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
+
+const router: IRouter = Router();
+
+const INDUSTRIES = [
+  "Agriculture & Agribusiness",
+  "Beauty & Salons",
+  "Construction & Contracting",
+  "Education & Training",
+  "E-commerce & Retail",
+  "Financial Services",
+  "Healthcare & Clinics",
+  "Hospitality & Tourism",
+  "Logistics & Transport",
+  "Manufacturing & SMEs",
+  "Real Estate",
+  "Restaurants & Food Business",
+  "Tech Startups",
+];
+
+router.get("/experts/industries", async (_req, res): Promise<void> => {
+  res.json(INDUSTRIES);
+});
+
+router.get("/experts/search-suggestions", async (req, res): Promise<void> => {
+  const params = GetSearchSuggestionsQueryParams.safeParse(req.query);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const { q } = params.data;
+  const experts = await db
+    .select({ headline: expertsTable.headline, industry: expertsTable.industry })
+    .from(expertsTable)
+    .where(
+      and(
+        eq(expertsTable.status, "approved"),
+        or(
+          ilike(expertsTable.headline, `%${q}%`),
+          ilike(expertsTable.industry, `%${q}%`)
+        )
+      )
+    )
+    .limit(8);
+
+  const suggestions = [
+    ...new Set([
+      ...experts.map((e) => e.industry),
+      ...experts.filter((e) => e.headline).map((e) => e.headline!),
+    ]),
+  ].slice(0, 8);
+
+  res.json(suggestions);
+});
+
+router.get("/experts/stats", async (_req, res): Promise<void> => {
+  const [expertCountResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(expertsTable)
+    .where(eq(expertsTable.status, "approved"));
+
+  const [sessionCountResult] = await db
+    .select({ count: sql<number>`sum(total_sessions)::int` })
+    .from(expertsTable)
+    .where(eq(expertsTable.status, "approved"));
+
+  const [reviewCountResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(reviewsTable);
+
+  res.json({
+    expertCount: expertCountResult?.count ?? 0,
+    industryCount: INDUSTRIES.length,
+    sessionCount: sessionCountResult?.count ?? 0,
+    reviewCount: reviewCountResult?.count ?? 0,
+  });
+});
+
+router.get("/experts", async (req, res): Promise<void> => {
+  const params = ListExpertsQueryParams.safeParse(req.query);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const { industry, search, page = 1, limit = 12 } = params.data;
+  const offset = (page - 1) * limit;
+
+  const conditions = [eq(expertsTable.status, "approved")];
+
+  if (industry) {
+    conditions.push(ilike(expertsTable.industry, `%${industry}%`));
+  }
+  if (search) {
+    conditions.push(
+      or(
+        ilike(expertsTable.headline, `%${search}%`),
+        ilike(expertsTable.industry, `%${search}%`),
+        ilike(expertsTable.name, `%${search}%`)
+      )!
+    );
+  }
+
+  const where = and(...conditions);
+
+  const [totalResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(expertsTable)
+    .where(where);
+
+  const experts = await db
+    .select()
+    .from(expertsTable)
+    .where(where)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(expertsTable.createdAt);
+
+  res.json({
+    experts: experts.map(formatExpert),
+    total: totalResult?.count ?? 0,
+    page,
+    limit,
+  });
+});
+
+router.get("/experts/:id", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, id));
+  if (!expert) {
+    res.status(404).json({ error: "Expert not found" });
+    return;
+  }
+
+  const reviews = await db
+    .select()
+    .from(reviewsTable)
+    .where(eq(reviewsTable.expertId, id))
+    .orderBy(reviewsTable.createdAt);
+
+  res.json({
+    ...formatExpert(expert),
+    reviews: reviews.map(formatReview),
+  });
+});
+
+router.post("/experts/apply", async (req, res): Promise<void> => {
+  const parsed = ApplyAsExpertBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const userId = (req.session as { userId?: number }).userId ?? null;
+
+  const [expert] = await db
+    .insert(expertsTable)
+    .values({
+      userId,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      headline: parsed.data.headline ?? null,
+      industry: parsed.data.industry,
+      yearsExperience: parsed.data.yearsExperience,
+      bio: parsed.data.bio ?? null,
+      skills: parsed.data.skills ?? [],
+      discoveryPrice: parsed.data.discoveryPrice ?? null,
+      consultancyPrice: parsed.data.consultancyPrice ?? null,
+      growthPrice3mo: parsed.data.growthPrice3mo ?? null,
+      growthPrice6mo: parsed.data.growthPrice6mo ?? null,
+      status: "pending",
+    })
+    .returning();
+
+  res.status(201).json(formatApplication(expert));
+});
+
+router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") {
+    res.status(403).json({ error: "Experts only" });
+    return;
+  }
+
+  const [expert] = await db
+    .select()
+    .from(expertsTable)
+    .where(eq(expertsTable.userId, req.userId!));
+
+  if (!expert) {
+    res.status(404).json({ error: "Expert profile not found" });
+    return;
+  }
+
+
+  const allBookings = await db
+    .select()
+    .from(bookingsTable)
+    .where(eq(bookingsTable.expertId, expert.id))
+    .orderBy(bookingsTable.scheduledTime);
+
+  const now = new Date();
+  const upcomingBookings = allBookings.filter(
+    (b) => b.status === "approved" && new Date(b.scheduledTime) > now
+  );
+  const pendingRequests = allBookings.filter((b) => b.status === "pending");
+
+  const completedBookings = allBookings.filter((b) => b.status === "completed");
+  const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
+
+  const getCommissionRate = (type: string) => {
+    if (type === "growth_3mo" || type === "growth_6mo") return 0.15;
+    return 0.20;
+  };
+
+  const commissionPaid = completedBookings.reduce((sum, b) => {
+    return sum + (b.amount ?? 0) * getCommissionRate(b.sessionType);
+  }, 0);
+  const netEarnings = totalEarnings - commissionPaid;
+
+  const clientIds = [...new Set(allBookings.map((b) => b.clientId))];
+  const clients = clientIds.length > 0
+    ? await db.select().from(usersTable).where(
+        sql`${usersTable.id} = ANY(${clientIds})`
+      )
+    : [];
+
+  const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));
+
+  const formatBookingWithClient = (b: typeof allBookings[0]) => ({
+    id: b.id,
+    clientId: b.clientId,
+    expertId: b.expertId,
+    sessionType: b.sessionType,
+    scheduledTime: b.scheduledTime.toISOString(),
+    durationMinutes: b.durationMinutes,
+    status: b.status,
+    notes: b.notes ?? null,
+    meetLink: b.meetLink ?? null,
+    amount: b.amount ?? null,
+    clientName: clientMap[b.clientId]?.name ?? null,
+    expertName: expert.name,
+    expertIndustry: expert.industry ?? null,
+    createdAt: b.createdAt.toISOString(),
+  });
+
+  res.json({
+    expert: formatExpert(expert),
+    upcomingBookings: upcomingBookings.map(formatBookingWithClient),
+    pendingRequests: pendingRequests.map(formatBookingWithClient),
+    totalEarnings,
+    commissionPaid,
+    netEarnings,
+  });
+});
+
+router.patch("/expert/profile", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") {
+    res.status(403).json({ error: "Experts only" });
+    return;
+  }
+
+  const parsed = UpdateExpertProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [expert] = await db
+    .select()
+    .from(expertsTable)
+    .where(eq(expertsTable.userId, req.userId!));
+
+  if (!expert) {
+    res.status(404).json({ error: "Expert profile not found" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(expertsTable)
+    .set({
+      headline: parsed.data.headline ?? expert.headline,
+      bio: parsed.data.bio ?? expert.bio,
+      skills: parsed.data.skills ?? expert.skills,
+      discoveryPrice: parsed.data.discoveryPrice ?? expert.discoveryPrice,
+      consultancyPrice: parsed.data.consultancyPrice ?? expert.consultancyPrice,
+      growthPrice3mo: parsed.data.growthPrice3mo ?? expert.growthPrice3mo,
+      growthPrice6mo: parsed.data.growthPrice6mo ?? expert.growthPrice6mo,
+    })
+    .where(eq(expertsTable.id, expert.id))
+    .returning();
+
+  const reviews = await db
+    .select()
+    .from(reviewsTable)
+    .where(eq(reviewsTable.expertId, expert.id));
+
+  res.json({
+    ...formatExpert(updated),
+    reviews: reviews.map(formatReview),
+  });
+});
+
+export function formatExpert(expert: {
+  id: number;
+  userId: number | null;
+  name: string;
+  headline: string | null;
+  industry: string;
+  yearsExperience: number;
+  rating: number;
+  totalSessions: number;
+  avatarUrl: string | null;
+  bio: string | null;
+  skills: string[] | null;
+  status: string;
+  discoveryPrice: number | null;
+  consultancyPrice: number | null;
+  growthPrice3mo: number | null;
+  growthPrice6mo: number | null;
+  createdAt: Date;
+}) {
+  return {
+    id: expert.id,
+    userId: expert.userId ?? 0,
+    name: expert.name,
+    headline: expert.headline ?? "",
+    industry: expert.industry,
+    yearsExperience: expert.yearsExperience,
+    rating: expert.rating,
+    totalSessions: expert.totalSessions,
+    avatarUrl: expert.avatarUrl ?? null,
+    bio: expert.bio ?? null,
+    skills: expert.skills ?? [],
+    status: expert.status,
+    discoveryPrice: expert.discoveryPrice ?? null,
+    consultancyPrice: expert.consultancyPrice ?? null,
+    growthPrice3mo: expert.growthPrice3mo ?? null,
+    growthPrice6mo: expert.growthPrice6mo ?? null,
+    createdAt: expert.createdAt.toISOString(),
+  };
+}
+
+export function formatApplication(expert: {
+  id: number;
+  name: string;
+  email: string;
+  headline: string | null;
+  industry: string;
+  yearsExperience: number;
+  bio: string | null;
+  skills: string[] | null;
+  status: string;
+  discoveryPrice: number | null;
+  consultancyPrice: number | null;
+  growthPrice3mo: number | null;
+  growthPrice6mo: number | null;
+  createdAt: Date;
+}) {
+  return {
+    id: expert.id,
+    name: expert.name,
+    email: expert.email,
+    headline: expert.headline ?? null,
+    industry: expert.industry,
+    yearsExperience: expert.yearsExperience,
+    bio: expert.bio ?? null,
+    skills: expert.skills ?? [],
+    status: expert.status,
+    discoveryPrice: expert.discoveryPrice ?? null,
+    consultancyPrice: expert.consultancyPrice ?? null,
+    growthPrice3mo: expert.growthPrice3mo ?? null,
+    growthPrice6mo: expert.growthPrice6mo ?? null,
+    createdAt: expert.createdAt.toISOString(),
+  };
+}
+
+export function formatReview(r: {
+  id: number;
+  reviewerName: string;
+  businessName: string | null;
+  expertId: number | null;
+  rating: number;
+  body: string;
+  createdAt: Date;
+}) {
+  return {
+    id: r.id,
+    reviewerName: r.reviewerName,
+    businessName: r.businessName ?? null,
+    expertId: r.expertId ?? null,
+    rating: r.rating,
+    body: r.body,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+export default router;
