@@ -109,6 +109,22 @@ router.post("/admin/applications/:id/reject", adminMiddleware(), async (req, res
   res.json(formatApplication(expert));
 });
 
+router.delete("/admin/experts/:id", adminMiddleware(), async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, id));
+  if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
+
+  if (expert.userId) {
+    await db.update(usersTable).set({ role: "client" }).where(eq(usersTable.id, expert.userId));
+  }
+
+  await db.delete(expertsTable).where(eq(expertsTable.id, id));
+  res.sendStatus(204);
+});
+
 router.get("/admin/bookings", adminMiddleware(), async (req, res): Promise<void> => {
   const conditions: ReturnType<typeof eq>[] = [];
 

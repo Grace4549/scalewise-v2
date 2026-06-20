@@ -126,6 +126,8 @@ export default function AdminDashboard() {
   const [expandedBookings, setExpandedBookings] = useState<Set<number>>(new Set());
 
   const [appStatusFilter, setAppStatusFilter] = useState<"" | "pending" | "approved" | "rejected">("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [appDateFrom, setAppDateFrom] = useState("");
   const [appDateTo, setAppDateTo] = useState("");
 
@@ -199,6 +201,25 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
       },
     });
+  };
+
+  const handleDeleteExpert = async (id: number) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/experts/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete");
+      }
+      toast({ title: "Expert deleted", description: "The expert and their application have been removed." });
+      setConfirmDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleDeleteReview = (id: number) => {
@@ -479,6 +500,24 @@ export default function AdminDashboard() {
                             });
                           }}>
                           📧 Copy Invite Link
+                        </Button>
+                      )}
+                      {confirmDeleteId === app.id ? (
+                        <div className="flex gap-1.5 shrink-0 items-center">
+                          <span className="text-xs text-destructive font-medium">Delete this expert?</span>
+                          <Button size="sm" variant="destructive"
+                            disabled={deletingId === app.id}
+                            onClick={() => handleDeleteExpert(app.id)}>
+                            {deletingId === app.id ? "Deleting…" : "Yes, Delete"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setConfirmDeleteId(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="outline" className="shrink-0 text-destructive border-destructive/40 hover:bg-destructive/10"
+                          onClick={() => setConfirmDeleteId(app.id)}>
+                          🗑 Delete
                         </Button>
                       )}
                     </div>
