@@ -116,9 +116,35 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Link href="/register">
-                <Button size="sm">Sign Up</Button>
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="gap-1">
+                    Sign Up <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  <div className="px-3 py-2 text-xs text-muted-foreground font-medium">I want to…</div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/register?role=client" className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-base">🏢</span>
+                      <div>
+                        <div className="font-medium text-sm">Sign up as a Business Owner</div>
+                        <div className="text-xs text-muted-foreground">Book sessions with verified experts</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/register?role=expert" className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-base">💡</span>
+                      <div>
+                        <div className="font-medium text-sm">Apply as an Expert</div>
+                        <div className="text-xs text-muted-foreground">Share your expertise and earn</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>
