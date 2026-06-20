@@ -160,15 +160,12 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
   await db.delete(passwordResetTokensTable).where(eq(passwordResetTokensTable.userId, user.id));
 
   const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-  await db.insert(passwordResetTokensTable).values({ userId: user.id, token, expiresAt });
+  await db.insert(passwordResetTokensTable).values({ userId: user.id, token: tokenHash, expiresAt });
 
-  const domains = process.env.REPLIT_DOMAINS?.split(",")[0];
-  const baseUrl = domains ? `https://${domains}` : (process.env.SITE_URL || "http://localhost:80");
-  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
-
-  req.log.info({ resetUrl, email: user.email }, "Password reset link — share with user or configure SMTP to send automatically");
+  req.log.info({ email: user.email }, "Password reset token generated");
 
   res.json({ ok: true });
 });
@@ -185,8 +182,9 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
     return;
   }
 
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const [resetToken] = await db.select().from(passwordResetTokensTable)
-    .where(eq(passwordResetTokensTable.token, token));
+    .where(eq(passwordResetTokensTable.token, tokenHash));
 
   if (!resetToken || resetToken.expiresAt < new Date()) {
     res.status(400).json({ error: "This reset link has expired or is invalid. Please request a new one." });
