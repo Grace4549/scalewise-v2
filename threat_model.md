@@ -1,0 +1,57 @@
+# Threat Model
+
+## Project Overview
+
+ScaleWise is a marketplace that connects clients with approved experts for paid advisory sessions. The production stack is a React/Vite frontend and an Express 5 API backed by PostgreSQL via Drizzle, with cookie-based session authentication through `express-session`.
+
+This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as production scope, treats shared packages under `lib/` as production-shared code when they are consumed by those artifacts, and treats `artifacts/mockup-sandbox/` as dev-only unless a production path proves otherwise. Per platform assumptions, deployed traffic is terminated over TLS by the platform. This project is not currently deployed.
+
+## Assets
+
+- **User accounts and sessions** — email addresses, password verifiers, session cookies, and role assignments. Compromise enables account takeover and privilege escalation.
+- **Marketplace communications** — booking-linked messages between clients, experts, and admins. These contain private business context and must remain scoped to authorized participants.
+- **Booking and payout data** — bookings, notes, meet links, amounts, payout status, and admin payout operations. Exposure or tampering affects both privacy and money flows.
+- **Expert application data** — applicant identity, contact information, pricing, biography, skills, and approval status. This includes PII and business-sensitive profile details.
+- **Administrative analytics and commission data** — commission rates, breakdowns, pending payouts, and cross-platform booking visibility. These are explicitly restricted to expert/admin surfaces.
+- **Application secrets** — `DATABASE_URL`, `SESSION_SECRET`, and any future third-party secrets. Secret compromise would let an attacker forge sessions or directly access backend data.
+
+## Trust Boundaries
+
+- **Browser to API** — all client requests to `/api/*` cross from an untrusted browser into the trusted backend. Every authenticated action must be validated server-side.
+- **API to PostgreSQL** — the API has direct read/write access to core marketplace data. Injection or broken authorization at the API layer can expose the full dataset.
+- **Unauthenticated to authenticated** — public browsing, reviews, login, registration, and expert applications are reachable without a session; bookings, inboxes, and dashboards are not.
+- **Authenticated to role-restricted** — expert and admin capabilities sit on top of ordinary authenticated access and must be enforced server-side, not in frontend routing alone.
+- **Production to dev-only** — `artifacts/mockup-sandbox/` is assumed non-production and should be ignored unless a production entry point or build path proves reachability.
+
+## Scan Anchors
+
+- **Production entry points:** `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/api-server/src/routes/*.ts`, `artifacts/scalewise/src/App.tsx`.
+- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, and route handlers for `auth`, `bookings`, `messages`, `experts`, `reviews`, and `admin`.
+- **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
+- **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
+- **Intentional public behavior:** `POST /api/reviews` is a product-defined unauthenticated “public review” surface; future scans should not treat lack of auth on that route alone as a vulnerability unless another control boundary is bypassed.
+- **Usually ignore as dev-only:** `artifacts/mockup-sandbox/`, generated `dist/` outputs, and workspace tooling unless they are executed in production paths.
+
+## Threat Categories
+
+### Spoofing
+
+ScaleWise relies on server-side sessions stored in cookies. The application must use a high-entropy production session secret, protect session cookies from cross-site abuse, and ensure that only valid authenticated sessions can reach booking, messaging, expert, and admin routes.
+
+Password-based login is also in scope. Password verifiers must resist offline cracking if the user table is exposed, and login endpoints must not allow trivial credential-stuffing or brute-force attacks.
+
+### Tampering
+
+Clients, experts, and admins can all change marketplace state: account creation, expert applications, booking creation, booking status, payout state, profile edits, and messages. The backend must calculate sensitive fields server-side, validate all state transitions, and ensure users can only modify resources they own or are explicitly authorized to manage.
+
+### Information Disclosure
+
+The platform stores personal data, private messages, meet links, booking notes, and admin-only financial information. API responses must be scoped to the requesting user’s role and relationship to the resource. Public endpoints must not leak internal identifiers, hidden business data, or admin/expert-only financial details beyond what the product intentionally publishes.
+
+### Denial of Service
+
+Public routes such as login, registration, expert application, search, and public review submission are reachable without authentication. The application must prevent unauthenticated users from using these endpoints for brute-force attempts, spam, or resource exhaustion. Expensive operations and external calls must remain bounded.
+
+### Elevation of Privilege
+
+ScaleWise has three meaningful privilege tiers: client, expert, and admin. The backend must enforce role checks and object ownership on every sensitive route. Any flaw that lets a client act as an expert or admin, read another user’s messages or bookings, or forge an authenticated/admin session is a high-priority production risk.
