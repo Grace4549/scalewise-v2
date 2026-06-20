@@ -45,11 +45,11 @@ function JourneyFlowDiagram() {
         </defs>
 
         {/* ── TOP STAGE LABELS ── */}
-        <text x="100" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#90B8D6" letterSpacing="0.8">THE PROBLEM</text>
-        <text x="282" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#6395EE" letterSpacing="0.8">EXPERTS APPEAR</text>
-        <text x="493" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#88CFA8" letterSpacing="0.8">BOOK &amp; PAY</text>
-        <text x="703" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#85DECB" letterSpacing="0.8">THE MEETING</text>
-        <text x="888" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="url(#sw-g5)" letterSpacing="0.8">SUCCESS ✓</text>
+        <text x="100" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#90B8D6" letterSpacing="1">THE PROBLEM</text>
+        <text x="282" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#6395EE" letterSpacing="1">EXPERTS APPEAR</text>
+        <text x="493" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#88CFA8" letterSpacing="1">BOOK &amp; PAY</text>
+        <text x="703" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#85DECB" letterSpacing="1">THE MEETING</text>
+        <text x="888" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="url(#sw-g5)" letterSpacing="1">SUCCESS ✓</text>
 
         {/* ── ANIMATED CONNECTOR PATHS ── */}
         <path d="M 178 148 C 196 124,214 124,230 148" fill="none" stroke="#90B8D6" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" markerEnd="url(#sw-arr)"/>
@@ -64,12 +64,12 @@ function JourneyFlowDiagram() {
             <ellipse cx="0" cy="6" rx="80" ry="66" fill="#90B8D6" fillOpacity="0.12" className="sw-gl"/>
             <path d="M -8,-70 C 26,-68 62,-42 68,-6 C 74,30 52,64 16,74 C -20,84 -60,64 -70,26 C -80,-12 -62,-50 -36,-68 C -22,-78 -42,-72 -8,-70 Z"
               fill="#90B8D6" fillOpacity="0.3" stroke="#90B8D6" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
-            <rect x="-44" y="-56" rx="11" ry="11" width="88" height="23" fill="#90B8D6" fillOpacity="0.65"/>
-            <text x="0" y="-40" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Pricing Confusion</text>
-            <rect x="-16" y="-24" rx="11" ry="11" width="80" height="23" fill="#90B8D6" fillOpacity="0.72"/>
-            <text x="24" y="-8" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Staff Turnover</text>
-            <rect x="-38" y="10" rx="11" ry="11" width="72" height="23" fill="#90B8D6" fillOpacity="0.68"/>
-            <text x="-2" y="26" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Slow Growth</text>
+            <rect x="-50" y="-60" rx="11" ry="11" width="100" height="27" fill="#90B8D6" fillOpacity="0.65"/>
+            <text x="0" y="-42" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Pricing Confusion</text>
+            <rect x="-20" y="-24" rx="11" ry="11" width="90" height="27" fill="#90B8D6" fillOpacity="0.72"/>
+            <text x="25" y="-6" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Staff Turnover</text>
+            <rect x="-42" y="12" rx="11" ry="11" width="80" height="27" fill="#90B8D6" fillOpacity="0.68"/>
+            <text x="-2" y="30" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Slow Growth</text>
           </g>
         </g>
 
@@ -90,8 +90,8 @@ function JourneyFlowDiagram() {
             <circle cx="54" cy="-22" r="18" fill="#6395EE" fillOpacity="0.24" stroke="#6395EE" strokeWidth="1.8" strokeOpacity="0.45"/>
             <circle cx="54" cy="-28" r="7" fill="#6395EE" fillOpacity="0.5"/>
             <ellipse cx="54" cy="-14" rx="10" ry="6" fill="#6395EE" fillOpacity="0.4"/>
-            <rect x="-47" y="24" rx="11" ry="11" width="94" height="23" fill="#6395EE" fillOpacity="0.6"/>
-            <text x="0" y="40" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">3 Experts Ready</text>
+            <rect x="-53" y="24" rx="11" ry="11" width="106" height="27" fill="#6395EE" fillOpacity="0.6"/>
+            <text x="0" y="42" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">3 Experts Ready</text>
           </g>
         </g>
 
@@ -108,11 +108,11 @@ function JourneyFlowDiagram() {
             <path d="M -44,-36 L -36,-27 L -18,-44" fill="none" stroke="white" strokeWidth="3.5" strokeOpacity="0.95" strokeLinecap="round" strokeLinejoin="round"/>
             <rect x="4" y="-58" rx="9" ry="9" width="44" height="62" fill="#88CFA8" fillOpacity="0.38" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
             <rect x="11" y="-51" rx="4" ry="4" width="30" height="38" fill="#88CFA8" fillOpacity="0.25"/>
-            <text x="26" y="-35" textAnchor="middle" fontSize="13" fill="white" fontWeight="900" opacity="0.95">M</text>
-            <text x="26" y="-22" textAnchor="middle" fontSize="8" fill="white" fontWeight="600" opacity="0.85">Pesa</text>
-            <circle cx="26" cy="-8" r="4" fill="white" fillOpacity="0.55"/>
-            <rect x="-44" y="26" rx="11" ry="11" width="88" height="23" fill="#88CFA8" fillOpacity="0.6"/>
-            <text x="0" y="42" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Select &amp; Pay ✓</text>
+            <text x="26" y="-33" textAnchor="middle" fontSize="17" fill="white" fontWeight="900" opacity="0.95">M</text>
+            <text x="26" y="-18" textAnchor="middle" fontSize="10" fill="white" fontWeight="600" opacity="0.85">Pesa</text>
+            <circle cx="26" cy="-6" r="4" fill="white" fillOpacity="0.55"/>
+            <rect x="-50" y="26" rx="11" ry="11" width="100" height="27" fill="#88CFA8" fillOpacity="0.6"/>
+            <text x="0" y="44" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Select &amp; Pay ✓</text>
           </g>
         </g>
 
@@ -131,8 +131,8 @@ function JourneyFlowDiagram() {
             <circle cx="-10" cy="-20" r="10" fill="#85DECB" fillOpacity="0.5"/>
             <circle cx="-10" cy="-27" r="5" fill="#85DECB" fillOpacity="0.75"/>
             <ellipse cx="-10" cy="-9" rx="8" ry="4.5" fill="#85DECB" fillOpacity="0.48"/>
-            <rect x="-49" y="22" rx="11" ry="11" width="98" height="23" fill="#85DECB" fillOpacity="0.55"/>
-            <text x="0" y="38" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Google Meet Live</text>
+            <rect x="-57" y="22" rx="11" ry="11" width="114" height="27" fill="#85DECB" fillOpacity="0.55"/>
+            <text x="0" y="40" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Google Meet Live</text>
           </g>
         </g>
 
@@ -142,12 +142,12 @@ function JourneyFlowDiagram() {
             <ellipse cx="4" cy="6" rx="84" ry="70" fill="url(#sw-g5)" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.2s"}}/>
             <path d="M -4,-78 C 34,-74 72,-48 76,-6 C 80,36 54,76 14,84 C -26,92 -70,70 -80,26 C -90,-18 -66,-62 -34,-78 C -18,-88 -42,-82 -4,-78 Z"
               fill="url(#sw-g5)" fillOpacity="0.28" stroke="url(#sw-g5)" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
-            <rect x="-48" y="-64" rx="11" ry="11" width="96" height="23" fill="#6395EE" fillOpacity="0.65"/>
-            <text x="0" y="-47" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Clear Pricing ✓</text>
-            <rect x="-18" y="-31" rx="11" ry="11" width="82" height="23" fill="#88CFA8" fillOpacity="0.72"/>
-            <text x="23" y="-14" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Loyal Team ✓</text>
-            <rect x="-48" y="4" rx="11" ry="11" width="90" height="23" fill="#85DECB" fillOpacity="0.7"/>
-            <text x="-3" y="21" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Growth Plan ✓</text>
+            <rect x="-54" y="-68" rx="11" ry="11" width="108" height="27" fill="#6395EE" fillOpacity="0.65"/>
+            <text x="0" y="-50" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Clear Pricing ✓</text>
+            <rect x="-22" y="-31" rx="11" ry="11" width="94" height="27" fill="#88CFA8" fillOpacity="0.72"/>
+            <text x="25" y="-13" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Loyal Team ✓</text>
+            <rect x="-54" y="6" rx="11" ry="11" width="102" height="27" fill="#85DECB" fillOpacity="0.7"/>
+            <text x="-3" y="24" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Growth Plan ✓</text>
           </g>
         </g>
       </svg>
