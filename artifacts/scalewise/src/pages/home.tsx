@@ -7,6 +7,154 @@ import { useListExperts, useListReviews, useGetMe, useCreateReview } from "@work
 import { ExpertCard } from "@/components/expert-card";
 import { ChevronLeft, ChevronRight, Search, Clock, Star } from "lucide-react";
 
+// ── Journey flow diagram ────────────────────────────────────────
+function JourneyFlowDiagram() {
+  return (
+    <div className="w-full overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" as const }}>
+      <style>{`
+        @keyframes sw-fa{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+        @keyframes sw-fb{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+        @keyframes sw-fc{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+        @keyframes sw-fd{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes sw-fe{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes sw-dash{to{stroke-dashoffset:-50}}
+        @keyframes sw-glow{0%,100%{opacity:0.1}50%{opacity:0.26}}
+        .sw-ga{animation:sw-fa 3.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+        .sw-gb{animation:sw-fb 4.3s ease-in-out infinite .5s;transform-box:fill-box;transform-origin:center}
+        .sw-gc{animation:sw-fc 3.5s ease-in-out infinite 1.0s;transform-box:fill-box;transform-origin:center}
+        .sw-gd{animation:sw-fd 4.6s ease-in-out infinite .3s;transform-box:fill-box;transform-origin:center}
+        .sw-ge{animation:sw-fe 4.0s ease-in-out infinite .8s;transform-box:fill-box;transform-origin:center}
+        .sw-ap{stroke-dasharray:10 7;animation:sw-dash 1.6s linear infinite}
+        .sw-gl{animation:sw-glow 3s ease-in-out infinite}
+        .sw-sg{cursor:default;transition:filter .3s ease}
+        .sw-sg:hover{filter:drop-shadow(0 6px 22px rgba(0,0,0,0.2))}
+        .sw-ms{transition:transform .3s ease;transform-box:fill-box;transform-origin:center}
+        .sw-sg:hover .sw-ms{transform:scale(1.06)}
+      `}</style>
+      <svg viewBox="0 0 990 282" xmlns="http://www.w3.org/2000/svg"
+           style={{ width:"100%", minWidth:520, display:"block" }}>
+        <defs>
+          <marker id="sw-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0 1,7 3.5,0 6" fill="#b0c4d8" fillOpacity="0.75"/>
+          </marker>
+          <linearGradient id="sw-g5" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stopColor="#6395EE"/>
+            <stop offset="45%"  stopColor="#88CFA8"/>
+            <stop offset="100%" stopColor="#85DECB"/>
+          </linearGradient>
+        </defs>
+
+        {/* ── TOP STAGE LABELS ── */}
+        <text x="100" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#90B8D6" letterSpacing="0.8">THE PROBLEM</text>
+        <text x="282" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#6395EE" letterSpacing="0.8">EXPERTS APPEAR</text>
+        <text x="493" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#88CFA8" letterSpacing="0.8">BOOK &amp; PAY</text>
+        <text x="703" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#85DECB" letterSpacing="0.8">THE MEETING</text>
+        <text x="888" y="19" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="url(#sw-g5)" letterSpacing="0.8">SUCCESS ✓</text>
+
+        {/* ── ANIMATED CONNECTOR PATHS ── */}
+        <path d="M 178 148 C 196 124,214 124,230 148" fill="none" stroke="#90B8D6" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" markerEnd="url(#sw-arr)"/>
+        <path d="M 360 148 C 384 124,412 124,436 148" fill="none" stroke="#6395EE" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".4s"}} markerEnd="url(#sw-arr)"/>
+        <path d="M 572 148 C 594 124,618 124,640 148" fill="none" stroke="#88CFA8" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".8s"}} markerEnd="url(#sw-arr)"/>
+        <path d="M 778 148 C 796 124,812 124,828 148" fill="none" stroke="#85DECB" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:"1.2s"}} markerEnd="url(#sw-arr)"/>
+
+        {/* ═══ STAGE 1 — THE PROBLEM ═══ */}
+        {/* outer <g> handles SVG position; inner <g> handles CSS float — avoids transform conflict */}
+        <g transform="translate(108,150)" className="sw-sg">
+          <g className="sw-ga">
+            <ellipse cx="0" cy="6" rx="80" ry="66" fill="#90B8D6" fillOpacity="0.12" className="sw-gl"/>
+            <path d="M -8,-70 C 26,-68 62,-42 68,-6 C 74,30 52,64 16,74 C -20,84 -60,64 -70,26 C -80,-12 -62,-50 -36,-68 C -22,-78 -42,-72 -8,-70 Z"
+              fill="#90B8D6" fillOpacity="0.3" stroke="#90B8D6" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
+            <rect x="-44" y="-56" rx="11" ry="11" width="88" height="23" fill="#90B8D6" fillOpacity="0.65"/>
+            <text x="0" y="-40" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Pricing Confusion</text>
+            <rect x="-16" y="-24" rx="11" ry="11" width="80" height="23" fill="#90B8D6" fillOpacity="0.72"/>
+            <text x="24" y="-8" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Staff Turnover</text>
+            <rect x="-38" y="10" rx="11" ry="11" width="72" height="23" fill="#90B8D6" fillOpacity="0.68"/>
+            <text x="-2" y="26" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Slow Growth</text>
+          </g>
+        </g>
+
+        {/* ═══ STAGE 2 — EXPERTS APPEAR ═══ */}
+        <g transform="translate(294,142)" className="sw-sg">
+          <g className="sw-gb">
+            <ellipse cx="-10" cy="8" rx="82" ry="68" fill="#6395EE" fillOpacity="0.1" className="sw-gl" style={{animationDelay:".9s"}}/>
+            <path d="M -4,-76 C 30,-72 66,-46 70,-8 C 74,30 50,68 12,78 C -26,88 -66,64 -76,22 C -86,-20 -60,-60 -28,-74 C -14,-82 -38,-80 -4,-76 Z"
+              fill="#6395EE" fillOpacity="0.28" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
+            <circle cx="-35" cy="-26" r="21" fill="#6395EE" fillOpacity="0.3" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.55"/>
+            <circle cx="-35" cy="-22" r="22" fill="none" stroke="#6395EE" strokeWidth="3.5" strokeOpacity="0.2" className="sw-gl" style={{animationDelay:".3s"}}/>
+            <circle cx="-35" cy="-33" r="8" fill="#6395EE" fillOpacity="0.65"/>
+            <ellipse cx="-35" cy="-16" rx="12" ry="7" fill="#6395EE" fillOpacity="0.52"/>
+            <circle cx="12" cy="-34" r="21" fill="#6395EE" fillOpacity="0.36" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.6"/>
+            <circle cx="12" cy="-30" r="22" fill="none" stroke="#6395EE" strokeWidth="4" strokeOpacity="0.18" className="sw-gl" style={{animationDelay:"1.0s"}}/>
+            <circle cx="12" cy="-41" r="8" fill="#6395EE" fillOpacity="0.7"/>
+            <ellipse cx="12" cy="-24" rx="12" ry="7" fill="#6395EE" fillOpacity="0.56"/>
+            <circle cx="54" cy="-22" r="18" fill="#6395EE" fillOpacity="0.24" stroke="#6395EE" strokeWidth="1.8" strokeOpacity="0.45"/>
+            <circle cx="54" cy="-28" r="7" fill="#6395EE" fillOpacity="0.5"/>
+            <ellipse cx="54" cy="-14" rx="10" ry="6" fill="#6395EE" fillOpacity="0.4"/>
+            <rect x="-47" y="24" rx="11" ry="11" width="94" height="23" fill="#6395EE" fillOpacity="0.6"/>
+            <text x="0" y="40" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">3 Experts Ready</text>
+          </g>
+        </g>
+
+        {/* ═══ STAGE 3 — BOOK & PAY ═══ */}
+        <g transform="translate(504,150)" className="sw-sg">
+          <g className="sw-gc">
+            <ellipse cx="0" cy="6" rx="82" ry="68" fill="#88CFA8" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.6s"}}/>
+            <path d="M -64,-42 C -64,-66 -38,-78 2,-76 C 42,-74 70,-56 74,-20 C 78,16 62,60 24,74 C -14,88 -58,70 -68,34 C -78,-2 -64,-18 -64,-42 Z"
+              fill="#88CFA8" fillOpacity="0.3" stroke="#88CFA8" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
+            <rect x="-58" y="-58" rx="9" ry="9" width="48" height="48" fill="#88CFA8" fillOpacity="0.4" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <line x1="-49" y1="-58" x2="-49" y2="-68" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
+            <line x1="-22" y1="-58" x2="-22" y2="-68" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
+            <line x1="-58" y1="-46" x2="-10" y2="-46" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.6"/>
+            <path d="M -44,-36 L -36,-27 L -18,-44" fill="none" stroke="white" strokeWidth="3.5" strokeOpacity="0.95" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="4" y="-58" rx="9" ry="9" width="44" height="62" fill="#88CFA8" fillOpacity="0.38" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <rect x="11" y="-51" rx="4" ry="4" width="30" height="38" fill="#88CFA8" fillOpacity="0.25"/>
+            <text x="26" y="-35" textAnchor="middle" fontSize="13" fill="white" fontWeight="900" opacity="0.95">M</text>
+            <text x="26" y="-22" textAnchor="middle" fontSize="8" fill="white" fontWeight="600" opacity="0.85">Pesa</text>
+            <circle cx="26" cy="-8" r="4" fill="white" fillOpacity="0.55"/>
+            <rect x="-44" y="26" rx="11" ry="11" width="88" height="23" fill="#88CFA8" fillOpacity="0.6"/>
+            <text x="0" y="42" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Select &amp; Pay ✓</text>
+          </g>
+        </g>
+
+        {/* ═══ STAGE 4 — THE MEETING ═══ */}
+        <g transform="translate(714,142)" className="sw-sg">
+          <g className="sw-gd">
+            <ellipse cx="0" cy="8" rx="80" ry="67" fill="#85DECB" fillOpacity="0.12" className="sw-gl" style={{animationDelay:".6s"}}/>
+            <path d="M -2,-72 C 34,-70 68,-46 72,-6 C 76,34 52,68 14,78 C -24,88 -64,66 -72,26 C -80,-14 -60,-54 -30,-70 C -16,-80 -36,-74 -2,-72 Z"
+              fill="#85DECB" fillOpacity="0.28" stroke="#85DECB" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
+            <rect x="-54" y="-40" rx="9" ry="9" width="60" height="46" fill="#85DECB" fillOpacity="0.38" stroke="#85DECB" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <path d="M 6,-34 L 34,-22 L 34,-6 L 6,6 Z" fill="#85DECB" fillOpacity="0.65"/>
+            <rect x="-50" y="-34" rx="5" ry="5" width="50" height="34" fill="#85DECB" fillOpacity="0.2"/>
+            <circle cx="-32" cy="-20" r="10" fill="#85DECB" fillOpacity="0.5"/>
+            <circle cx="-32" cy="-27" r="5" fill="#85DECB" fillOpacity="0.75"/>
+            <ellipse cx="-32" cy="-9" rx="8" ry="4.5" fill="#85DECB" fillOpacity="0.48"/>
+            <circle cx="-10" cy="-20" r="10" fill="#85DECB" fillOpacity="0.5"/>
+            <circle cx="-10" cy="-27" r="5" fill="#85DECB" fillOpacity="0.75"/>
+            <ellipse cx="-10" cy="-9" rx="8" ry="4.5" fill="#85DECB" fillOpacity="0.48"/>
+            <rect x="-49" y="22" rx="11" ry="11" width="98" height="23" fill="#85DECB" fillOpacity="0.55"/>
+            <text x="0" y="38" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Google Meet Live</text>
+          </g>
+        </g>
+
+        {/* ═══ STAGE 5 — SUCCESS ═══ */}
+        <g transform="translate(885,150)" className="sw-sg">
+          <g className="sw-ge">
+            <ellipse cx="4" cy="6" rx="84" ry="70" fill="url(#sw-g5)" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.2s"}}/>
+            <path d="M -4,-78 C 34,-74 72,-48 76,-6 C 80,36 54,76 14,84 C -26,92 -70,70 -80,26 C -90,-18 -66,-62 -34,-78 C -18,-88 -42,-82 -4,-78 Z"
+              fill="url(#sw-g5)" fillOpacity="0.28" stroke="url(#sw-g5)" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
+            <rect x="-48" y="-64" rx="11" ry="11" width="96" height="23" fill="#6395EE" fillOpacity="0.65"/>
+            <text x="0" y="-47" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Clear Pricing ✓</text>
+            <rect x="-18" y="-31" rx="11" ry="11" width="82" height="23" fill="#88CFA8" fillOpacity="0.72"/>
+            <text x="23" y="-14" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Loyal Team ✓</text>
+            <rect x="-48" y="4" rx="11" ry="11" width="90" height="23" fill="#85DECB" fillOpacity="0.7"/>
+            <text x="-3" y="21" textAnchor="middle" fontSize="9.5" fill="white" fontWeight="700">Growth Plan ✓</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 // ── Brand palette ──────────────────────────────────────────────
 const P = {
   blue:   "#6395EE",
@@ -667,17 +815,10 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Consultation photo */}
+          {/* Journey flow diagram */}
           <Reveal delay={120}>
-            <div className="max-w-3xl mx-auto rounded-3xl overflow-hidden shadow-xl relative">
-              <img
-                src="/photos/consultation-session.png"
-                alt="Business consultation in progress"
-                className="w-full object-cover"
-                style={{ maxHeight: 320 }}
-                loading="lazy"
-              />
-              <div className="absolute inset-0 rounded-3xl" style={{ background: "linear-gradient(to top, rgba(26,37,64,0.35) 0%, transparent 60%)" }} />
+            <div className="max-w-5xl mx-auto">
+              <JourneyFlowDiagram />
             </div>
           </Reveal>
         </div>
