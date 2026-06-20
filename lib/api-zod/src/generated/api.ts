@@ -27,7 +27,8 @@ export const RegisterBody = zod.object({
   "email": zod.string(),
   "password": zod.string().min(registerBodyPasswordMin),
   "name": zod.string(),
-  "role": zod.enum(['client', 'expert'])
+  "role": zod.enum(['client', 'expert']),
+  "inviteToken": zod.string().optional().describe('One-time invite token required when registering with role=expert')
 })
 
 

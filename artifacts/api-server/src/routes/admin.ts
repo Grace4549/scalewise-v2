@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import crypto from "crypto";
 import { db, expertsTable, bookingsTable, reviewsTable, usersTable } from "@workspace/db";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
@@ -79,19 +80,28 @@ router.post("/admin/applications/:id/approve", adminMiddleware(), async (req, re
   const id = parseInt(raw, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
+  const [existing] = await db
+    .select()
+    .from(expertsTable)
+    .where(eq(expertsTable.id, id));
+
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+
+  const plaintextInviteToken = crypto.randomBytes(32).toString("hex");
+  const inviteTokenHash = crypto.createHash("sha256").update(plaintextInviteToken).digest("hex");
+
   const [expert] = await db
     .update(expertsTable)
-    .set({ status: "approved" })
+    .set({ status: "approved", inviteToken: inviteTokenHash })
     .where(eq(expertsTable.id, id))
     .returning();
 
   if (!expert) { res.status(404).json({ error: "Not found" }); return; }
 
-  if (expert.userId) {
-    await db.update(usersTable).set({ role: "expert" }).where(eq(usersTable.id, expert.userId));
-  }
-
-  res.json(formatApplication(expert));
+  res.json({
+    ...formatApplication(expert),
+    inviteToken: plaintextInviteToken,
+  });
 });
 
 router.post("/admin/applications/:id/reject", adminMiddleware(), async (req, res): Promise<void> => {

@@ -181,8 +181,6 @@ router.post("/experts/apply", publicWriteLimiter, async (req, res): Promise<void
     return;
   }
 
-  const userId = (req.session as { userId?: number }).userId ?? null;
-
   const [existing] = await db
     .select({ id: expertsTable.id })
     .from(expertsTable)
@@ -201,7 +199,7 @@ router.post("/experts/apply", publicWriteLimiter, async (req, res): Promise<void
   const [expert] = await db
     .insert(expertsTable)
     .values({
-      userId,
+      userId: null,
       name: parsed.data.name,
       email: parsed.data.email,
       headline: parsed.data.headline ?? null,

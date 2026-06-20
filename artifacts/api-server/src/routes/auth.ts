@@ -24,24 +24,76 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  // Expert role requires a prior approved application
+  // Expert role requires a prior approved application AND a valid one-time invite token
   if (role === "expert") {
+    const { inviteToken } = req.body as { inviteToken?: string };
+    if (!inviteToken || typeof inviteToken !== "string") {
+      res.status(400).json({
+        error: "An invite token is required to register as an expert. Please contact your administrator.",
+      });
+      return;
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(inviteToken).digest("hex");
+
     const [application] = await db
       .select()
       .from(expertsTable)
       .where(and(
         eq(expertsTable.email, email),
-        eq(expertsTable.status, "approved")
+        eq(expertsTable.status, "approved"),
+        eq(expertsTable.inviteToken, tokenHash)
       ));
 
     if (!application) {
       res.status(400).json({
-        error: "No approved expert application found for this email. Please apply first at /apply-expert and wait for admin approval before creating your account.",
+        error: "Invalid or expired invite token. Please contact your administrator.",
       });
       return;
     }
+
+    const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    if (existing) {
+      res.status(400).json({ error: "Email already registered" });
+      return;
+    }
+
+    const passwordHash = await hashPassword(password);
+    const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
+
+    // Link user to their specific approved application and consume the invite token atomically
+    await db
+      .update(expertsTable)
+      .set({ userId: user.id, inviteToken: null })
+      .where(and(
+        eq(expertsTable.id, application.id),
+        eq(expertsTable.status, "approved"),
+        eq(expertsTable.inviteToken, tokenHash)
+      ));
+
+    await new Promise<void>((resolve, reject) => {
+      req.session.regenerate((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    (req.session as { userId?: number }).userId = user.id;
+
+    res.status(201).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        avatarUrl: user.avatarUrl ?? null,
+        bio: user.bio ?? null,
+        createdAt: user.createdAt.toISOString(),
+      },
+    });
+    return;
   }
 
+  // Non-expert (client) registration
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing) {
     res.status(400).json({ error: "Email already registered" });
@@ -51,17 +103,12 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const passwordHash = await hashPassword(password);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
 
-  // If expert account — link user to their approved application
-  if (role === "expert") {
-    await db
-      .update(expertsTable)
-      .set({ userId: user.id })
-      .where(and(
-        eq(expertsTable.email, email),
-        eq(expertsTable.status, "approved")
-      ));
-  }
-
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
   (req.session as { userId?: number }).userId = user.id;
 
   res.status(201).json({
@@ -105,6 +152,12 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     user.role = "admin";
   }
 
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
   (req.session as { userId?: number }).userId = user.id;
 
   res.json({

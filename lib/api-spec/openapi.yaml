@@ -763,6 +763,9 @@ components:
         role:
           type: string
           enum: [client, expert]
+        inviteToken:
+          type: string
+          description: One-time invite token required when registering with role=expert
 
     LoginInput:
       type: object

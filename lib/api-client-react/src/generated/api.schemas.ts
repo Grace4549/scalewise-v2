@@ -44,6 +44,8 @@ export interface RegisterInput {
   password: string;
   name: string;
   role: RegisterInputRole;
+  /** One-time invite token required when registering with role=expert */
+  inviteToken?: string;
 }
 
 export interface LoginInput {

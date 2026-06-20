@@ -76,9 +76,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET environment variable must be set in production");
+  }
+  logger.warn("SESSION_SECRET is not set — using insecure fallback. Set SESSION_SECRET before deploying.");
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET ?? "scalewise-dev-secret-2026",
+    secret: sessionSecret ?? "scalewise-dev-secret-2026",
     resave: false,
     saveUninitialized: false,
     cookie: {
