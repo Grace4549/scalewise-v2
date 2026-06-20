@@ -1,0 +1,29 @@
+Make the following fixes and improvements to the ScaleWise site:
+1. Fix login/navigation logic:
+
+The main "Login" button (in the navbar) should first ask "Are you an Expert, or looking for an Expert?" and then route the user to the correct login form based on their answer.
+The separate "I'm a Business Owner" and "I'm an Expert" buttons (shown elsewhere on the homepage) should NOT ask this question — they should go directly to their respective login or sign-up form immediately when clicked.
+"Admin Login" must be a completely separate, distinct button. It should never ask "Are you an Expert or looking for an Expert?" It should go straight to a dedicated admin login form, accessible only to the admin.
+
+2. Reduce spacing between sections. The vertical gaps between sections are currently too large — tighten the padding/margin between all homepage sections so the page feels more compact and continuous, without removing any content.
+3. Fix all broken links and buttons. Every button and link across the entire site, especially in the footer, must navigate to its correct, matching page or section. Audit and fix: footer links (Quick Links, For Business Owners, For Experts, Legal, Support), all homepage CTA buttons, and all navbar links.
+4. Make the "Apply as a Founding Expert" / "For Industry Practitioners" button significantly more visible. Increase its size, contrast, or use a bolder color from our palette so it stands out clearly rather than blending into the section.
+5. Remove all hyphens across the entire site's text content. Replace them with commas, periods, or em dashes where appropriate, depending on what reads naturally in each sentence. No hyphens should remain anywhere in the copy.
+6. Use all four palette colors actively across the site, not just blue as primary:
+
+Cornflower blue: #6395EE
+Muted blue: #90B8D6
+Muted green: #88CFA8
+Mint green: #85DECB
+
+Apply them with intentional variation rather than using only one shade everywhere. For example, in any 4 column layout (such as the "How It Works" steps), assign each column a different accent color from this palette, for example: column 1 uses cornflower blue, column 2 uses muted blue, column 3 uses muted green, column 4 uses mint green. Apply this same color rotation logic to other 3 or 4 item layouts across the site where it fits naturally, such as the industries grid, the "For Business Owners" and "For Experts" benefit lists, or stat groupings.
+7. Allow mixed font colors within individual statements and headlines where it adds emphasis, using the same four palette colors to highlight specific key words or phrases within a sentence, similar to how the "How It Works" step numbers currently use a soft pale blue for the large background numerals. Apply this thoughtfully to headlines, the hero subtext, and section subheadings, picking out the most important word or phrase in each to receive a color accent, while the rest of the text stays in our standard text color. Apply this selectively to 2 to 3 of our most important headlines (for example the hero headline and the About page heading), not everywhere, so it stays impactful rather than overused.
+Keep all color usage tasteful and balanced. Color should guide the eye to what matters most in each section, not make the page feel cluttered or rainbow like. No single section should use more than 2 to 3 of these colors at once.
+8. Update the wording of How It Works Step 4 from "Real conversation. Actionable answers. Guaranteed." to "Real conversation. Actionable answers. Every time." Do not use the word "Guaranteed" anywhere on the site, since we cannot promise specific outcomes for every session.
+9. Add an animated, ticking clock visual element somewhere appropriate on the homepage (for example near the How It Works or Become an Expert section), styled in our blue/green palette, showing the clock hands actually moving. Pair it with a short, urgent but encouraging statement about not staying stuck on a problem when help is one call away. Example direction: "Every minute you wait is a minute your competitor isn't. Help is one call away." Feel free to refine the exact wording to fit naturally, but the core message should be: time keeps moving, so do not stay stuck when assistance is available right now.
+10. Make the overall typography more dynamic and less uniform. Right now all text feels like flat, uniform blocks. Specifically:
+
+Use varied font sizes and weights more intentionally within sections, not just one size per heading level
+Add subtle text animation effects where appropriate, such as words fading or sliding in one at a time as a heading appears on scroll, or a gentle highlight/underline animation drawing attention to key phrases
+Add tasteful pop in or pop up animations for cards, buttons, and stat numbers as they enter the viewport
+Keep all of this subtle, smooth, and professional. It should feel premium and alive, not busy, childish, or distracting
