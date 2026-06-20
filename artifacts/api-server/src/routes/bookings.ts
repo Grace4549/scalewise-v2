@@ -144,7 +144,7 @@ router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
 const TERMINAL_STATUSES = new Set(["completed", "cancelled", "no-show"]);
 
 const EXPERT_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
-  upcoming: new Set(["no-show", "cancelled"]),
+  upcoming: new Set(["no-show"]),
 };
 
 const ADMIN_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
@@ -174,7 +174,11 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
     if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
     const allowed = EXPERT_ALLOWED_TRANSITIONS[booking.status];
     if (!allowed || !allowed.has(newStatus)) {
-      res.status(403).json({ error: "Experts may only mark an upcoming booking as no-show or cancelled" });
+      res.status(403).json({ error: "Experts may only mark an upcoming booking as no-show after the scheduled session time" });
+      return;
+    }
+    if (new Date() < booking.scheduledTime) {
+      res.status(409).json({ error: "A booking cannot be marked as no-show before the scheduled session time" });
       return;
     }
   } else if (req.userRole === "admin") {

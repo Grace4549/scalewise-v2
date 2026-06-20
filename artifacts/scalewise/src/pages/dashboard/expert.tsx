@@ -272,8 +272,9 @@ export default function ExpertDashboard() {
                       <Button size="sm" className="hover:opacity-90"
                         style={{ backgroundColor: C.green, color: "#1a5730" }}
                         onClick={() => handleStatusUpdate(booking.id, "completed")}>Mark Completed</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(booking.id, "cancelled")}>Cancel</Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleStatusUpdate(booking.id, "no-show")}>No-show</Button>
+                      {new Date() >= new Date(booking.scheduledTime) && (
+                        <Button size="sm" variant="ghost" onClick={() => handleStatusUpdate(booking.id, "no-show")}>No-show</Button>
+                      )}
                     </div>
                   </div>
                 ))}
