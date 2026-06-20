@@ -1,8 +1,10 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, expertsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import { hashPassword, verifyPassword, requireAuth } from "../lib/auth";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
+
+const ADMIN_EMAIL = "kihongegrace4549@gmail.com";
 
 const router: IRouter = Router();
 
@@ -15,6 +17,30 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { email, password, name, role } = parsed.data;
 
+  // Admin email is reserved — cannot be registered through the public form
+  if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    res.status(400).json({ error: "This email is reserved. Please contact the platform administrator." });
+    return;
+  }
+
+  // Expert role requires a prior approved application
+  if (role === "expert") {
+    const [application] = await db
+      .select()
+      .from(expertsTable)
+      .where(and(
+        eq(expertsTable.email, email),
+        eq(expertsTable.status, "approved")
+      ));
+
+    if (!application) {
+      res.status(400).json({
+        error: "No approved expert application found for this email. Please apply first at /apply-expert and wait for admin approval before creating your account.",
+      });
+      return;
+    }
+  }
+
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing) {
     res.status(400).json({ error: "Email already registered" });
@@ -23,6 +49,17 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const passwordHash = hashPassword(password);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
+
+  // If expert account — link user to their approved application
+  if (role === "expert") {
+    await db
+      .update(expertsTable)
+      .set({ userId: user.id })
+      .where(and(
+        eq(expertsTable.email, email),
+        eq(expertsTable.status, "approved")
+      ));
+  }
 
   (req.session as { userId?: number }).userId = user.id;
 
@@ -54,6 +91,12 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
+  // Ensure admin email always has admin role (self-healing)
+  if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && user.role !== "admin") {
+    await db.update(usersTable).set({ role: "admin" }).where(eq(usersTable.id, user.id));
+    user.role = "admin";
+  }
+
   (req.session as { userId?: number }).userId = user.id;
 
   res.json({
@@ -71,6 +114,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
 router.post("/auth/logout", async (req, res): Promise<void> => {
   req.session.destroy(() => {});
+  res.clearCookie("connect.sid");
   res.json({ ok: true });
 });
 

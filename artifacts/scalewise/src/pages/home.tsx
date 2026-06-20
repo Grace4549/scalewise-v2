@@ -188,18 +188,15 @@ function RoleLoginBanner() {
     <div className="bg-card border rounded-2xl px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
       <p className="text-sm text-muted-foreground font-medium">Already have an account? Jump right in:</p>
       <div className="flex flex-wrap gap-2">
-        <Link href="/login?role=client">
+        <Link href="/login">
           <Button size="sm" variant="outline" className="rounded-xl text-sm" style={{ color: P.blue, borderColor: P.blue + "55" }}>
             I am a Business Owner
           </Button>
         </Link>
-        <Link href="/login?role=expert">
+        <Link href="/login">
           <Button size="sm" variant="outline" className="rounded-xl text-sm" style={{ color: P.mgreen, borderColor: P.mgreen + "55" }}>
             I am an Expert
           </Button>
-        </Link>
-        <Link href="/login?role=admin">
-          <Button size="sm" variant="ghost" className="rounded-xl text-xs text-muted-foreground">Admin</Button>
         </Link>
       </div>
     </div>

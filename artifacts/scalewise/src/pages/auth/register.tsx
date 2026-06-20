@@ -4,6 +4,8 @@ import { z } from "zod";
 import { useRegister } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -20,45 +22,30 @@ const registerSchema = z.object({
 
 type RegisterData = z.infer<typeof registerSchema>;
 
-const ROLE_META: Record<"client" | "expert", { label: string; subLabel: string; color: string; heading: string; sub: string }> = {
-  client: {
-    label:    "Business Owner",
-    subLabel: "Looking to book an expert session",
-    color:    P.blue,
-    heading:  "Create Your Business Account",
-    sub:      "Get access to verified experts across 13 industries.",
-  },
-  expert: {
-    label:    "Expert",
-    subLabel: "Sharing expertise with business owners",
-    color:    P.mgreen,
-    heading:  "Create Your Expert Account",
-    sub:      "Next you will complete your expert profile and application.",
-  },
-};
-
 export default function Register() {
   const registerMutation = useRegister();
   const { refetch }      = useAuth();
   const [, setLocation]  = useLocation();
   const { toast }        = useToast();
+  const queryClient      = useQueryClient();
 
   const params    = new URLSearchParams(window.location.search);
   const roleParam = params.get("role");
-  const presetRole: "client" | "expert" | null =
-    roleParam === "client" || roleParam === "expert" ? roleParam : null;
+  const role: "client" | "expert" =
+    roleParam === "expert" ? "expert" : "client";
 
   const form = useForm<RegisterData>({
     resolver:      zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", role: presetRole ?? "client" },
+    defaultValues: { name: "", email: "", password: "", role },
   });
 
   const onSubmit = (data: RegisterData) => {
     registerMutation.mutate({ data }, {
-      onSuccess: () => {
+      onSuccess: (res) => {
+        queryClient.setQueryData(getGetMeQueryKey(), (res as any).user ?? null);
         refetch();
         if (data.role === "expert") {
-          setLocation("/apply-expert");
+          setLocation("/expert/dashboard");
         } else {
           setLocation("/");
         }
@@ -73,7 +60,67 @@ export default function Register() {
     });
   };
 
-  const meta = presetRole ? ROLE_META[presetRole] : null;
+  if (role === "expert") {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <div className="w-full max-w-md p-8 rounded-3xl bg-card border shadow-lg text-center space-y-5">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold"
+            style={{ background: P.mgreen + "14", color: P.mgreen }}
+          >
+            Expert Account
+          </div>
+          <h1 className="text-2xl font-bold">Creating Your Expert Account</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Expert accounts are created only after admin approval of your application.
+            If your application has been approved, enter the email you applied with below.
+          </p>
+          <div className="text-left">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <input type="hidden" {...form.register("role")} value="expert" />
+                <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (same as your application)</FormLabel>
+                    <FormControl><Input placeholder="name@company.com" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="password" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Choose a Password</FormLabel>
+                    <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={registerMutation.isPending}
+                  style={{ background: P.mgreen, color: "#083d2e" }}
+                >
+                  {registerMutation.isPending ? "Verifying…" : "Create My Account"}
+                </Button>
+              </form>
+            </Form>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Have not applied yet?{" "}
+            <Link href="/apply-expert" className="font-semibold underline" style={{ color: P.mgreen }}>
+              Submit your application →
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
@@ -83,110 +130,45 @@ export default function Register() {
 
         <div className="relative z-10">
           <div className="text-center mb-8">
-            {meta ? (
-              <>
-                {/* Role badge */}
-                <div
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-4"
-                  style={{ background: meta.color + "14", color: meta.color }}
-                >
-                  {meta.label}
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight">{meta.heading}</h1>
-                <p className="text-muted-foreground mt-2 text-sm">{meta.sub}</p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold tracking-tight">Create an Account</h1>
-                <p className="text-muted-foreground mt-2">Join ScaleWise and get unstuck.</p>
-              </>
-            )}
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-4"
+              style={{ background: P.blue + "14", color: P.blue }}
+            >
+              Business Owner
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Create Your Business Account</h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Get access to verified experts across 13 industries.
+            </p>
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {/* Hidden role field when pre-set */}
-              <input type="hidden" {...form.register("role")} />
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Jane Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="name@company.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Only show role picker if no role was pre-selected from URL */}
-              {!presetRole && (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">What brings you here?</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(["client", "expert"] as const).map((r) => {
-                      const m   = ROLE_META[r];
-                      const sel = form.watch("role") === r;
-                      return (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => form.setValue("role", r)}
-                          className="rounded-xl border p-4 text-left transition-all"
-                          style={{
-                            borderColor: sel ? m.color : undefined,
-                            background:  sel ? m.color + "0C" : undefined,
-                          }}
-                        >
-                          <p className="font-semibold text-sm" style={{ color: sel ? m.color : undefined }}>{m.label}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{m.subLabel}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={registerMutation.isPending}
-                style={presetRole ? { background: meta!.color, color: presetRole === "expert" ? "#083d2e" : undefined } : undefined}
-              >
-                {registerMutation.isPending
-                  ? "Creating account…"
-                  : presetRole === "expert"
-                    ? "Create Account & Continue to Application →"
-                    : "Sign Up"}
+              <input type="hidden" {...form.register("role")} value="client" />
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl><Input placeholder="Jane Doe" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl><Input placeholder="name@company.com" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="password" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <Button type="submit" className="w-full" disabled={registerMutation.isPending}
+                style={{ background: P.blue }}>
+                {registerMutation.isPending ? "Creating account…" : "Sign Up"}
               </Button>
             </form>
           </Form>

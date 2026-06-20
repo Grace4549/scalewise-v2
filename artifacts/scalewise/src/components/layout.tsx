@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useLogout } from "@workspace/api-client-react";
+import { useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,10 +28,18 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const { user, refetch } = useAuth();
-  const logout = useLogout();
+  const logout            = useLogout();
+  const queryClient       = useQueryClient();
 
   const handleLogout = () => {
-    logout.mutate(undefined, { onSuccess: () => refetch() });
+    logout.mutate(undefined, {
+      onSuccess: () => {
+        // Immediately clear the cached user so the UI updates right away
+        queryClient.setQueryData(getGetMeQueryKey(), undefined);
+        queryClient.removeQueries({ queryKey: getGetMeQueryKey() });
+        refetch();
+      },
+    });
   };
 
   return (
@@ -62,23 +71,31 @@ export function Navbar() {
               </div>
               {user.role === "admin" && (
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm">Admin</Button>
+                  <Button variant="ghost" size="sm">Admin Dashboard</Button>
                 </Link>
               )}
               {user.role === "expert" && (
                 <Link href="/expert/dashboard">
-                  <Button variant="ghost" size="sm">Expert Dashboard</Button>
+                  <Button variant="ghost" size="sm">My Dashboard</Button>
                 </Link>
               )}
               {user.role === "client" && (
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">Dashboard</Button>
+                  <Button variant="ghost" size="sm">My Dashboard</Button>
                 </Link>
               )}
-              <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                disabled={logout.isPending}
+              >
+                {logout.isPending ? "Logging out…" : "Logout"}
+              </Button>
             </>
           ) : (
             <>
+              {/* Login dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1">
@@ -89,40 +106,34 @@ export function Navbar() {
                   <div className="px-3 py-2 text-xs text-muted-foreground font-medium">Sign in as…</div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/login?role=client" className="flex items-center gap-2 cursor-pointer">
+                    <Link href="/login" className="flex items-center gap-2 cursor-pointer">
                       <span className="text-base">🏢</span>
                       <div>
                         <div className="font-medium text-sm">Business Owner</div>
-                        <div className="text-xs text-muted-foreground">Looking for expert guidance</div>
+                        <div className="text-xs text-muted-foreground">Access your dashboard and sessions</div>
                       </div>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/login?role=expert" className="flex items-center gap-2 cursor-pointer">
+                    <Link href="/login" className="flex items-center gap-2 cursor-pointer">
                       <span className="text-base">💡</span>
                       <div>
                         <div className="font-medium text-sm">Expert</div>
-                        <div className="text-xs text-muted-foreground">Sharing expertise and coaching</div>
+                        <div className="text-xs text-muted-foreground">Access your expert dashboard</div>
                       </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/login?role=admin" className="flex items-center gap-2 cursor-pointer text-muted-foreground">
-                      <span className="text-base">🔐</span>
-                      <div className="text-xs">Admin Login</div>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Sign Up dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="gap-1">
                     Sign Up <ChevronDown className="h-3.5 w-3.5 opacity-70" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuContent align="end" className="w-64">
                   <div className="px-3 py-2 text-xs text-muted-foreground font-medium">I want to…</div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -134,12 +145,13 @@ export function Navbar() {
                       </div>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/register?role=expert" className="flex items-center gap-2 cursor-pointer">
+                    <Link href="/apply-expert" className="flex items-center gap-2 cursor-pointer">
                       <span className="text-base">💡</span>
                       <div>
                         <div className="font-medium text-sm">Apply as an Expert</div>
-                        <div className="text-xs text-muted-foreground">Share your expertise and earn</div>
+                        <div className="text-xs text-muted-foreground">Submit your application for review — no account needed yet</div>
                       </div>
                     </Link>
                   </DropdownMenuItem>
@@ -182,16 +194,14 @@ export function Footer() {
             <h4 className="font-semibold mb-4" style={{ color: P.mgreen }}>For Business Owners</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/experts" className="hover:text-foreground transition-colors">Find an Expert</Link></li>
-              <li><Link href="/#how-it-works" className="hover:text-foreground transition-colors">How It Works</Link></li>
               <li><Link href="/experts" className="hover:text-foreground transition-colors">Book a Session</Link></li>
-              <li><Link href="/dashboard/client" className="hover:text-foreground transition-colors">Client Dashboard</Link></li>
+              <li><Link href="/dashboard" className="hover:text-foreground transition-colors">Client Dashboard</Link></li>
             </ul>
 
             <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mint }}>For Experts</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/apply-expert" className="hover:text-foreground transition-colors">Apply as a Founding Expert</Link></li>
-              <li><Link href="/dashboard/expert" className="hover:text-foreground transition-colors">Expert Dashboard</Link></li>
-              <li><Link href="/faq" className="hover:text-foreground transition-colors">How Payouts Work</Link></li>
+              <li><Link href="/expert/dashboard" className="hover:text-foreground transition-colors">Expert Dashboard</Link></li>
             </ul>
           </div>
 
