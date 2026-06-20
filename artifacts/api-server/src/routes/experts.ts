@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@workspace/db";
-import { and, eq, ilike, or, sql, inArray } from "drizzle-orm";
+import { and, eq, ilike, or, sql, inArray, isNotNull } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { publicWriteLimiter, searchSuggestionsLimiter } from "../lib/limiters";
 import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
@@ -46,6 +46,7 @@ router.get("/experts/search-suggestions", searchSuggestionsLimiter, async (req, 
     .where(
       and(
         eq(expertsTable.status, "approved"),
+        isNotNull(expertsTable.userId),
         or(
           ilike(expertsTable.headline, `%${q}%`),
           ilike(expertsTable.industry, `%${q}%`)
@@ -68,12 +69,12 @@ router.get("/experts/stats", async (_req, res): Promise<void> => {
   const [expertCountResult] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(expertsTable)
-    .where(eq(expertsTable.status, "approved"));
+    .where(and(eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)));
 
   const [sessionCountResult] = await db
     .select({ count: sql<number>`sum(total_sessions)::int` })
     .from(expertsTable)
-    .where(eq(expertsTable.status, "approved"));
+    .where(and(eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)));
 
   const [reviewCountResult] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -98,7 +99,7 @@ router.get("/experts", async (req, res): Promise<void> => {
   const limit = Math.min(rawLimit, 50);
   const offset = (page - 1) * limit;
 
-  const conditions = [eq(expertsTable.status, "approved")];
+  const conditions = [eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)];
 
   if (industry) {
     conditions.push(ilike(expertsTable.industry, `%${industry}%`));
@@ -144,7 +145,7 @@ router.get("/experts/:id", async (req, res): Promise<void> => {
   const [expert] = await db
     .select()
     .from(expertsTable)
-    .where(and(eq(expertsTable.id, id), eq(expertsTable.status, "approved")));
+    .where(and(eq(expertsTable.id, id), eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)));
   if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
   const allReviews = await db
