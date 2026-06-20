@@ -413,6 +413,16 @@ export interface PlatformStats {
   reviewCount: number;
 }
 
+export interface MarkExpertPaidInput {
+  /** ISO date string for when the payment was made (defaults to now) */
+  paidAt?: string;
+}
+
+export interface MarkExpertPaidResult {
+  /** Number of bookings marked as paid */
+  count: number;
+}
+
 export interface AdminStats {
   totalExperts: number;
   pendingApplications: number;
@@ -452,6 +462,11 @@ export type ListReviewsParams = {
 expertId?: number;
 };
 
+export type ListApplicationsParams = {
+dateFrom?: string;
+dateTo?: string;
+};
+
 export type ListAllBookingsParams = {
 status?: ListAllBookingsStatus;
 expertId?: number;
@@ -468,4 +483,9 @@ export const ListAllBookingsStatus = {
   cancelled: 'cancelled',
   'no-show': 'no-show',
 } as const;
+
+export type GetExpertBreakdownParams = {
+dateFrom?: string;
+dateTo?: string;
+};
 

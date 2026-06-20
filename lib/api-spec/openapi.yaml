@@ -488,6 +488,15 @@ paths:
       operationId: listApplications
       tags: [admin]
       summary: List all expert applications (admin only)
+      parameters:
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+        - in: query
+          name: dateTo
+          schema:
+            type: string
       responses:
         "200":
           description: Applications
@@ -631,6 +640,15 @@ paths:
       operationId: getExpertBreakdown
       tags: [admin]
       summary: Per-expert earnings and payout breakdown (admin only)
+      parameters:
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+        - in: query
+          name: dateTo
+          schema:
+            type: string
       responses:
         "200":
           description: Expert breakdown list
@@ -640,6 +658,31 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AdminExpertBreakdown"
+
+  /admin/experts/{id}/mark-paid:
+    post:
+      operationId: markExpertPaid
+      tags: [admin]
+      summary: Mark all pending payout bookings for an expert as paid (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkExpertPaidInput"
+      responses:
+        "200":
+          description: Payouts marked as paid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarkExpertPaidResult"
 
   /expert/dashboard:
     get:
@@ -1180,6 +1223,21 @@ components:
           type: integer
         reviewCount:
           type: integer
+
+    MarkExpertPaidInput:
+      type: object
+      properties:
+        paidAt:
+          type: string
+          description: ISO date string for when the payment was made (defaults to now)
+
+    MarkExpertPaidResult:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+          description: Number of bookings marked as paid
 
     AdminStats:
       type: object

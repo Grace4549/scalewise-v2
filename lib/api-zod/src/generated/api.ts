@@ -443,6 +443,11 @@ export const GetInboxResponse = zod.array(GetInboxResponseItem)
 /**
  * @summary List all expert applications (admin only)
  */
+export const ListApplicationsQueryParams = zod.object({
+  "dateFrom": zod.coerce.string().optional(),
+  "dateTo": zod.coerce.string().optional()
+})
+
 export const ListApplicationsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -647,6 +652,11 @@ export const GetAdminStatsResponse = zod.object({
 /**
  * @summary Per-expert earnings and payout breakdown (admin only)
  */
+export const GetExpertBreakdownQueryParams = zod.object({
+  "dateFrom": zod.coerce.string().optional(),
+  "dateTo": zod.coerce.string().optional()
+})
+
 export const GetExpertBreakdownResponseItem = zod.object({
   "expertId": zod.number(),
   "expertName": zod.string(),
@@ -661,6 +671,22 @@ export const GetExpertBreakdownResponseItem = zod.object({
   "paidPayout": zod.number()
 })
 export const GetExpertBreakdownResponse = zod.array(GetExpertBreakdownResponseItem)
+
+
+/**
+ * @summary Mark all pending payout bookings for an expert as paid (admin only)
+ */
+export const MarkExpertPaidParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkExpertPaidBody = zod.object({
+  "paidAt": zod.string().optional().describe('ISO date string for when the payment was made (defaults to now)')
+})
+
+export const MarkExpertPaidResponse = zod.object({
+  "count": zod.number().describe('Number of bookings marked as paid')
+})
 
 
 /**

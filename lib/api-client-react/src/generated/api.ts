@@ -33,13 +33,17 @@ import type {
   ExpertList,
   ExpertProfile,
   ExpertProfileUpdate,
+  GetExpertBreakdownParams,
   GetSearchSuggestionsParams,
   HealthStatus,
   InboxThread,
   ListAllBookingsParams,
+  ListApplicationsParams,
   ListExpertsParams,
   ListReviewsParams,
   LoginInput,
+  MarkExpertPaidInput,
+  MarkExpertPaidResult,
   Message,
   MessageInput,
   PlatformStats,
@@ -1866,20 +1870,27 @@ export function useGetInbox<TData = Awaited<ReturnType<typeof getInbox>>, TError
 
 
 
-export const getListApplicationsUrl = () => {
+export const getListApplicationsUrl = (params?: ListApplicationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/admin/applications`
+  return stringifiedParams.length > 0 ? `/api/admin/applications?${stringifiedParams}` : `/api/admin/applications`
 }
 
 /**
  * @summary List all expert applications (admin only)
  */
-export const listApplications = async ( options?: RequestInit): Promise<ExpertApplication[]> => {
+export const listApplications = async (params?: ListApplicationsParams, options?: RequestInit): Promise<ExpertApplication[]> => {
 
-  return customFetch<ExpertApplication[]>(getListApplicationsUrl(),
+  return customFetch<ExpertApplication[]>(getListApplicationsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1892,23 +1903,23 @@ export const listApplications = async ( options?: RequestInit): Promise<ExpertAp
 
 
 
-export const getListApplicationsQueryKey = () => {
+export const getListApplicationsQueryKey = (params?: ListApplicationsParams,) => {
     return [
-    `/api/admin/applications`
+    `/api/admin/applications`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListApplicationsQueryOptions = <TData = Awaited<ReturnType<typeof listApplications>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListApplicationsQueryOptions = <TData = Awaited<ReturnType<typeof listApplications>>, TError = ErrorType<unknown>>(params?: ListApplicationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListApplicationsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListApplicationsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApplications>>> = ({ signal }) => listApplications({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApplications>>> = ({ signal }) => listApplications(params, { signal, ...requestOptions });
 
 
 
@@ -1926,11 +1937,11 @@ export type ListApplicationsQueryError = ErrorType<unknown>
  */
 
 export function useListApplications<TData = Awaited<ReturnType<typeof listApplications>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListApplicationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listApplications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListApplicationsQueryOptions(options)
+  const queryOptions = getListApplicationsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -2386,20 +2397,27 @@ export function useGetAdminStats<TData = Awaited<ReturnType<typeof getAdminStats
 
 
 
-export const getGetExpertBreakdownUrl = () => {
+export const getGetExpertBreakdownUrl = (params?: GetExpertBreakdownParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/admin/experts/breakdown`
+  return stringifiedParams.length > 0 ? `/api/admin/experts/breakdown?${stringifiedParams}` : `/api/admin/experts/breakdown`
 }
 
 /**
  * @summary Per-expert earnings and payout breakdown (admin only)
  */
-export const getExpertBreakdown = async ( options?: RequestInit): Promise<AdminExpertBreakdown[]> => {
+export const getExpertBreakdown = async (params?: GetExpertBreakdownParams, options?: RequestInit): Promise<AdminExpertBreakdown[]> => {
 
-  return customFetch<AdminExpertBreakdown[]>(getGetExpertBreakdownUrl(),
+  return customFetch<AdminExpertBreakdown[]>(getGetExpertBreakdownUrl(params),
   {
     ...options,
     method: 'GET'
@@ -2412,23 +2430,23 @@ export const getExpertBreakdown = async ( options?: RequestInit): Promise<AdminE
 
 
 
-export const getGetExpertBreakdownQueryKey = () => {
+export const getGetExpertBreakdownQueryKey = (params?: GetExpertBreakdownParams,) => {
     return [
-    `/api/admin/experts/breakdown`
+    `/api/admin/experts/breakdown`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetExpertBreakdownQueryOptions = <TData = Awaited<ReturnType<typeof getExpertBreakdown>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertBreakdown>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetExpertBreakdownQueryOptions = <TData = Awaited<ReturnType<typeof getExpertBreakdown>>, TError = ErrorType<unknown>>(params?: GetExpertBreakdownParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertBreakdown>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetExpertBreakdownQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetExpertBreakdownQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpertBreakdown>>> = ({ signal }) => getExpertBreakdown({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpertBreakdown>>> = ({ signal }) => getExpertBreakdown(params, { signal, ...requestOptions });
 
 
 
@@ -2446,11 +2464,11 @@ export type GetExpertBreakdownQueryError = ErrorType<unknown>
  */
 
 export function useGetExpertBreakdown<TData = Awaited<ReturnType<typeof getExpertBreakdown>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertBreakdown>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetExpertBreakdownParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertBreakdown>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetExpertBreakdownQueryOptions(options)
+  const queryOptions = getGetExpertBreakdownQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -2462,6 +2480,78 @@ export function useGetExpertBreakdown<TData = Awaited<ReturnType<typeof getExper
 
 
 
+
+export const getMarkExpertPaidUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/experts/${id}/mark-paid`
+}
+
+/**
+ * @summary Mark all pending payout bookings for an expert as paid (admin only)
+ */
+export const markExpertPaid = async (id: number,
+    markExpertPaidInput?: MarkExpertPaidInput, options?: RequestInit): Promise<MarkExpertPaidResult> => {
+
+  return customFetch<MarkExpertPaidResult>(getMarkExpertPaidUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      markExpertPaidInput,)
+  }
+);}
+
+
+
+
+export const getMarkExpertPaidMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markExpertPaid>>, TError,{id: number;data?: BodyType<MarkExpertPaidInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markExpertPaid>>, TError,{id: number;data?: BodyType<MarkExpertPaidInput>}, TContext> => {
+
+const mutationKey = ['markExpertPaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markExpertPaid>>, {id: number;data?: BodyType<MarkExpertPaidInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  markExpertPaid(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkExpertPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markExpertPaid>>>
+    export type MarkExpertPaidMutationBody = BodyType<MarkExpertPaidInput> | undefined
+    export type MarkExpertPaidMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark all pending payout bookings for an expert as paid (admin only)
+ */
+export const useMarkExpertPaid = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markExpertPaid>>, TError,{id: number;data?: BodyType<MarkExpertPaidInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markExpertPaid>>,
+        TError,
+        {id: number;data?: BodyType<MarkExpertPaidInput>},
+        TContext
+      > => {
+      return useMutation(getMarkExpertPaidMutationOptions(options));
+    }
 
 export const getGetExpertDashboardUrl = () => {
 

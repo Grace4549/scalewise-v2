@@ -57,8 +57,20 @@ function formatAdminBooking(
   };
 }
 
-router.get("/admin/applications", adminMiddleware(), async (_req, res): Promise<void> => {
-  const experts = await db.select().from(expertsTable).orderBy(expertsTable.createdAt);
+router.get("/admin/applications", adminMiddleware(), async (req, res): Promise<void> => {
+  const dateFrom = req.query.dateFrom as string | undefined;
+  const dateTo = req.query.dateTo as string | undefined;
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (dateFrom) conditions.push(gte(expertsTable.createdAt, new Date(dateFrom)));
+  if (dateTo) conditions.push(lte(expertsTable.createdAt, new Date(dateTo)));
+
+  const experts = await db
+    .select()
+    .from(expertsTable)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(expertsTable.createdAt);
+
   res.json(experts.map(formatApplication));
 });
 
@@ -195,9 +207,42 @@ router.post("/admin/bookings/:id/mark-paid", adminMiddleware(), async (req, res)
   res.json(formatAdminBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
 });
 
-router.get("/admin/experts/breakdown", adminMiddleware(), async (_req, res): Promise<void> => {
+router.post("/admin/experts/:id/mark-paid", adminMiddleware(), async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const expertId = parseInt(raw, 10);
+  if (isNaN(expertId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const paidAt = req.body?.paidAt ? new Date(req.body.paidAt) : new Date();
+
+  const updated = await db
+    .update(bookingsTable)
+    .set({ payoutStatus: "paid", payoutPaidAt: paidAt })
+    .where(
+      and(
+        eq(bookingsTable.expertId, expertId),
+        eq(bookingsTable.status, "completed"),
+        eq(bookingsTable.payoutStatus, "pending")
+      )
+    )
+    .returning();
+
+  res.json({ count: updated.length });
+});
+
+router.get("/admin/experts/breakdown", adminMiddleware(), async (req, res): Promise<void> => {
+  const dateFrom = req.query.dateFrom as string | undefined;
+  const dateTo = req.query.dateTo as string | undefined;
+
   const experts = await db.select().from(expertsTable).where(eq(expertsTable.status, "approved"));
-  const allBookings = await db.select().from(bookingsTable);
+
+  const bookingConditions: ReturnType<typeof eq>[] = [];
+  if (dateFrom) bookingConditions.push(gte(bookingsTable.scheduledTime, new Date(dateFrom)));
+  if (dateTo) bookingConditions.push(lte(bookingsTable.scheduledTime, new Date(dateTo)));
+
+  const allBookings = await db
+    .select()
+    .from(bookingsTable)
+    .where(bookingConditions.length > 0 ? and(...bookingConditions) : undefined);
 
   const breakdown = experts.map((expert) => {
     const expertBookings = allBookings.filter((b) => b.expertId === expert.id);
