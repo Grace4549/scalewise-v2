@@ -193,7 +193,7 @@ function RoleLoginBanner() {
             I am a Business Owner
           </Button>
         </Link>
-        <Link href="/login">
+        <Link href="/login?role=expert">
           <Button size="sm" variant="outline" className="rounded-xl text-sm" style={{ color: P.mgreen, borderColor: P.mgreen + "55" }}>
             I am an Expert
           </Button>
