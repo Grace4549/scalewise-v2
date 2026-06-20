@@ -31,7 +31,7 @@ function JourneyFlowDiagram() {
         .sw-ms{transition:transform .3s ease;transform-box:fill-box;transform-origin:center}
         .sw-sg:hover .sw-ms{transform:scale(1.06)}
       `}</style>
-      <svg viewBox="0 0 990 282" xmlns="http://www.w3.org/2000/svg"
+      <svg viewBox="0 0 1060 300" xmlns="http://www.w3.org/2000/svg"
            style={{ width:"100%", minWidth:520, display:"block" }}>
         <defs>
           <marker id="sw-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
@@ -45,109 +45,108 @@ function JourneyFlowDiagram() {
         </defs>
 
         {/* ── TOP STAGE LABELS ── */}
-        <text x="100" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#90B8D6" letterSpacing="1">THE PROBLEM</text>
-        <text x="282" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#6395EE" letterSpacing="1">EXPERTS APPEAR</text>
-        <text x="493" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#88CFA8" letterSpacing="1">BOOK &amp; PAY</text>
-        <text x="703" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#85DECB" letterSpacing="1">THE MEETING</text>
-        <text x="888" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="url(#sw-g5)" letterSpacing="1">SUCCESS ✓</text>
+        <text x="112" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#90B8D6" letterSpacing="1">THE PROBLEM</text>
+        <text x="308" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#6395EE" letterSpacing="1">EXPERTS APPEAR</text>
+        <text x="530" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#88CFA8" letterSpacing="1">BOOK &amp; PAY</text>
+        <text x="750" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="#85DECB" letterSpacing="1">THE MEETING</text>
+        <text x="948" y="20" textAnchor="middle" fontSize="11" fontWeight="800" fill="url(#sw-g5)" letterSpacing="1">SUCCESS ✓</text>
 
         {/* ── ANIMATED CONNECTOR PATHS ── */}
-        <path d="M 178 148 C 196 124,214 124,230 148" fill="none" stroke="#90B8D6" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" markerEnd="url(#sw-arr)"/>
-        <path d="M 360 148 C 384 124,412 124,436 148" fill="none" stroke="#6395EE" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".4s"}} markerEnd="url(#sw-arr)"/>
-        <path d="M 572 148 C 594 124,618 124,640 148" fill="none" stroke="#88CFA8" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".8s"}} markerEnd="url(#sw-arr)"/>
-        <path d="M 778 148 C 796 124,812 124,828 148" fill="none" stroke="#85DECB" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:"1.2s"}} markerEnd="url(#sw-arr)"/>
+        <path d="M 190 152 C 200 128,216 128,226 152" fill="none" stroke="#90B8D6" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" markerEnd="url(#sw-arr)"/>
+        <path d="M 388 152 C 412 128,438 128,462 152" fill="none" stroke="#6395EE" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".4s"}} markerEnd="url(#sw-arr)"/>
+        <path d="M 616 152 C 638 128,654 128,672 152" fill="none" stroke="#88CFA8" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:".8s"}} markerEnd="url(#sw-arr)"/>
+        <path d="M 834 152 C 844 128,852 128,862 152" fill="none" stroke="#85DECB" strokeWidth="2.2" strokeOpacity="0.6" className="sw-ap" style={{animationDelay:"1.2s"}} markerEnd="url(#sw-arr)"/>
 
         {/* ═══ STAGE 1 — THE PROBLEM ═══ */}
-        {/* outer <g> handles SVG position; inner <g> handles CSS float — avoids transform conflict */}
-        <g transform="translate(108,150)" className="sw-sg">
+        <g transform="translate(112,152)" className="sw-sg">
           <g className="sw-ga">
-            <ellipse cx="0" cy="6" rx="80" ry="66" fill="#90B8D6" fillOpacity="0.12" className="sw-gl"/>
-            <path d="M -8,-70 C 26,-68 62,-42 68,-6 C 74,30 52,64 16,74 C -20,84 -60,64 -70,26 C -80,-12 -62,-50 -36,-68 C -22,-78 -42,-72 -8,-70 Z"
-              fill="#90B8D6" fillOpacity="0.3" stroke="#90B8D6" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
-            <rect x="-50" y="-60" rx="11" ry="11" width="100" height="27" fill="#90B8D6" fillOpacity="0.65"/>
-            <text x="0" y="-42" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Pricing Confusion</text>
-            <rect x="-20" y="-24" rx="11" ry="11" width="90" height="27" fill="#90B8D6" fillOpacity="0.72"/>
-            <text x="25" y="-6" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Staff Turnover</text>
-            <rect x="-42" y="12" rx="11" ry="11" width="80" height="27" fill="#90B8D6" fillOpacity="0.68"/>
-            <text x="-2" y="30" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Slow Growth</text>
+            <ellipse cx="0" cy="6" rx="90" ry="74" fill="#90B8D6" fillOpacity="0.12" className="sw-gl"/>
+            <path d="M -9,-78 C 29,-76 69,-47 76,-7 C 83,34 58,72 18,83 C -22,94 -67,72 -78,29 C -90,-13 -69,-56 -40,-76 C -25,-87 -47,-81 -9,-78 Z"
+              fill="#90B8D6" fillOpacity="0.32" stroke="#90B8D6" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
+            <rect x="-52" y="-64" rx="11" ry="11" width="104" height="27" fill="#90B8D6" fillOpacity="0.65"/>
+            <text x="0" y="-46" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Pricing Confusion</text>
+            <rect x="-22" y="-28" rx="11" ry="11" width="94" height="27" fill="#90B8D6" fillOpacity="0.72"/>
+            <text x="25" y="-10" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Staff Turnover</text>
+            <rect x="-44" y="8" rx="11" ry="11" width="84" height="27" fill="#90B8D6" fillOpacity="0.68"/>
+            <text x="-2" y="26" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Slow Growth</text>
           </g>
         </g>
 
         {/* ═══ STAGE 2 — EXPERTS APPEAR ═══ */}
-        <g transform="translate(294,142)" className="sw-sg">
+        <g transform="translate(308,144)" className="sw-sg">
           <g className="sw-gb">
-            <ellipse cx="-10" cy="8" rx="82" ry="68" fill="#6395EE" fillOpacity="0.1" className="sw-gl" style={{animationDelay:".9s"}}/>
-            <path d="M -4,-76 C 30,-72 66,-46 70,-8 C 74,30 50,68 12,78 C -26,88 -66,64 -76,22 C -86,-20 -60,-60 -28,-74 C -14,-82 -38,-80 -4,-76 Z"
+            <ellipse cx="-10" cy="8" rx="92" ry="76" fill="#6395EE" fillOpacity="0.1" className="sw-gl" style={{animationDelay:".9s"}}/>
+            <path d="M -4,-85 C 34,-81 74,-52 78,-9 C 83,34 56,76 13,87 C -29,99 -74,72 -85,25 C -96,-22 -67,-67 -31,-83 C -16,-92 -43,-90 -4,-85 Z"
               fill="#6395EE" fillOpacity="0.28" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
-            <circle cx="-35" cy="-26" r="21" fill="#6395EE" fillOpacity="0.3" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.55"/>
-            <circle cx="-35" cy="-22" r="22" fill="none" stroke="#6395EE" strokeWidth="3.5" strokeOpacity="0.2" className="sw-gl" style={{animationDelay:".3s"}}/>
-            <circle cx="-35" cy="-33" r="8" fill="#6395EE" fillOpacity="0.65"/>
-            <ellipse cx="-35" cy="-16" rx="12" ry="7" fill="#6395EE" fillOpacity="0.52"/>
-            <circle cx="12" cy="-34" r="21" fill="#6395EE" fillOpacity="0.36" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.6"/>
-            <circle cx="12" cy="-30" r="22" fill="none" stroke="#6395EE" strokeWidth="4" strokeOpacity="0.18" className="sw-gl" style={{animationDelay:"1.0s"}}/>
-            <circle cx="12" cy="-41" r="8" fill="#6395EE" fillOpacity="0.7"/>
-            <ellipse cx="12" cy="-24" rx="12" ry="7" fill="#6395EE" fillOpacity="0.56"/>
-            <circle cx="54" cy="-22" r="18" fill="#6395EE" fillOpacity="0.24" stroke="#6395EE" strokeWidth="1.8" strokeOpacity="0.45"/>
-            <circle cx="54" cy="-28" r="7" fill="#6395EE" fillOpacity="0.5"/>
-            <ellipse cx="54" cy="-14" rx="10" ry="6" fill="#6395EE" fillOpacity="0.4"/>
-            <rect x="-53" y="24" rx="11" ry="11" width="106" height="27" fill="#6395EE" fillOpacity="0.6"/>
-            <text x="0" y="42" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">3 Experts Ready</text>
+            <circle cx="-35" cy="-28" r="23" fill="#6395EE" fillOpacity="0.3" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.55"/>
+            <circle cx="-35" cy="-24" r="24" fill="none" stroke="#6395EE" strokeWidth="3.5" strokeOpacity="0.2" className="sw-gl" style={{animationDelay:".3s"}}/>
+            <circle cx="-35" cy="-35" r="9" fill="#6395EE" fillOpacity="0.65"/>
+            <ellipse cx="-35" cy="-17" rx="13" ry="7.5" fill="#6395EE" fillOpacity="0.52"/>
+            <circle cx="14" cy="-36" r="23" fill="#6395EE" fillOpacity="0.36" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.6"/>
+            <circle cx="14" cy="-32" r="24" fill="none" stroke="#6395EE" strokeWidth="4" strokeOpacity="0.18" className="sw-gl" style={{animationDelay:"1.0s"}}/>
+            <circle cx="14" cy="-44" r="9" fill="#6395EE" fillOpacity="0.7"/>
+            <ellipse cx="14" cy="-25" rx="13" ry="7.5" fill="#6395EE" fillOpacity="0.56"/>
+            <circle cx="58" cy="-24" r="20" fill="#6395EE" fillOpacity="0.24" stroke="#6395EE" strokeWidth="1.8" strokeOpacity="0.45"/>
+            <circle cx="58" cy="-31" r="8" fill="#6395EE" fillOpacity="0.5"/>
+            <ellipse cx="58" cy="-14" rx="11" ry="6.5" fill="#6395EE" fillOpacity="0.4"/>
+            <rect x="-56" y="28" rx="11" ry="11" width="112" height="27" fill="#6395EE" fillOpacity="0.6"/>
+            <text x="0" y="46" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">3 Experts Ready</text>
           </g>
         </g>
 
         {/* ═══ STAGE 3 — BOOK & PAY ═══ */}
-        <g transform="translate(504,150)" className="sw-sg">
+        <g transform="translate(530,152)" className="sw-sg">
           <g className="sw-gc">
-            <ellipse cx="0" cy="6" rx="82" ry="68" fill="#88CFA8" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.6s"}}/>
-            <path d="M -64,-42 C -64,-66 -38,-78 2,-76 C 42,-74 70,-56 74,-20 C 78,16 62,60 24,74 C -14,88 -58,70 -68,34 C -78,-2 -64,-18 -64,-42 Z"
+            <ellipse cx="0" cy="6" rx="92" ry="76" fill="#88CFA8" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.6s"}}/>
+            <path d="M -72,-47 C -72,-74 -43,-87 2,-85 C 47,-83 78,-63 83,-22 C 87,18 69,67 27,83 C -16,99 -65,78 -76,38 C -87,-2 -72,-20 -72,-47 Z"
               fill="#88CFA8" fillOpacity="0.3" stroke="#88CFA8" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
-            <rect x="-58" y="-58" rx="9" ry="9" width="48" height="48" fill="#88CFA8" fillOpacity="0.4" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
-            <line x1="-49" y1="-58" x2="-49" y2="-68" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
-            <line x1="-22" y1="-58" x2="-22" y2="-68" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
-            <line x1="-58" y1="-46" x2="-10" y2="-46" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.6"/>
-            <path d="M -44,-36 L -36,-27 L -18,-44" fill="none" stroke="white" strokeWidth="3.5" strokeOpacity="0.95" strokeLinecap="round" strokeLinejoin="round"/>
-            <rect x="4" y="-58" rx="9" ry="9" width="44" height="62" fill="#88CFA8" fillOpacity="0.38" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
-            <rect x="11" y="-51" rx="4" ry="4" width="30" height="38" fill="#88CFA8" fillOpacity="0.25"/>
-            <text x="26" y="-33" textAnchor="middle" fontSize="17" fill="white" fontWeight="900" opacity="0.95">M</text>
-            <text x="26" y="-18" textAnchor="middle" fontSize="10" fill="white" fontWeight="600" opacity="0.85">Pesa</text>
-            <circle cx="26" cy="-6" r="4" fill="white" fillOpacity="0.55"/>
-            <rect x="-50" y="26" rx="11" ry="11" width="100" height="27" fill="#88CFA8" fillOpacity="0.6"/>
-            <text x="0" y="44" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Select &amp; Pay ✓</text>
+            <rect x="-62" y="-62" rx="9" ry="9" width="52" height="52" fill="#88CFA8" fillOpacity="0.4" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <line x1="-52" y1="-62" x2="-52" y2="-73" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
+            <line x1="-23" y1="-62" x2="-23" y2="-73" stroke="#88CFA8" strokeWidth="2.5" strokeOpacity="0.75" strokeLinecap="round"/>
+            <line x1="-62" y1="-49" x2="-10" y2="-49" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.6"/>
+            <path d="M -47,-38 L -39,-28 L -19,-47" fill="none" stroke="white" strokeWidth="3.5" strokeOpacity="0.95" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="4" y="-62" rx="9" ry="9" width="48" height="67" fill="#88CFA8" fillOpacity="0.38" stroke="#88CFA8" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <rect x="12" y="-55" rx="4" ry="4" width="32" height="42" fill="#88CFA8" fillOpacity="0.25"/>
+            <text x="28" y="-36" textAnchor="middle" fontSize="18" fill="white" fontWeight="900" opacity="0.95">M</text>
+            <text x="28" y="-20" textAnchor="middle" fontSize="11" fill="white" fontWeight="600" opacity="0.85">Pesa</text>
+            <circle cx="28" cy="-5" r="4.5" fill="white" fillOpacity="0.55"/>
+            <rect x="-52" y="30" rx="11" ry="11" width="104" height="27" fill="#88CFA8" fillOpacity="0.6"/>
+            <text x="0" y="48" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Select &amp; Pay ✓</text>
           </g>
         </g>
 
         {/* ═══ STAGE 4 — THE MEETING ═══ */}
-        <g transform="translate(714,142)" className="sw-sg">
+        <g transform="translate(750,144)" className="sw-sg">
           <g className="sw-gd">
-            <ellipse cx="0" cy="8" rx="80" ry="67" fill="#85DECB" fillOpacity="0.12" className="sw-gl" style={{animationDelay:".6s"}}/>
-            <path d="M -2,-72 C 34,-70 68,-46 72,-6 C 76,34 52,68 14,78 C -24,88 -64,66 -72,26 C -80,-14 -60,-54 -30,-70 C -16,-80 -36,-74 -2,-72 Z"
+            <ellipse cx="0" cy="8" rx="90" ry="75" fill="#85DECB" fillOpacity="0.12" className="sw-gl" style={{animationDelay:".6s"}}/>
+            <path d="M -2,-81 C 38,-78 76,-52 81,-7 C 85,38 58,76 16,87 C -27,99 -72,74 -81,29 C -90,-16 -67,-60 -34,-78 C -18,-90 -40,-83 -2,-81 Z"
               fill="#85DECB" fillOpacity="0.28" stroke="#85DECB" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
-            <rect x="-54" y="-40" rx="9" ry="9" width="60" height="46" fill="#85DECB" fillOpacity="0.38" stroke="#85DECB" strokeWidth="1.5" strokeOpacity="0.55"/>
-            <path d="M 6,-34 L 34,-22 L 34,-6 L 6,6 Z" fill="#85DECB" fillOpacity="0.65"/>
-            <rect x="-50" y="-34" rx="5" ry="5" width="50" height="34" fill="#85DECB" fillOpacity="0.2"/>
-            <circle cx="-32" cy="-20" r="10" fill="#85DECB" fillOpacity="0.5"/>
-            <circle cx="-32" cy="-27" r="5" fill="#85DECB" fillOpacity="0.75"/>
-            <ellipse cx="-32" cy="-9" rx="8" ry="4.5" fill="#85DECB" fillOpacity="0.48"/>
-            <circle cx="-10" cy="-20" r="10" fill="#85DECB" fillOpacity="0.5"/>
-            <circle cx="-10" cy="-27" r="5" fill="#85DECB" fillOpacity="0.75"/>
-            <ellipse cx="-10" cy="-9" rx="8" ry="4.5" fill="#85DECB" fillOpacity="0.48"/>
-            <rect x="-57" y="22" rx="11" ry="11" width="114" height="27" fill="#85DECB" fillOpacity="0.55"/>
-            <text x="0" y="40" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Google Meet Live</text>
+            <rect x="-60" y="-44" rx="9" ry="9" width="67" height="52" fill="#85DECB" fillOpacity="0.38" stroke="#85DECB" strokeWidth="1.5" strokeOpacity="0.55"/>
+            <path d="M 7,-38 L 38,-24 L 38,-6 L 7,8 Z" fill="#85DECB" fillOpacity="0.65"/>
+            <rect x="-56" y="-38" rx="5" ry="5" width="56" height="38" fill="#85DECB" fillOpacity="0.2"/>
+            <circle cx="-36" cy="-22" r="11" fill="#85DECB" fillOpacity="0.5"/>
+            <circle cx="-36" cy="-30" r="5.5" fill="#85DECB" fillOpacity="0.75"/>
+            <ellipse cx="-36" cy="-9" rx="9" ry="5" fill="#85DECB" fillOpacity="0.48"/>
+            <circle cx="-12" cy="-22" r="11" fill="#85DECB" fillOpacity="0.5"/>
+            <circle cx="-12" cy="-30" r="5.5" fill="#85DECB" fillOpacity="0.75"/>
+            <ellipse cx="-12" cy="-9" rx="9" ry="5" fill="#85DECB" fillOpacity="0.48"/>
+            <rect x="-62" y="26" rx="11" ry="11" width="124" height="27" fill="#85DECB" fillOpacity="0.55"/>
+            <text x="0" y="44" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Google Meet Live</text>
           </g>
         </g>
 
         {/* ═══ STAGE 5 — SUCCESS ═══ */}
-        <g transform="translate(885,150)" className="sw-sg">
+        <g transform="translate(948,152)" className="sw-sg">
           <g className="sw-ge">
-            <ellipse cx="4" cy="6" rx="84" ry="70" fill="url(#sw-g5)" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.2s"}}/>
-            <path d="M -4,-78 C 34,-74 72,-48 76,-6 C 80,36 54,76 14,84 C -26,92 -70,70 -80,26 C -90,-18 -66,-62 -34,-78 C -18,-88 -42,-82 -4,-78 Z"
+            <ellipse cx="4" cy="6" rx="94" ry="78" fill="url(#sw-g5)" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.2s"}}/>
+            <path d="M -4,-87 C 38,-83 81,-54 85,-7 C 90,40 60,85 16,94 C -29,103 -78,78 -90,29 C -101,-20 -74,-69 -38,-87 C -20,-99 -47,-92 -4,-87 Z"
               fill="url(#sw-g5)" fillOpacity="0.28" stroke="url(#sw-g5)" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
-            <rect x="-54" y="-68" rx="11" ry="11" width="108" height="27" fill="#6395EE" fillOpacity="0.65"/>
-            <text x="0" y="-50" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Clear Pricing ✓</text>
-            <rect x="-22" y="-31" rx="11" ry="11" width="94" height="27" fill="#88CFA8" fillOpacity="0.72"/>
-            <text x="25" y="-13" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Loyal Team ✓</text>
-            <rect x="-54" y="6" rx="11" ry="11" width="102" height="27" fill="#85DECB" fillOpacity="0.7"/>
-            <text x="-3" y="24" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Growth Plan ✓</text>
+            <rect x="-58" y="-74" rx="11" ry="11" width="116" height="27" fill="#6395EE" fillOpacity="0.65"/>
+            <text x="0" y="-56" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Clear Pricing ✓</text>
+            <rect x="-24" y="-36" rx="11" ry="11" width="100" height="27" fill="#88CFA8" fillOpacity="0.72"/>
+            <text x="26" y="-18" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Loyal Team ✓</text>
+            <rect x="-58" y="4" rx="11" ry="11" width="108" height="27" fill="#85DECB" fillOpacity="0.7"/>
+            <text x="-4" y="22" textAnchor="middle" fontSize="12" fill="white" fontWeight="700">Growth Plan ✓</text>
           </g>
         </g>
       </svg>
@@ -788,10 +787,10 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-20 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
+      <section id="how-it-works" className="py-12 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
         <div className="container mx-auto px-4">
           <Reveal>
-            <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="text-center max-w-3xl mx-auto mb-7">
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
                 Your Solution Is{" "}
                 <span style={{ color: P.blue }}>One Call Away</span>
@@ -800,7 +799,7 @@ export default function Home() {
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-4 gap-5 mb-10">
+          <div className="grid md:grid-cols-4 gap-5 mb-6">
             {HOW_IT_WORKS.map((s, i) => (
               <Reveal key={s.step} delay={i * 80}>
                 <div
@@ -825,7 +824,7 @@ export default function Home() {
       </section>
 
       {/* ── TICKING CLOCK URGENCY BANNER ── */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container mx-auto px-4">
           <Reveal>
             <div
@@ -853,10 +852,10 @@ export default function Home() {
       </section>
 
       {/* ── SESSION TYPES ── */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
           <Reveal>
-            <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="text-center max-w-3xl mx-auto mb-7">
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
                 Three Ways to <span style={{ color: P.mgreen }}>Get Help</span>
               </h2>
@@ -889,10 +888,10 @@ export default function Home() {
       <IndustriesSection />
 
       {/* ── FEATURED EXPERTS ── */}
-      <section className="py-20">
+      <section className="py-12">
         <div className="container mx-auto px-4">
           <Reveal>
-            <div className="flex justify-between items-end mb-10">
+            <div className="flex justify-between items-end mb-6">
               <h2 className="text-3xl md:text-4xl font-bold max-w-lg">
                 The People Who Have{" "}
                 <span style={{ color: P.mgreen }}>Actually</span>{" "}
@@ -936,13 +935,13 @@ export default function Home() {
       </section>
 
       {/* ── REVIEWS CAROUSEL ── */}
-      <section id="reviews" className="py-20 bg-muted/30">
+      <section id="reviews" className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
           <Reveal>
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">
               Business Owners, <span style={{ color: P.mgreen }}>Telling It Like It Is</span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12">Real experiences from real people.</p>
+            <p className="text-center text-muted-foreground mb-7">Real experiences from real people.</p>
           </Reveal>
           <ReviewsCarousel reviews={reviews} />
           <LeaveReviewForm />
@@ -950,7 +949,7 @@ export default function Home() {
       </section>
 
       {/* ── EXPERT CTA ── */}
-      <section className="py-20">
+      <section className="py-12">
         <div className="container mx-auto px-4">
           <Reveal>
             <div

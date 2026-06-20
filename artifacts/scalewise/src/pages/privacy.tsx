@@ -1,6 +1,6 @@
 export default function Privacy() {
   return (
-    <div className="py-24 container mx-auto px-4 max-w-3xl prose prose-slate dark:prose-invert">
+    <div className="py-14 container mx-auto px-4 max-w-3xl prose prose-slate dark:prose-invert">
       <h1>Privacy Policy</h1>
       <p className="lead">Last updated: October 2023</p>
       

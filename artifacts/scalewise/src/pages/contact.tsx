@@ -45,7 +45,7 @@ export default function Contact() {
 
       {/* ── Hero ── */}
       <div
-        className="relative overflow-hidden py-16"
+        className="relative overflow-hidden py-10"
         style={{ background: `linear-gradient(135deg, ${P.mint}0A, ${P.blue}0C)` }}
       >
         <div className="pointer-events-none absolute inset-0">
@@ -83,8 +83,8 @@ export default function Contact() {
       </div>
 
       {/* ── Contact options ── */}
-      <div className="container mx-auto px-4 max-w-4xl py-16">
-        <div className="grid md:grid-cols-3 gap-5 mb-12">
+      <div className="container mx-auto px-4 max-w-4xl py-10">
+        <div className="grid md:grid-cols-3 gap-5 mb-7">
           {CONTACT_OPTIONS.map((opt) => (
             <div
               key={opt.title}

@@ -75,8 +75,8 @@ export default function ApplyExpert() {
   }
 
   return (
-    <div className="py-12 md:py-24 container mx-auto px-4 max-w-3xl">
-      <div className="text-center mb-12">
+    <div className="py-8 md:py-14 container mx-auto px-4 max-w-3xl">
+      <div className="text-center mb-7">
         <h1 className="text-4xl font-bold tracking-tight mb-4">Apply as a Founding Expert</h1>
         <p className="text-xl text-muted-foreground">Share your hard-earned experience with business owners who need it.</p>
       </div>

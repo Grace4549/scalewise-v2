@@ -82,7 +82,7 @@ export default function FAQ() {
 
       {/* ── Hero ── */}
       <div
-        className="relative overflow-hidden py-16"
+        className="relative overflow-hidden py-10"
         style={{ background: `linear-gradient(135deg, ${P.blue}0A, ${P.mint}0C)` }}
       >
         <div className="pointer-events-none absolute inset-0">
@@ -105,7 +105,7 @@ export default function FAQ() {
       </div>
 
       {/* ── FAQ groups ── */}
-      <div className="container mx-auto px-4 max-w-3xl py-16 space-y-12">
+      <div className="container mx-auto px-4 max-w-3xl py-10 space-y-8">
         {FAQ_GROUPS.map((group) => (
           <section key={group.heading}>
             <div className="flex items-center gap-3 mb-5">

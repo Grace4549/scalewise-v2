@@ -36,7 +36,7 @@ export default function About() {
     <div className="min-h-screen">
 
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden py-20" style={{ background: `linear-gradient(135deg, ${P.mgreen}0A, ${P.blue}0C)` }}>
+      <div className="relative overflow-hidden py-12" style={{ background: `linear-gradient(135deg, ${P.mgreen}0A, ${P.blue}0C)` }}>
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-20 right-0 h-[320px] w-[320px] rounded-full opacity-[0.11] blur-[110px]" style={{ background: P.mgreen }} />
           <div className="absolute bottom-0 left-10 h-[250px] w-[250px] rounded-full opacity-[0.09] blur-[90px]" style={{ background: P.blue }} />
@@ -77,7 +77,7 @@ export default function About() {
       </div>
 
       {/* ── Story sections ── */}
-      <div className="container mx-auto px-4 max-w-4xl py-20">
+      <div className="container mx-auto px-4 max-w-4xl py-12">
         <div className="space-y-12 text-lg leading-relaxed">
           {SECTIONS.map((s) => (
             <section
