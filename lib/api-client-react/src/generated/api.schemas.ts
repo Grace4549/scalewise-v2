@@ -282,7 +282,6 @@ export interface BookingInput {
   expertId: number;
   sessionType: BookingInputSessionType;
   scheduledTime: string;
-  durationMinutes: number;
   notes?: string;
 }
 

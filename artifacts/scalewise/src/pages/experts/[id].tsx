@@ -247,7 +247,6 @@ export default function ExpertProfile() {
         expertId,
         sessionType: data.sessionType as any,
         scheduledTime: new Date(data.scheduledTime).toISOString(),
-        durationMinutes: getDuration(data.sessionType),
         notes: data.notes,
       },
     }, {

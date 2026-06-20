@@ -1023,7 +1023,7 @@ components:
 
     BookingInput:
       type: object
-      required: [expertId, sessionType, scheduledTime, durationMinutes]
+      required: [expertId, sessionType, scheduledTime]
       properties:
         expertId:
           type: integer
@@ -1032,8 +1032,6 @@ components:
           enum: [discovery, consultancy, growth_3mo, growth_6mo]
         scheduledTime:
           type: string
-        durationMinutes:
-          type: integer
         notes:
           type: string
 

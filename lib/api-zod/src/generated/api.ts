@@ -260,7 +260,6 @@ export const CreateBookingBody = zod.object({
   "expertId": zod.number(),
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
-  "durationMinutes": zod.number(),
   "notes": zod.string().optional()
 })
 

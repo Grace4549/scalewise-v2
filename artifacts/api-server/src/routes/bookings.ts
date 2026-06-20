@@ -76,11 +76,15 @@ router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
   res.json(bookings.map((b) => formatBooking(b, expertMap, clientMap)));
 });
 
+function getDurationForSession(sessionType: string): number {
+  return sessionType === "discovery" ? 30 : 60;
+}
+
 router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   const parsed = CreateBookingBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const { expertId, sessionType, scheduledTime, durationMinutes, notes } = parsed.data;
+  const { expertId, sessionType, scheduledTime, notes } = parsed.data;
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
   if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
@@ -91,6 +95,12 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   }
 
   const amount = getPriceForSession(expert, sessionType);
+  if (amount === null) {
+    res.status(422).json({ error: "This expert does not offer the requested session type" });
+    return;
+  }
+
+  const durationMinutes = getDurationForSession(sessionType);
   const meetLink = generateMeetLink();
 
   const [booking] = await db
@@ -103,7 +113,7 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
       durationMinutes,
       notes: notes ?? null,
       meetLink,
-      amount: amount ?? null,
+      amount,
       status: "upcoming",
     })
     .returning();
