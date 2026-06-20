@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,11 +35,44 @@ function NotFound() {
   );
 }
 
+/** Smoothly scrolls to #hash after every route change, or resets to top when there's no hash. */
+function ScrollToHash() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.slice(1);
+      const tryScroll = () => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          return true;
+        }
+        return false;
+      };
+      // Try immediately, then wait for the page to render
+      if (!tryScroll()) {
+        requestAnimationFrame(() => {
+          if (!tryScroll()) {
+            setTimeout(tryScroll, 250);
+          }
+        });
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }
+  }, [location]);
+
+  return null;
+}
+
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
+      <ScrollToHash />
       <Navbar />
       <main className="flex-1">
         <Switch>

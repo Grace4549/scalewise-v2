@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useListExperts, useListReviews, useGetMe } from "@workspace/api-client-react";
+import { Textarea } from "@/components/ui/textarea";
+import { useListExperts, useListReviews, useGetMe, useCreateReview } from "@workspace/api-client-react";
 import { ExpertCard } from "@/components/expert-card";
 import { ChevronLeft, ChevronRight, Search, Clock, Star } from "lucide-react";
 
@@ -336,15 +337,104 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
         ))}
       </div>
 
-      {/* Leave a Review CTA */}
-      <div className="text-center mt-8">
-        <p className="text-sm text-muted-foreground mb-3">Had a session? Share your experience.</p>
-        <Link href="/experts">
-          <Button variant="outline" className="rounded-xl" style={{ borderColor: P.mgreen + "60", color: P.mgreen }}>
+    </div>
+  );
+}
+
+// ── Leave a Review inline form ──────────────────────────────────
+function LeaveReviewForm() {
+  const [open,     setOpen]     = useState(false);
+  const [name,     setName]     = useState("");
+  const [business, setBusiness] = useState("");
+  const [rating,   setRating]   = useState(5);
+  const [body,     setBody]     = useState("");
+  const [done,     setDone]     = useState(false);
+  const createReview = useCreateReview();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !body.trim()) return;
+    createReview.mutate(
+      { data: { reviewerName: name.trim(), businessName: business.trim() || undefined, rating, body: body.trim() } },
+      {
+        onSuccess: () => {
+          setDone(true);
+          setName(""); setBusiness(""); setRating(5); setBody("");
+        },
+      }
+    );
+  };
+
+  if (done) {
+    return (
+      <div className="text-center mt-8 p-6 rounded-3xl border" style={{ background: P.mgreen + "10", borderColor: P.mgreen + "40" }}>
+        <div className="text-3xl mb-2">🙏</div>
+        <p className="font-semibold text-lg" style={{ color: P.mgreen }}>Thank you for your review!</p>
+        <p className="text-sm text-muted-foreground mt-1">Your experience helps other business owners find the right expert.</p>
+        <button onClick={() => setDone(false)} className="text-sm underline mt-3" style={{ color: P.mgreen }}>
+          Leave another review
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-10 text-center">
+      {!open ? (
+        <>
+          <p className="text-sm text-muted-foreground mb-3">Had a session? Share your experience — no account needed.</p>
+          <Button variant="outline" className="rounded-xl" onClick={() => setOpen(true)}
+            style={{ borderColor: P.mgreen + "60", color: P.mgreen }}>
             Leave a Review →
           </Button>
-        </Link>
-      </div>
+        </>
+      ) : (
+        <form onSubmit={handleSubmit}
+          className="text-left max-w-xl mx-auto p-7 rounded-3xl border shadow-sm"
+          style={{ background: P.mgreen + "08", borderColor: P.mgreen + "30" }}>
+          <h3 className="font-bold text-lg mb-5 text-center">Share Your Experience</h3>
+
+          {/* Star rating */}
+          <div className="mb-5">
+            <label className="block text-sm font-medium mb-2">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(s => (
+                <button key={s} type="button" onClick={() => setRating(s)}
+                  className="text-3xl transition-transform hover:scale-110 focus:outline-none">
+                  <span style={{ color: s <= rating ? P.mgreen : "#d1d5db" }}>★</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Your Name <span className="text-red-500">*</span></label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              Business Name <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
+            <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Mama Chiku's Salon" />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">Your Review <span className="text-red-500">*</span></label>
+            <Textarea value={body} onChange={e => setBody(e.target.value)}
+              placeholder="Tell us about your experience with ScaleWise…" rows={3} required />
+          </div>
+
+          <div className="flex gap-3">
+            <Button type="submit" className="flex-1"
+              disabled={createReview.isPending || !name.trim() || !body.trim()}
+              style={{ background: P.mgreen, color: "#083d2e" }}>
+              {createReview.isPending ? "Submitting…" : "Submit Review"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
@@ -550,7 +640,7 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-20 bg-muted/30">
+      <section id="how-it-works" className="py-20 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
         <div className="container mx-auto px-4">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-12">
@@ -705,7 +795,7 @@ export default function Home() {
       </section>
 
       {/* ── REVIEWS CAROUSEL ── */}
-      <section className="py-20 bg-muted/30">
+      <section id="reviews" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <Reveal>
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">
@@ -714,6 +804,7 @@ export default function Home() {
             <p className="text-center text-muted-foreground mb-12">Real experiences from real people.</p>
           </Reveal>
           <ReviewsCarousel reviews={reviews} />
+          <LeaveReviewForm />
         </div>
       </section>
 

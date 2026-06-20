@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useGetExpert, useCreateBooking } from "@workspace/api-client-react";
+import { useGetExpert, useCreateBooking, useCreateReview } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +52,104 @@ function ReviewCard({ review }: { review: ReviewData }) {
       </div>
       <p className="text-muted-foreground leading-relaxed mb-2">"{review.body}"</p>
       <div className="text-sm font-semibold text-foreground">{review.reviewerName}</div>
+    </div>
+  );
+}
+
+const P_MGREEN = "#88CFA8";
+const P_BLUE   = "#6395EE";
+
+function LeaveExpertReviewForm({ expertId, defaultName }: { expertId: number; defaultName?: string }) {
+  const [open,     setOpen]     = useState(false);
+  const [name,     setName]     = useState(defaultName ?? "");
+  const [business, setBusiness] = useState("");
+  const [rating,   setRating]   = useState(5);
+  const [body,     setBody]     = useState("");
+  const [done,     setDone]     = useState(false);
+  const createReview = useCreateReview();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !body.trim()) return;
+    createReview.mutate(
+      { data: { reviewerName: name.trim(), businessName: business.trim() || undefined, rating, body: body.trim(), expertId } },
+      { onSuccess: () => { setDone(true); setBody(""); setBusiness(""); setRating(5); } }
+    );
+  };
+
+  if (done) {
+    return (
+      <div className="bg-card border p-8 rounded-3xl shadow-sm text-center" style={{ borderColor: P_MGREEN + "40" }}>
+        <div className="text-3xl mb-3">🙏</div>
+        <p className="font-semibold text-lg" style={{ color: P_MGREEN }}>Thank you for your review!</p>
+        <p className="text-sm text-muted-foreground mt-1">Your feedback helps other business owners find the right expert.</p>
+        <button onClick={() => setDone(false)} className="text-sm underline mt-4" style={{ color: P_MGREEN }}>
+          Leave another review
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-card border p-8 rounded-3xl shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Leave a Review</h2>
+        <span className="text-xs text-muted-foreground">No account needed</span>
+      </div>
+      {!open ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-muted-foreground mb-4">
+            Worked with this expert? Share your experience — it helps other business owners.
+          </p>
+          <Button onClick={() => setOpen(true)} style={{ background: P_MGREEN, color: "#083d2e" }}>
+            Write a Review →
+          </Button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Star picker */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Rating</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(s => (
+                <button key={s} type="button" onClick={() => setRating(s)}
+                  className="text-3xl transition-transform hover:scale-110 focus:outline-none">
+                  <span style={{ color: s <= rating ? P_MGREEN : "#d1d5db" }}>★</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Your Name <span className="text-red-500">*</span></label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Business <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Mama Chiku's Salon" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Your Review <span className="text-red-500">*</span></label>
+            <Textarea value={body} onChange={e => setBody(e.target.value)}
+              placeholder="Share what you found most valuable about working with this expert…"
+              rows={4} required />
+          </div>
+
+          <div className="flex gap-3">
+            <Button type="submit" className="flex-1"
+              disabled={createReview.isPending || !name.trim() || !body.trim()}
+              style={{ background: P_MGREEN, color: "#083d2e" }}>
+              {createReview.isPending ? "Submitting…" : "Submit Review"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
@@ -226,10 +324,13 @@ export default function ExpertProfile() {
               <div className="text-center py-8 text-muted-foreground">
                 <div className="text-3xl mb-2">⭐</div>
                 <p className="font-medium">No reviews yet.</p>
-                <p className="text-sm mt-1">Be the first to book a session with this expert.</p>
+                <p className="text-sm mt-1">Be the first to share your experience.</p>
               </div>
             )}
           </div>
+
+          {/* Leave a Review — open to everyone */}
+          <LeaveExpertReviewForm expertId={expertId} defaultName={user?.name} />
         </div>
 
         {/* Sticky Booking Widget */}
