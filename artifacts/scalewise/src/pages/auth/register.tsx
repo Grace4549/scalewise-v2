@@ -29,18 +29,22 @@ export default function Register() {
   const { toast }        = useToast();
   const queryClient      = useQueryClient();
 
-  const params    = new URLSearchParams(window.location.search);
-  const roleParam = params.get("role");
+  const params      = new URLSearchParams(window.location.search);
+  const roleParam   = params.get("role");
+  const emailParam  = params.get("email") ?? "";
+  const tokenParam  = params.get("token") ?? "";
   const role: "client" | "expert" =
     roleParam === "expert" ? "expert" : "client";
 
   const form = useForm<RegisterData>({
     resolver:      zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", role },
+    defaultValues: { name: "", email: emailParam, password: "", role },
   });
 
   const onSubmit = (data: RegisterData) => {
-    registerMutation.mutate({ data }, {
+    const payload: any = { ...data };
+    if (role === "expert" && tokenParam) payload.inviteToken = tokenParam;
+    registerMutation.mutate({ data: payload }, {
       onSuccess: (res) => {
         queryClient.setQueryData(getGetMeQueryKey(), (res as any).user ?? null);
         refetch();

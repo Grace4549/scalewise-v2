@@ -128,6 +128,7 @@ export default function AdminDashboard() {
   const [appStatusFilter, setAppStatusFilter] = useState<"" | "pending" | "approved" | "rejected">("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [approvedTokens, setApprovedTokens] = useState<Record<number, string>>({});
   const [appDateFrom, setAppDateFrom] = useState("");
   const [appDateTo, setAppDateTo] = useState("");
 
@@ -185,8 +186,11 @@ export default function AdminDashboard() {
 
   const handleApprove = (id: number) => {
     approveApp.mutate({ id }, {
-      onSuccess: () => {
-        toast({ title: "Application approved" });
+      onSuccess: (data: any) => {
+        if (data?.inviteToken) {
+          setApprovedTokens(prev => ({ ...prev, [id]: data.inviteToken }));
+        }
+        toast({ title: "Application approved", description: "Click '📧 Copy Invite Link' to send the expert their registration link." });
         queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
       },
@@ -493,11 +497,17 @@ export default function AdminDashboard() {
                       )}
                       {app.status === "approved" && (
                         <Button size="sm" variant="outline" className="shrink-0"
-                          onClick={() => {
-                            const link = `${window.location.origin}/register?role=expert&email=${encodeURIComponent(app.email)}`;
-                            navigator.clipboard.writeText(link).then(() => {
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/admin/applications/${app.id}/regenerate-invite`, { method: "POST" });
+                              if (!res.ok) throw new Error("Failed to generate invite link");
+                              const { inviteToken } = await res.json();
+                              const link = `${window.location.origin}/register?role=expert&email=${encodeURIComponent(app.email)}&token=${encodeURIComponent(inviteToken)}`;
+                              await navigator.clipboard.writeText(link);
                               toast({ title: "Invite link copied!", description: "Share with the expert so they can create their login." });
-                            });
+                            } catch {
+                              toast({ title: "Failed to generate invite link", variant: "destructive" });
+                            }
                           }}>
                           📧 Copy Invite Link
                         </Button>

@@ -104,6 +104,23 @@ router.post("/admin/applications/:id/approve", adminMiddleware(), async (req, re
   });
 });
 
+router.post("/admin/applications/:id/regenerate-invite", adminMiddleware(), async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [existing] = await db.select().from(expertsTable).where(eq(expertsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (existing.status !== "approved") { res.status(400).json({ error: "Application is not approved" }); return; }
+
+  const plaintextInviteToken = crypto.randomBytes(32).toString("hex");
+  const inviteTokenHash = crypto.createHash("sha256").update(plaintextInviteToken).digest("hex");
+
+  await db.update(expertsTable).set({ inviteToken: inviteTokenHash }).where(eq(expertsTable.id, id));
+
+  res.json({ inviteToken: plaintextInviteToken });
+});
+
 router.post("/admin/applications/:id/reject", adminMiddleware(), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
