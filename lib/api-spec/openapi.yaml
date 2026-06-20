@@ -946,6 +946,8 @@ components:
         status:
           type: string
           enum: [pending, approved, rejected]
+        userId:
+          type: ["integer", "null"]
         discoveryPrice:
           type: ["number", "null"]
         consultancyPrice:
@@ -1249,9 +1251,11 @@ components:
 
     AdminStats:
       type: object
-      required: [totalExperts, pendingApplications, totalBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
+      required: [totalExperts, pendingRegistration, pendingApplications, totalBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
       properties:
         totalExperts:
+          type: integer
+        pendingRegistration:
           type: integer
         pendingApplications:
           type: integer

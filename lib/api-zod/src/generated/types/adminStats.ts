@@ -9,6 +9,7 @@ import type { AdminBooking } from './adminBooking';
 
 export interface AdminStats {
   totalExperts: number;
+  pendingRegistration: number;
   pendingApplications: number;
   totalBookings: number;
   upcomingBookings: number;

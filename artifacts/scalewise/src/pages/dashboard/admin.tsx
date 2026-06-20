@@ -125,7 +125,7 @@ export default function AdminDashboard() {
   const [bookingDateTo, setBookingDateTo] = useState("");
   const [expandedBookings, setExpandedBookings] = useState<Set<number>>(new Set());
 
-  const [appStatusFilter, setAppStatusFilter] = useState<"" | "pending" | "approved" | "rejected">("");
+  const [appStatusFilter, setAppStatusFilter] = useState<"" | "pending" | "approved" | "rejected" | "awaiting_registration">("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [approvedTokens, setApprovedTokens] = useState<Record<number, string>>({});
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
 
   const navigateTo = (tab: string, opts?: {
     bookingStatus?: string;
-    appStatus?: "" | "pending" | "approved" | "rejected";
+    appStatus?: "" | "pending" | "approved" | "rejected" | "awaiting_registration";
   }) => {
     setActiveTab(tab);
     if (opts?.bookingStatus !== undefined) setBookingFilter(opts.bookingStatus);
@@ -309,6 +309,13 @@ export default function AdminDashboard() {
   });
 
   const pendingApps = apps?.filter((a) => a.status === "pending").length ?? 0;
+
+  const filterApps = (list: typeof apps) => {
+    if (!appStatusFilter) return list;
+    if (appStatusFilter === "awaiting_registration") return list?.filter(a => a.status === "approved" && !a.userId);
+    if (appStatusFilter === "approved") return list?.filter(a => a.status === "approved" && !!a.userId);
+    return list?.filter(a => a.status === appStatusFilter);
+  };
 
   const filteredReviews = reviews?.filter((r) => {
     if (reviewDateFrom && r.createdAt < reviewDateFrom) return false;
@@ -362,6 +369,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
           <StatCard label="Total Experts" value={stats.totalExperts} accent={C.mblue}
             onClick={() => navigateTo("payouts")} />
+          <StatCard label="Pending Registration" value={stats.pendingRegistration} accent={C.green}
+            sub="Approved — awaiting sign-up"
+            onClick={() => navigateTo("applications", { appStatus: "awaiting_registration" })} />
           <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue}
             onClick={() => navigateTo("applications", { appStatus: "pending" })} />
           <StatCard label="Upcoming" value={stats.upcomingBookings} accent={C.mint}
@@ -442,21 +452,22 @@ export default function AdminDashboard() {
               className="h-9 px-3 rounded-lg border bg-background text-sm">
               <option value="">All statuses</option>
               <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
+              <option value="awaiting_registration">Awaiting Registration</option>
+              <option value="approved">Approved & Registered</option>
               <option value="rejected">Rejected</option>
             </select>
             <DateRangeFilter from={appDateFrom} to={appDateTo}
               onFromChange={setAppDateFrom} onToChange={setAppDateTo} label="Applied between" />
             <span className="text-sm text-muted-foreground ml-auto">
-              {(appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ?? 0} application{((appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ?? 0) !== 1 ? "s" : ""}
+              {filterApps(apps)?.length ?? 0} application{(filterApps(apps)?.length ?? 0) !== 1 ? "s" : ""}
             </span>
           </div>
           <div className="bg-card rounded-2xl border overflow-hidden">
             {appsLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading...</div>
-            ) : (appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ? (
+            ) : filterApps(apps)?.length ? (
               <div className="divide-y">
-                {(appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)!.map((app) => (
+                {filterApps(apps)!.map((app) => (
                   <div key={app.id} className="p-6">
                     <div className="flex justify-between items-start mb-3 gap-4">
                       <div className="min-w-0">
@@ -464,13 +475,15 @@ export default function AdminDashboard() {
                           {app.name}
                           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
                             style={
-                              app.status === "approved"
+                              app.status === "approved" && app.userId
                                 ? { backgroundColor: C.green + "33", color: "#1a5730" }
-                                : app.status === "pending"
-                                  ? { backgroundColor: C.blue + "22", color: C.blue }
-                                  : { backgroundColor: "#fecaca", color: "#b91c1c" }
+                                : app.status === "approved" && !app.userId
+                                  ? { backgroundColor: C.green + "22", color: "#0a7a50" }
+                                  : app.status === "pending"
+                                    ? { backgroundColor: C.blue + "22", color: C.blue }
+                                    : { backgroundColor: "#fecaca", color: "#b91c1c" }
                             }>
-                            {app.status}
+                            {app.status === "approved" && !app.userId ? "awaiting registration" : app.status}
                           </span>
                         </h3>
                         <p className="text-sm text-muted-foreground mt-0.5">
@@ -495,7 +508,7 @@ export default function AdminDashboard() {
                           </Button>
                         </div>
                       )}
-                      {app.status === "approved" && (
+                      {app.status === "approved" && !app.userId && (
                         <Button size="sm" variant="outline" className="shrink-0"
                           onClick={async () => {
                             try {

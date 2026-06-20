@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
 import { db, expertsTable, bookingsTable, reviewsTable, usersTable } from "@workspace/db";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql, isNotNull, isNull } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
 import { UpdateBookingStatusBody } from "@workspace/api-zod";
@@ -334,7 +334,12 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
   const [expertCount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(expertsTable)
-    .where(eq(expertsTable.status, "approved"));
+    .where(and(eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)));
+
+  const [pendingRegistrationCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(expertsTable)
+    .where(and(eq(expertsTable.status, "approved"), isNull(expertsTable.userId)));
 
   const [pendingCount] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -404,6 +409,7 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
 
   res.json({
     totalExperts: expertCount?.count ?? 0,
+    pendingRegistration: pendingRegistrationCount?.count ?? 0,
     pendingApplications: pendingCount?.count ?? 0,
     totalBookings: bookingCount?.count ?? 0,
     upcomingBookings: upcomingCount?.count ?? 0,

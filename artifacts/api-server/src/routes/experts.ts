@@ -370,6 +370,7 @@ export function formatApplication(expert: {
   bio: string | null;
   skills: string[] | null;
   status: string;
+  userId: number | null;
   discoveryPrice: number | null;
   consultancyPrice: number | null;
   growthPrice3mo: number | null;
@@ -386,6 +387,7 @@ export function formatApplication(expert: {
     bio: expert.bio ?? null,
     skills: expert.skills ?? [],
     status: expert.status,
+    userId: expert.userId ?? null,
     discoveryPrice: expert.discoveryPrice ?? null,
     consultancyPrice: expert.consultancyPrice ?? null,
     growthPrice3mo: expert.growthPrice3mo ?? null,

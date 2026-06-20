@@ -481,6 +481,7 @@ export const ListApplicationsResponseItem = zod.object({
   "bio": zod.string().nullish(),
   "skills": zod.array(zod.string()).optional(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
+  "userId": zod.number().nullish(),
   "discoveryPrice": zod.number().nullish(),
   "consultancyPrice": zod.number().nullish(),
   "growthPrice3mo": zod.number().nullish(),
@@ -507,6 +508,7 @@ export const ApproveApplicationResponse = zod.object({
   "bio": zod.string().nullish(),
   "skills": zod.array(zod.string()).optional(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
+  "userId": zod.number().nullish(),
   "discoveryPrice": zod.number().nullish(),
   "consultancyPrice": zod.number().nullish(),
   "growthPrice3mo": zod.number().nullish(),
@@ -532,6 +534,7 @@ export const RejectApplicationResponse = zod.object({
   "bio": zod.string().nullish(),
   "skills": zod.array(zod.string()).optional(),
   "status": zod.enum(['pending', 'approved', 'rejected']),
+  "userId": zod.number().nullish(),
   "discoveryPrice": zod.number().nullish(),
   "consultancyPrice": zod.number().nullish(),
   "growthPrice3mo": zod.number().nullish(),
@@ -640,6 +643,7 @@ export const MarkBookingPaidResponse = zod.object({
  */
 export const GetAdminStatsResponse = zod.object({
   "totalExperts": zod.number(),
+  "pendingRegistration": zod.number(),
   "pendingApplications": zod.number(),
   "totalBookings": zod.number(),
   "upcomingBookings": zod.number(),

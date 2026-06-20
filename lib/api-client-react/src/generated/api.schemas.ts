@@ -188,6 +188,8 @@ export interface ExpertApplication {
   skills?: string[];
   status: ExpertApplicationStatus;
   /** @nullable */
+  userId?: number | null;
+  /** @nullable */
   discoveryPrice?: number | null;
   /** @nullable */
   consultancyPrice?: number | null;
@@ -435,6 +437,7 @@ export interface MarkExpertPaidResult {
 
 export interface AdminStats {
   totalExperts: number;
+  pendingRegistration: number;
   pendingApplications: number;
   totalBookings: number;
   upcomingBookings: number;

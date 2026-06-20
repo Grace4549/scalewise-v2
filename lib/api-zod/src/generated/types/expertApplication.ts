@@ -20,6 +20,8 @@ export interface ExpertApplication {
   skills?: string[];
   status: ExpertApplicationStatus;
   /** @nullable */
+  userId?: number | null;
+  /** @nullable */
   discoveryPrice?: number | null;
   /** @nullable */
   consultancyPrice?: number | null;
