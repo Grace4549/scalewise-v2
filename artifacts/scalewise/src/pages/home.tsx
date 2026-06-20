@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useListExperts, useListReviews, useGetMe, useCreateReview } from "@workspace/api-client-react";
 import { ExpertCard } from "@/components/expert-card";
-import { ChevronLeft, ChevronRight, Search, Clock, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Clock, Star, ShieldCheck, LayoutGrid, TrendingUp } from "lucide-react";
 
 // ── Journey flow diagram ────────────────────────────────────────
 function JourneyFlowDiagram() {
@@ -701,6 +701,9 @@ export default function Home() {
   const [search, setSearch]       = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchWrapperRef          = useRef<HTMLDivElement>(null);
+  const trustRef                  = useRef<HTMLDivElement>(null);
+  const [trustVisible, setTrustVisible] = useState(false);
+  const [industryCount, setIndustryCount] = useState(0);
   const [, navigate]              = useLocation();
 
   useEffect(() => {
@@ -712,6 +715,28 @@ export default function Home() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    const el = trustRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setTrustVisible(true); obs.disconnect(); }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!trustVisible) return;
+    let n = 0;
+    const target = 13;
+    const interval = setInterval(() => {
+      n += 1;
+      setIndustryCount(n);
+      if (n >= target) clearInterval(interval);
+    }, 60);
+    return () => clearInterval(interval);
+  }, [trustVisible]);
   const { data: expertData, isLoading: expertsLoading } = useListExperts({ limit: 3 });
   const { data: reviewsData } = useListReviews();
 
@@ -844,12 +869,38 @@ export default function Home() {
                 })()}
               </div>
 
-              <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-                {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
-                  <span key={txt} className="flex items-center gap-1.5">
-                    <span className="font-bold" style={{ color: col }}>✓</span> {txt}
+              <div ref={trustRef} className="flex flex-wrap items-center justify-center gap-4">
+                {/* Verified practitioners */}
+                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
+                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
+                    style={{ background: `${P.blue}22` }}>
+                    <ShieldCheck size={18} style={{ color: P.blue }} strokeWidth={2} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Verified practitioners</span>
+                </div>
+
+                {/* 13 industries — animated count */}
+                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
+                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
+                    style={{ background: `${P.mgreen}22` }}>
+                    <LayoutGrid size={18} style={{ color: P.mgreen }} strokeWidth={2} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">
+                    <span className="tabular-nums" style={{ color: P.mgreen }}>{industryCount}</span> industries
                   </span>
-                ))}
+                </div>
+
+                {/* Real results */}
+                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
+                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
+                    style={{ background: `${P.mint}22` }}>
+                    <TrendingUp size={18} style={{ color: P.mint }} strokeWidth={2} />
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">Real results</span>
+                </div>
               </div>
             </div>
           </Reveal>
