@@ -115,7 +115,7 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/login" className="flex items-center gap-2 cursor-pointer">
+                    <Link href="/login?role=expert" className="flex items-center gap-2 cursor-pointer">
                       <span className="text-base">💡</span>
                       <div>
                         <div className="font-medium text-sm">Expert</div>
