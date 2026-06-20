@@ -53,13 +53,28 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     }
 
     const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    if (existing) {
-      res.status(400).json({ error: "Email already registered" });
-      return;
-    }
 
-    const passwordHash = await hashPassword(password);
-    const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
+    let user: typeof existing;
+
+    if (existing) {
+      // If the existing account is already expert or admin, nothing to do
+      if (existing.role !== "client") {
+        res.status(400).json({ error: "An account with this email is already active as an expert or admin." });
+        return;
+      }
+
+      // Existing client account — upgrade role to expert in place (no new account needed)
+      const [upgraded] = await db
+        .update(usersTable)
+        .set({ role: "expert" })
+        .where(eq(usersTable.id, existing.id))
+        .returning();
+      user = upgraded;
+    } else {
+      const passwordHash = await hashPassword(password);
+      const [created] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
+      user = created;
+    }
 
     // Link user to their specific approved application and consume the invite token atomically
     await db
