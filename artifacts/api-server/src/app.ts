@@ -15,6 +15,12 @@ declare module "express-session" {
 
 const app: Express = express();
 
+// Replit (and most cloud platforms) terminate TLS at their reverse proxy and
+// forward requests to the app over plain HTTP. Without this, Express sees
+// req.secure=false and refuses to set the `secure: true` session cookie,
+// so every login appears to succeed but the session is immediately lost.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
