@@ -151,12 +151,18 @@ export interface ExpertProfile {
 }
 
 export interface ExpertApplicationInput {
+  /** @maxLength 100 */
   name: string;
+  /** @maxLength 254 */
   email: string;
+  /** @maxLength 100 */
   industry: string;
   yearsExperience: number;
+  /** @maxLength 200 */
   headline?: string;
+  /** @maxLength 3000 */
   bio?: string;
+  /** @maxItems 20 */
   skills?: string[];
   discoveryPrice?: number;
   consultancyPrice?: number;
@@ -345,7 +351,12 @@ export interface AdminExpertBreakdown {
 }
 
 export interface ReviewInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   reviewerName: string;
+  /** @maxLength 100 */
   businessName?: string;
   expertId?: number;
   /**
@@ -353,6 +364,10 @@ export interface ReviewInput {
      * @maximum 5
      */
   rating: number;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
   body: string;
 }
 
@@ -451,10 +466,17 @@ export type ListExpertsParams = {
 industry?: string;
 search?: string;
 page?: number;
+/**
+ * @maximum 50
+ */
 limit?: number;
 };
 
 export type GetSearchSuggestionsParams = {
+/**
+ * @minLength 2
+ * @maxLength 100
+ */
 q: string;
 };
 

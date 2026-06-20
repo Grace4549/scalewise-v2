@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, reviewsTable, bookingsTable, usersTable, expertsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { publicWriteLimiter } from "../lib/limiters";
 import { CreateReviewBody, CreateVerifiedReviewBody, ListReviewsQueryParams } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -46,7 +47,7 @@ router.get("/reviews", async (req, res): Promise<void> => {
   res.json(reviews.map(formatReview));
 });
 
-router.post("/reviews", async (req, res): Promise<void> => {
+router.post("/reviews", publicWriteLimiter, async (req, res): Promise<void> => {
   const parsed = CreateReviewBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

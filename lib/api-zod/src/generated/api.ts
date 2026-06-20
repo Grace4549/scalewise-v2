@@ -71,12 +71,15 @@ export const GetMeResponse = zod.object({
  */
 export const listExpertsQueryPageDefault = 1;
 export const listExpertsQueryLimitDefault = 12;
+export const listExpertsQueryLimitMax = 50;
+
+
 
 export const ListExpertsQueryParams = zod.object({
   "industry": zod.coerce.string().optional(),
   "search": zod.coerce.string().optional(),
   "page": zod.coerce.number().default(listExpertsQueryPageDefault),
-  "limit": zod.coerce.number().default(listExpertsQueryLimitDefault)
+  "limit": zod.coerce.number().max(listExpertsQueryLimitMax).default(listExpertsQueryLimitDefault)
 })
 
 export const ListExpertsResponse = zod.object({
@@ -160,14 +163,30 @@ export const GetExpertResponse = zod.object({
 /**
  * @summary Submit expert application
  */
+export const applyAsExpertBodyNameMax = 100;
+
+export const applyAsExpertBodyEmailMax = 254;
+
+export const applyAsExpertBodyIndustryMax = 100;
+
+export const applyAsExpertBodyHeadlineMax = 200;
+
+export const applyAsExpertBodyBioMax = 3000;
+
+export const applyAsExpertBodySkillsItemMax = 100;
+
+export const applyAsExpertBodySkillsMax = 20;
+
+
+
 export const ApplyAsExpertBody = zod.object({
-  "name": zod.string(),
-  "email": zod.string(),
-  "industry": zod.string(),
+  "name": zod.string().max(applyAsExpertBodyNameMax),
+  "email": zod.string().max(applyAsExpertBodyEmailMax),
+  "industry": zod.string().max(applyAsExpertBodyIndustryMax),
   "yearsExperience": zod.number(),
-  "headline": zod.string().optional(),
-  "bio": zod.string().optional(),
-  "skills": zod.array(zod.string()).optional(),
+  "headline": zod.string().max(applyAsExpertBodyHeadlineMax).optional(),
+  "bio": zod.string().max(applyAsExpertBodyBioMax).optional(),
+  "skills": zod.array(zod.string().max(applyAsExpertBodySkillsItemMax)).max(applyAsExpertBodySkillsMax).optional(),
   "discoveryPrice": zod.number().optional(),
   "consultancyPrice": zod.number().optional(),
   "growthPrice3mo": zod.number().optional(),
@@ -185,8 +204,13 @@ export const ListIndustriesResponse = zod.array(ListIndustriesResponseItem)
 /**
  * @summary Autocomplete search suggestions
  */
+export const getSearchSuggestionsQueryQMin = 2;
+export const getSearchSuggestionsQueryQMax = 100;
+
+
+
 export const GetSearchSuggestionsQueryParams = zod.object({
-  "q": zod.coerce.string()
+  "q": zod.coerce.string().min(getSearchSuggestionsQueryQMin).max(getSearchSuggestionsQueryQMax)
 })
 
 export const GetSearchSuggestionsResponseItem = zod.string()
@@ -323,16 +347,23 @@ export const ListReviewsResponse = zod.array(ListReviewsResponseItem)
 /**
  * @summary Submit a public review (no auth required)
  */
+export const createReviewBodyReviewerNameMax = 100;
+
+export const createReviewBodyBusinessNameMax = 100;
+
 export const createReviewBodyRatingMax = 5;
+
+export const createReviewBodyBodyMin = 10;
+export const createReviewBodyBodyMax = 2000;
 
 
 
 export const CreateReviewBody = zod.object({
-  "reviewerName": zod.string(),
-  "businessName": zod.string().optional(),
+  "reviewerName": zod.string().min(1).max(createReviewBodyReviewerNameMax),
+  "businessName": zod.string().max(createReviewBodyBusinessNameMax).optional(),
   "expertId": zod.number().optional(),
   "rating": zod.number().min(1).max(createReviewBodyRatingMax),
-  "body": zod.string()
+  "body": zod.string().min(createReviewBodyBodyMin).max(createReviewBodyBodyMax)
 })
 
 

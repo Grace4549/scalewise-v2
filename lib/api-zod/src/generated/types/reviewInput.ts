@@ -7,7 +7,12 @@
  */
 
 export interface ReviewInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   reviewerName: string;
+  /** @maxLength 100 */
   businessName?: string;
   expertId?: number;
   /**
@@ -15,5 +20,9 @@ export interface ReviewInput {
      * @maximum 5
      */
   rating: number;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
   body: string;
 }

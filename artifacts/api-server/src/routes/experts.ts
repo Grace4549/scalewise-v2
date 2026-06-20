@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@workspace/db";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { publicWriteLimiter, searchSuggestionsLimiter } from "../lib/limiters";
 import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -31,7 +32,7 @@ router.get("/experts/industries", async (_req, res): Promise<void> => {
   res.json(INDUSTRIES);
 });
 
-router.get("/experts/search-suggestions", async (req, res): Promise<void> => {
+router.get("/experts/search-suggestions", searchSuggestionsLimiter, async (req, res): Promise<void> => {
   const params = GetSearchSuggestionsQueryParams.safeParse(req.query);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -93,7 +94,8 @@ router.get("/experts", async (req, res): Promise<void> => {
     return;
   }
 
-  const { industry, search, page = 1, limit = 12 } = params.data;
+  const { industry, search, page = 1, limit: rawLimit = 12 } = params.data;
+  const limit = Math.min(rawLimit, 50);
   const offset = (page - 1) * limit;
 
   const conditions = [eq(expertsTable.status, "approved")];
@@ -172,7 +174,7 @@ router.get("/experts/:id", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/experts/apply", async (req, res): Promise<void> => {
+router.post("/experts/apply", publicWriteLimiter, async (req, res): Promise<void> => {
   const parsed = ApplyAsExpertBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -180,6 +182,21 @@ router.post("/experts/apply", async (req, res): Promise<void> => {
   }
 
   const userId = (req.session as { userId?: number }).userId ?? null;
+
+  const [existing] = await db
+    .select({ id: expertsTable.id })
+    .from(expertsTable)
+    .where(
+      and(
+        eq(expertsTable.email, parsed.data.email),
+        inArray(expertsTable.status, ["pending", "approved"])
+      )
+    );
+
+  if (existing) {
+    res.status(409).json({ error: "An application with this email address is already pending or approved." });
+    return;
+  }
 
   const [expert] = await db
     .insert(expertsTable)

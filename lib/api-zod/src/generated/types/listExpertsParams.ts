@@ -10,5 +10,8 @@ export type ListExpertsParams = {
 industry?: string;
 search?: string;
 page?: number;
+/**
+ * @maximum 50
+ */
 limit?: number;
 };

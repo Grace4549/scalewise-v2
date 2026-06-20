@@ -7,12 +7,18 @@
  */
 
 export interface ExpertApplicationInput {
+  /** @maxLength 100 */
   name: string;
+  /** @maxLength 254 */
   email: string;
+  /** @maxLength 100 */
   industry: string;
   yearsExperience: number;
+  /** @maxLength 200 */
   headline?: string;
+  /** @maxLength 3000 */
   bio?: string;
+  /** @maxItems 20 */
   skills?: string[];
   discoveryPrice?: number;
   consultancyPrice?: number;
