@@ -1,19 +1,26 @@
-import { createHash, randomBytes } from "crypto";
+import argon2 from "argon2";
+import { createHash } from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-export function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const hash = createHash("sha256").update(password + salt).digest("hex");
-  return `${salt}:${hash}`;
+export async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, { type: argon2.argon2id });
 }
 
-export function verifyPassword(password: string, stored: string): boolean {
+export async function verifyPassword(
+  password: string,
+  stored: string,
+): Promise<boolean | "legacy"> {
+  if (stored.startsWith("$argon2")) {
+    return argon2.verify(stored, password);
+  }
+
   const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
   const computed = createHash("sha256").update(password + salt).digest("hex");
-  return computed === hash;
+  return computed === hash ? "legacy" : false;
 }
 
 export function generateMeetLink(): string {

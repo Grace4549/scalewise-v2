@@ -47,7 +47,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
 
   // If expert account — link user to their approved application
@@ -86,9 +86,16 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const { email, password } = parsed.data;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
 
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  const verifyResult = user ? await verifyPassword(password, user.passwordHash) : false;
+  if (!user || !verifyResult) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
+  }
+
+  // Transparently upgrade legacy SHA-256 hashes to argon2id on successful login
+  if (verifyResult === "legacy") {
+    const newHash = await hashPassword(password);
+    await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, user.id));
   }
 
   // Ensure admin email always has admin role (self-healing)
