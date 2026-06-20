@@ -14,8 +14,7 @@ export default function ClientDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-500/10 text-green-700';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-700';
+      case 'upcoming': return 'bg-blue-500/10 text-blue-700';
       case 'completed': return 'bg-blue-500/10 text-blue-700';
       case 'cancelled': return 'bg-red-500/10 text-red-700';
       default: return 'bg-gray-500/10 text-gray-700';
@@ -54,7 +53,7 @@ export default function ClientDashboard() {
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>📅 {new Date(booking.scheduledTime).toLocaleString()}</p>
                     <p>⏱ {booking.durationMinutes} minutes</p>
-                    {booking.meetLink && booking.status === 'approved' && (
+                    {booking.meetLink && booking.status === 'upcoming' && (
                       <p className="text-primary mt-2">
                         🔗 <a href={booking.meetLink} target="_blank" rel="noreferrer" className="hover:underline">Join Meeting</a>
                       </p>

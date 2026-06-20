@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { useGetMe } from "@workspace/api-client-react";
-import type { User } from "@workspace/api-client-react/src/generated/api.schemas";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import type { User } from "@workspace/api-client-react";
 
 interface AuthContextType {
   user: User | null;
@@ -12,7 +12,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading, refetch } = useGetMe({
-    query: { retry: false, refetchOnWindowFocus: false },
+    query: { queryKey: getGetMeQueryKey(), retry: false, refetchOnWindowFocus: false },
   });
 
   return (

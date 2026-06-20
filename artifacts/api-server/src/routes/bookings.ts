@@ -7,7 +7,7 @@ import { CreateBookingBody, UpdateBookingStatusBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-function getCommissionRate(sessionType: string): number {
+export function getCommissionRate(sessionType: string): number {
   if (sessionType === "growth_3mo" || sessionType === "growth_6mo") return 0.15;
   return 0.20;
 }
@@ -22,7 +22,11 @@ function getPriceForSession(expert: typeof expertsTable.$inferSelect, sessionTyp
   }
 }
 
-async function formatBooking(b: typeof bookingsTable.$inferSelect, expertMap: Record<number, typeof expertsTable.$inferSelect>, clientMap: Record<number, typeof usersTable.$inferSelect>) {
+export function formatBooking(
+  b: typeof bookingsTable.$inferSelect,
+  expertMap: Record<number, typeof expertsTable.$inferSelect>,
+  clientMap: Record<number, typeof usersTable.$inferSelect>
+) {
   const expert = expertMap[b.expertId];
   const client = clientMap[b.clientId];
   return {
@@ -33,6 +37,8 @@ async function formatBooking(b: typeof bookingsTable.$inferSelect, expertMap: Re
     scheduledTime: b.scheduledTime.toISOString(),
     durationMinutes: b.durationMinutes,
     status: b.status,
+    payoutStatus: b.payoutStatus,
+    payoutPaidAt: b.payoutPaidAt ? b.payoutPaidAt.toISOString() : null,
     notes: b.notes ?? null,
     meetLink: b.meetLink ?? null,
     amount: b.amount ?? null,
@@ -48,10 +54,7 @@ router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
 
   if (req.userRole === "expert") {
     const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
-    if (!expert) {
-      res.json([]);
-      return;
-    }
+    if (!expert) { res.json([]); return; }
     bookings = await db.select().from(bookingsTable).where(eq(bookingsTable.expertId, expert.id));
   } else {
     bookings = await db.select().from(bookingsTable).where(eq(bookingsTable.clientId, req.userId!));
@@ -70,24 +73,17 @@ router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
   const expertMap = Object.fromEntries(experts.map((e) => [e.id, e]));
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));
 
-  const result = await Promise.all(bookings.map((b) => formatBooking(b, expertMap, clientMap)));
-  res.json(result);
+  res.json(bookings.map((b) => formatBooking(b, expertMap, clientMap)));
 });
 
 router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   const parsed = CreateBookingBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const { expertId, sessionType, scheduledTime, durationMinutes, notes } = parsed.data;
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
-  if (!expert) {
-    res.status(404).json({ error: "Expert not found" });
-    return;
-  }
+  if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
   const amount = getPriceForSession(expert, sessionType);
   const meetLink = generateMeetLink();
@@ -103,13 +99,12 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
       notes: notes ?? null,
       meetLink,
       amount: amount ?? null,
-      status: "pending",
+      status: "upcoming",
     })
     .returning();
 
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
-
-  res.status(201).json(await formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
+  res.status(201).json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
 });
 
 router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
@@ -122,15 +117,13 @@ router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
 
   if (req.userRole !== "admin" && booking.clientId !== req.userId) {
     const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
-    if (!expert || expert.id !== booking.expertId) {
-      res.status(403).json({ error: "Forbidden" }); return;
-    }
+    if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
   }
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
-  res.json(await formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
+  res.json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
 });
 
 router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void> => {
@@ -146,9 +139,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
 
   if (req.userRole === "expert") {
     const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
-    if (!expert || expert.id !== booking.expertId) {
-      res.status(403).json({ error: "Forbidden" }); return;
-    }
+    if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
   } else if (req.userRole !== "admin") {
     res.status(403).json({ error: "Forbidden" }); return;
   }
@@ -160,8 +151,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
     .returning();
 
   if (parsed.data.status === "completed") {
-    await db
-      .update(expertsTable)
+    await db.update(expertsTable)
       .set({ totalSessions: sql`${expertsTable.totalSessions} + 1` })
       .where(eq(expertsTable.id, booking.expertId));
   }
@@ -169,8 +159,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
-  res.json(await formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
+  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
 });
 
-export { getCommissionRate };
 export default router;

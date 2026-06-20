@@ -1,0 +1,35 @@
+Add the following missing functionality and pages to ScaleWise. This is critical platform infrastructure, not cosmetic — implement all of it with real working logic connected to the database, not static mockups.
+1. Stock photography — use it throughout, specifically here:
+
+Hero section: a professional stock photo of a business owner on a video call, representing the coaching experience
+About page "Our Story" section: a stock photo conveying determination or problem-solving in a small business setting (e.g. a shop owner reviewing paperwork, a restaurant owner in their kitchen)
+How It Works section: small supporting images or icons next to each of the 4 steps
+Become an Expert CTA band: a stock photo of a confident professional, representing the expert side
+Do NOT use any stock photos on actual expert profile cards or the Featured Experts section, since we have zero real experts right now — see point 2 below
+
+2. Remove all dummy/placeholder experts immediately. The Featured Experts section and any expert listing pages must show zero fake experts. When no real experts exist in the database, display the empty state message and "Apply as a Founding Expert" button, exactly as already specified. However, keep the current visual card format/layout used for displaying experts — I like that design, just remove the fake data populating it. Once real experts are approved, they should automatically appear in that same format.
+3. Add an Expert Dashboard (for logged-in users with the "expert" role), showing:
+
+Upcoming sessions (scheduled, not yet completed)
+Past/completed sessions
+Total earnings to date
+Total commission paid to ScaleWise to date
+A permanent inbox/messaging section (see point 5)
+
+4. Add a full Admin Dashboard (for the admin role only) with:
+
+Total bookings count, split into: upcoming, completed, and pending
+A list of all bookings, filterable by: expert ranking/rating, number of bookings per expert, upcoming sessions, completed sessions, and a custom weekly date range filter
+Per-expert breakdown showing: total money earned by that expert, ScaleWise's commission earned from that expert, and a "Pending Payout" status
+Since payouts to experts are made manually via bank transfer, add a "Mark as Paid" button next to each pending payout. Clicking it updates that payout to "Paid," logs the payment date, and automatically recalculates and updates the expert's pending balance and ScaleWise's running commission totals
+A dedicated "Expert Applications" queue, where new expert sign-up applications appear for review, with Approve and Reject buttons. Approved experts become publicly visible on the platform; rejected ones do not
+A permanent inbox/messaging section (see point 5)
+
+5. Add a messaging/inbox system with two different behaviors:
+
+Client-to-Expert messaging: becomes available only after a client has completed a booking with that expert. This conversation thread should automatically become read-only or disappear exactly 24 hours after the scheduled session has ended.
+Admin-to-Expert messaging: every expert has a permanent, always-available conversation thread directly with the ScaleWise admin, which never expires or disappears.
+Every user type (client, expert, admin) must have a persistent Inbox section accessible from their dashboard or navigation at all times, even if no conversations exist yet.
+
+6. Add Login/Sign-up options for all three user types directly on the homepage — not just a generic "Log In" link. Add clearly separate options or a toggle for: "I'm a Business Owner," "I'm an Expert," and "Admin Login," so each user type is routed to the correct dashboard after logging in.
+Implement all of this with real backend logic — bookings, payments, messages, and approval statuses must be stored in and read from the actual database, updating in real time when buttons are clicked (Mark as Paid, Approve Expert, etc.), not just visually simulated.

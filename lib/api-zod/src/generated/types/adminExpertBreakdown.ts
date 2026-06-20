@@ -5,18 +5,17 @@
  * ScaleWise API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AdminBooking } from './adminBooking';
 
-export interface AdminStats {
-  totalExperts: number;
-  pendingApplications: number;
+export interface AdminExpertBreakdown {
+  expertId: number;
+  expertName: string;
+  industry: string;
+  rating: number;
   totalBookings: number;
-  upcomingBookings: number;
   completedBookings: number;
-  cancelledBookings: number;
   totalRevenue: number;
   totalCommission: number;
+  expertEarnings: number;
   pendingPayout: number;
   paidPayout: number;
-  recentBookings: AdminBooking[];
 }

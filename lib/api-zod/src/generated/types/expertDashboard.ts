@@ -11,8 +11,9 @@ import type { Expert } from './expert';
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];
-  pendingRequests: Booking[];
+  completedBookings: Booking[];
   totalEarnings: number;
   commissionPaid: number;
   netEarnings: number;
+  pendingPayout: number;
 }

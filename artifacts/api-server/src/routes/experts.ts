@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@workspace/db";
-import { eq, ilike, and, or, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
 
@@ -21,6 +21,11 @@ const INDUSTRIES = [
   "Restaurants & Food Business",
   "Tech Startups",
 ];
+
+function getCommissionRate(sessionType: string): number {
+  if (sessionType === "growth_3mo" || sessionType === "growth_6mo") return 0.15;
+  return 0.20;
+}
 
 router.get("/experts/industries", async (_req, res): Promise<void> => {
   res.json(INDUSTRIES);
@@ -132,26 +137,35 @@ router.get("/experts", async (req, res): Promise<void> => {
 router.get("/experts/:id", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid id" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, id));
-  if (!expert) {
-    res.status(404).json({ error: "Expert not found" });
-    return;
-  }
+  if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
-  const reviews = await db
+  const allReviews = await db
     .select()
     .from(reviewsTable)
     .where(eq(reviewsTable.expertId, id))
     .orderBy(reviewsTable.createdAt);
 
+  const publicReviews = allReviews.filter((r) => r.reviewType === "public");
+  const verifiedReviews = allReviews.filter((r) => r.reviewType === "verified");
+
+  const verifiedRatings = verifiedReviews.map((r) => r.rating);
+  const avgVerifiedRating = verifiedRatings.length > 0
+    ? verifiedRatings.reduce((a, b) => a + b, 0) / verifiedRatings.length
+    : expert.rating;
+
+  if (verifiedReviews.length > 0 && avgVerifiedRating !== expert.rating) {
+    await db.update(expertsTable)
+      .set({ rating: Math.round(avgVerifiedRating * 10) / 10 })
+      .where(eq(expertsTable.id, id));
+  }
+
   res.json({
-    ...formatExpert(expert),
-    reviews: reviews.map(formatReview),
+    ...formatExpert({ ...expert, rating: verifiedReviews.length > 0 ? Math.round(avgVerifiedRating * 10) / 10 : expert.rating }),
+    reviews: publicReviews.map(formatReview),
+    verifiedReviews: verifiedReviews.map(formatReview),
   });
 });
 
@@ -192,16 +206,8 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  const [expert] = await db
-    .select()
-    .from(expertsTable)
-    .where(eq(expertsTable.userId, req.userId!));
-
-  if (!expert) {
-    res.status(404).json({ error: "Expert profile not found" });
-    return;
-  }
-
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert) { res.status(404).json({ error: "Expert profile not found" }); return; }
 
   const allBookings = await db
     .select()
@@ -209,30 +215,22 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     .where(eq(bookingsTable.expertId, expert.id))
     .orderBy(bookingsTable.scheduledTime);
 
-  const now = new Date();
-  const upcomingBookings = allBookings.filter(
-    (b) => b.status === "approved" && new Date(b.scheduledTime) > now
-  );
-  const pendingRequests = allBookings.filter((b) => b.status === "pending");
-
+  const upcomingBookings = allBookings.filter((b) => b.status === "upcoming");
   const completedBookings = allBookings.filter((b) => b.status === "completed");
+
   const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
-
-  const getCommissionRate = (type: string) => {
-    if (type === "growth_3mo" || type === "growth_6mo") return 0.15;
-    return 0.20;
-  };
-
   const commissionPaid = completedBookings.reduce((sum, b) => {
     return sum + (b.amount ?? 0) * getCommissionRate(b.sessionType);
   }, 0);
   const netEarnings = totalEarnings - commissionPaid;
 
+  const pendingPayout = completedBookings
+    .filter((b) => b.payoutStatus === "pending")
+    .reduce((sum, b) => sum + (b.amount ?? 0) * (1 - getCommissionRate(b.sessionType)), 0);
+
   const clientIds = [...new Set(allBookings.map((b) => b.clientId))];
   const clients = clientIds.length > 0
-    ? await db.select().from(usersTable).where(
-        sql`${usersTable.id} = ANY(${clientIds})`
-      )
+    ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${clientIds})`)
     : [];
 
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));
@@ -245,6 +243,8 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     scheduledTime: b.scheduledTime.toISOString(),
     durationMinutes: b.durationMinutes,
     status: b.status,
+    payoutStatus: b.payoutStatus,
+    payoutPaidAt: b.payoutPaidAt ? b.payoutPaidAt.toISOString() : null,
     notes: b.notes ?? null,
     meetLink: b.meetLink ?? null,
     amount: b.amount ?? null,
@@ -257,10 +257,11 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
   res.json({
     expert: formatExpert(expert),
     upcomingBookings: upcomingBookings.map(formatBookingWithClient),
-    pendingRequests: pendingRequests.map(formatBookingWithClient),
+    completedBookings: completedBookings.map(formatBookingWithClient),
     totalEarnings,
     commissionPaid,
     netEarnings,
+    pendingPayout,
   });
 });
 
@@ -271,20 +272,10 @@ router.patch("/expert/profile", requireAuth, async (req, res): Promise<void> => 
   }
 
   const parsed = UpdateExpertProfileBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [expert] = await db
-    .select()
-    .from(expertsTable)
-    .where(eq(expertsTable.userId, req.userId!));
-
-  if (!expert) {
-    res.status(404).json({ error: "Expert profile not found" });
-    return;
-  }
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert) { res.status(404).json({ error: "Expert profile not found" }); return; }
 
   const [updated] = await db
     .update(expertsTable)
@@ -300,14 +291,14 @@ router.patch("/expert/profile", requireAuth, async (req, res): Promise<void> => 
     .where(eq(expertsTable.id, expert.id))
     .returning();
 
-  const reviews = await db
-    .select()
-    .from(reviewsTable)
-    .where(eq(reviewsTable.expertId, expert.id));
+  const allReviews = await db.select().from(reviewsTable).where(eq(reviewsTable.expertId, expert.id));
+  const publicReviews = allReviews.filter((r) => r.reviewType === "public");
+  const verifiedReviews = allReviews.filter((r) => r.reviewType === "verified");
 
   res.json({
     ...formatExpert(updated),
-    reviews: reviews.map(formatReview),
+    reviews: publicReviews.map(formatReview),
+    verifiedReviews: verifiedReviews.map(formatReview),
   });
 });
 
@@ -392,6 +383,9 @@ export function formatReview(r: {
   expertId: number | null;
   rating: number;
   body: string;
+  reviewType: string;
+  bookingId: number | null;
+  clientId: number | null;
   createdAt: Date;
 }) {
   return {
@@ -401,6 +395,9 @@ export function formatReview(r: {
     expertId: r.expertId ?? null,
     rating: r.rating,
     body: r.body,
+    reviewType: r.reviewType,
+    bookingId: r.bookingId ?? null,
+    clientId: r.clientId ?? null,
     createdAt: r.createdAt.toISOString(),
   };
 }

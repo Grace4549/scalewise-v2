@@ -342,6 +342,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/Review"
 
+  /reviews/verified:
+    post:
+      operationId: createVerifiedReview
+      tags: [reviews]
+      summary: Submit a verified review (must be logged in with a completed booking for that expert)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifiedReviewInput"
+      responses:
+        "201":
+          description: Verified review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: No completed booking found
+        "401":
+          description: Not authenticated
+
   /reviews/{id}:
     delete:
       operationId: deleteReview
@@ -361,7 +384,7 @@ paths:
     get:
       operationId: listMessages
       tags: [messages]
-      summary: List messages for a booking
+      summary: List messages for a booking thread
       parameters:
         - in: path
           name: bookingId
@@ -400,6 +423,65 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
+
+  /messages/admin/{expertId}:
+    get:
+      operationId: listAdminMessages
+      tags: [messages]
+      summary: List admin-to-expert direct messages
+      parameters:
+        - in: path
+          name: expertId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Admin messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendAdminMessage
+      tags: [messages]
+      summary: Send admin-to-expert direct message
+      parameters:
+        - in: path
+          name: expertId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/inbox:
+    get:
+      operationId: getInbox
+      tags: [messages]
+      summary: Get all inbox threads for the current user
+      responses:
+        "200":
+          description: Inbox threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InboxThread"
 
   /admin/applications:
     get:
@@ -458,7 +540,25 @@ paths:
     get:
       operationId: listAllBookings
       tags: [admin]
-      summary: List all bookings (admin only)
+      summary: List all bookings (admin only) with optional filters
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [upcoming, completed, cancelled, no-show]
+        - in: query
+          name: expertId
+          schema:
+            type: integer
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+        - in: query
+          name: dateTo
+          schema:
+            type: string
       responses:
         "200":
           description: All bookings with commission info
@@ -468,6 +568,50 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AdminBooking"
+
+  /admin/bookings/{id}/status:
+    patch:
+      operationId: adminUpdateBookingStatus
+      tags: [admin]
+      summary: Admin force-update a booking status (cancel or no-show)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingStatusUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBooking"
+
+  /admin/bookings/{id}/mark-paid:
+    post:
+      operationId: markBookingPaid
+      tags: [admin]
+      summary: Mark a completed booking's payout as paid (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking payout marked paid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBooking"
 
   /admin/stats:
     get:
@@ -481,6 +625,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminStats"
+
+  /admin/experts/breakdown:
+    get:
+      operationId: getExpertBreakdown
+      tags: [admin]
+      summary: Per-expert earnings and payout breakdown (admin only)
+      responses:
+        "200":
+          description: Expert breakdown list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminExpertBreakdown"
 
   /expert/dashboard:
     get:
@@ -634,7 +793,7 @@ components:
 
     ExpertProfile:
       type: object
-      required: [id, userId, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt, reviews]
+      required: [id, userId, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt, reviews, verifiedReviews]
       properties:
         id:
           type: integer
@@ -673,6 +832,10 @@ components:
         createdAt:
           type: string
         reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        verifiedReviews:
           type: array
           items:
             $ref: "#/components/schemas/Review"
@@ -764,7 +927,7 @@ components:
 
     Booking:
       type: object
-      required: [id, clientId, expertId, sessionType, scheduledTime, durationMinutes, status, createdAt]
+      required: [id, clientId, expertId, sessionType, scheduledTime, durationMinutes, status, payoutStatus, createdAt]
       properties:
         id:
           type: integer
@@ -781,7 +944,12 @@ components:
           type: integer
         status:
           type: string
-          enum: [pending, approved, completed, cancelled]
+          enum: [upcoming, completed, cancelled, no-show]
+        payoutStatus:
+          type: string
+          enum: [pending, paid]
+        payoutPaidAt:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
         meetLink:
@@ -819,11 +987,11 @@ components:
       properties:
         status:
           type: string
-          enum: [pending, approved, completed, cancelled]
+          enum: [upcoming, completed, cancelled, no-show]
 
     AdminBooking:
       type: object
-      required: [id, clientId, expertId, sessionType, scheduledTime, durationMinutes, status, amount, commission, createdAt]
+      required: [id, clientId, expertId, sessionType, scheduledTime, durationMinutes, status, payoutStatus, amount, commission, createdAt]
       properties:
         id:
           type: integer
@@ -839,6 +1007,11 @@ components:
           type: integer
         status:
           type: string
+        payoutStatus:
+          type: string
+          enum: [pending, paid]
+        payoutPaidAt:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
         meetLink:
@@ -849,6 +1022,8 @@ components:
           type: ["number", "null"]
         commissionRate:
           type: ["number", "null"]
+        expertEarnings:
+          type: ["number", "null"]
         clientName:
           type: ["string", "null"]
         expertName:
@@ -856,9 +1031,36 @@ components:
         createdAt:
           type: string
 
+    AdminExpertBreakdown:
+      type: object
+      required: [expertId, expertName, industry, totalBookings, completedBookings, totalRevenue, totalCommission, expertEarnings, pendingPayout, paidPayout, rating]
+      properties:
+        expertId:
+          type: integer
+        expertName:
+          type: string
+        industry:
+          type: string
+        rating:
+          type: number
+        totalBookings:
+          type: integer
+        completedBookings:
+          type: integer
+        totalRevenue:
+          type: number
+        totalCommission:
+          type: number
+        expertEarnings:
+          type: number
+        pendingPayout:
+          type: number
+        paidPayout:
+          type: number
+
     Review:
       type: object
-      required: [id, reviewerName, rating, body, createdAt]
+      required: [id, reviewerName, rating, body, reviewType, createdAt]
       properties:
         id:
           type: integer
@@ -872,6 +1074,13 @@ components:
           type: integer
         body:
           type: string
+        reviewType:
+          type: string
+          enum: [public, verified]
+        bookingId:
+          type: ["integer", "null"]
+        clientId:
+          type: ["integer", "null"]
         createdAt:
           type: string
 
@@ -892,14 +1101,33 @@ components:
         body:
           type: string
 
+    VerifiedReviewInput:
+      type: object
+      required: [expertId, bookingId, rating, body]
+      properties:
+        expertId:
+          type: integer
+        bookingId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+        businessName:
+          type: string
+
     Message:
       type: object
-      required: [id, bookingId, senderId, body, createdAt]
+      required: [id, senderId, body, createdAt]
       properties:
         id:
           type: integer
         bookingId:
-          type: integer
+          type: ["integer", "null"]
+        expertId:
+          type: ["integer", "null"]
         senderId:
           type: integer
         senderName:
@@ -918,6 +1146,28 @@ components:
         body:
           type: string
 
+    InboxThread:
+      type: object
+      required: [threadType, lastMessage, unreadCount]
+      properties:
+        threadType:
+          type: string
+          enum: [booking, admin]
+        bookingId:
+          type: ["integer", "null"]
+        expertId:
+          type: ["integer", "null"]
+        otherPartyName:
+          type: string
+        otherPartyRole:
+          type: string
+        lastMessage:
+          type: string
+        lastMessageAt:
+          type: string
+        unreadCount:
+          type: integer
+
     PlatformStats:
       type: object
       required: [expertCount, industryCount, sessionCount, reviewCount]
@@ -933,7 +1183,7 @@ components:
 
     AdminStats:
       type: object
-      required: [totalExperts, pendingApplications, totalBookings, totalRevenue, totalCommission, recentBookings]
+      required: [totalExperts, pendingApplications, totalBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
       properties:
         totalExperts:
           type: integer
@@ -941,9 +1191,19 @@ components:
           type: integer
         totalBookings:
           type: integer
+        upcomingBookings:
+          type: integer
+        completedBookings:
+          type: integer
+        cancelledBookings:
+          type: integer
         totalRevenue:
           type: number
         totalCommission:
+          type: number
+        pendingPayout:
+          type: number
+        paidPayout:
           type: number
         recentBookings:
           type: array
@@ -952,7 +1212,7 @@ components:
 
     ExpertDashboard:
       type: object
-      required: [expert, upcomingBookings, pendingRequests, totalEarnings, commissionPaid, netEarnings]
+      required: [expert, upcomingBookings, completedBookings, totalEarnings, commissionPaid, netEarnings, pendingPayout]
       properties:
         expert:
           $ref: "#/components/schemas/Expert"
@@ -960,7 +1220,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Booking"
-        pendingRequests:
+        completedBookings:
           type: array
           items:
             $ref: "#/components/schemas/Booking"
@@ -969,4 +1229,6 @@ components:
         commissionPaid:
           type: number
         netEarnings:
+          type: number
+        pendingPayout:
           type: number

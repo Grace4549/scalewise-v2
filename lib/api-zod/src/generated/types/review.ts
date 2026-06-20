@@ -5,6 +5,7 @@
  * ScaleWise API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ReviewReviewType } from './reviewReviewType';
 
 export interface Review {
   id: number;
@@ -15,5 +16,10 @@ export interface Review {
   expertId?: number | null;
   rating: number;
   body: string;
+  reviewType: ReviewReviewType;
+  /** @nullable */
+  bookingId?: number | null;
+  /** @nullable */
+  clientId?: number | null;
   createdAt: string;
 }

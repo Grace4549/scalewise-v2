@@ -1,0 +1,16 @@
+Update ScaleWise with the following corrections and additions to the previous build:
+1. Messaging — keep it always available, never disappearing:
+
+Client-to-Expert messaging becomes available once a client completes a booking with that expert, and remains permanently available and visible afterward. Do not disappear, freeze, or restrict it after 24 hours or at any point — full message history stays visible indefinitely to both the client and the expert.
+Admin-to-Expert messaging remains a separate, permanent thread between every expert and the admin, always available.
+Every user (client, expert, admin) has a persistent Inbox accessible from their dashboard at all times.
+
+2. Booking statuses — use exactly these four:
+
+upcoming, completed, cancelled, no-show. Add logic so the admin can manually mark a booking as cancelled or no-show if needed, and ensure commission/payout calculations correctly exclude cancelled and no-show bookings from earnings totals.
+3. Expert bank details — do not collect or store these on the platform. Payouts are handled manually outside the platform via direct bank transfer. The platform only needs to track payout status (pending or paid) and amounts, not banking information.
+4. Reviews — implement two separate types:
+
+Public reviews: open to any visitor, no login required, shown on the general Reviews section of the site as currently built. These do not affect expert rankings.
+Verified client reviews: only a client who has completed an actual booking with a specific expert can leave this type of review, tied directly to that expert's profile and that specific completed booking. These verified reviews are what calculate and power each expert's rating and ranking, used in the admin dashboard's "filter by ranking" feature and shown prominently on the expert's public profile page.
+Clearly visually distinguish verified client reviews (e.g. with a "Verified Booking" badge) from general public reviews on the expert's profile page, so visitors understand the difference.

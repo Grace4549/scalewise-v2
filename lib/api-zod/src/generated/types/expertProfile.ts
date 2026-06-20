@@ -32,4 +32,5 @@ export interface ExpertProfile {
   growthPrice6mo?: number | null;
   createdAt: string;
   reviews: Review[];
+  verifiedReviews: Review[];
 }

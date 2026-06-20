@@ -1,10 +1,25 @@
 import { Router, type IRouter } from "express";
-import { db, reviewsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, reviewsTable, bookingsTable, usersTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { CreateReviewBody, ListReviewsQueryParams } from "@workspace/api-zod";
+import { CreateReviewBody, CreateVerifiedReviewBody, ListReviewsQueryParams } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function formatReview(r: typeof reviewsTable.$inferSelect) {
+  return {
+    id: r.id,
+    reviewerName: r.reviewerName,
+    businessName: r.businessName ?? null,
+    expertId: r.expertId ?? null,
+    rating: r.rating,
+    body: r.body,
+    reviewType: r.reviewType,
+    bookingId: r.bookingId ?? null,
+    clientId: r.clientId ?? null,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
 
 router.get("/reviews", async (req, res): Promise<void> => {
   const params = ListReviewsQueryParams.safeParse(req.query);
@@ -18,26 +33,17 @@ router.get("/reviews", async (req, res): Promise<void> => {
     reviews = await db
       .select()
       .from(reviewsTable)
-      .where(eq(reviewsTable.expertId, params.data.expertId))
+      .where(and(eq(reviewsTable.expertId, params.data.expertId), eq(reviewsTable.reviewType, "public")))
       .orderBy(reviewsTable.createdAt);
   } else {
     reviews = await db
       .select()
       .from(reviewsTable)
+      .where(eq(reviewsTable.reviewType, "public"))
       .orderBy(reviewsTable.createdAt);
   }
 
-  res.json(
-    reviews.map((r) => ({
-      id: r.id,
-      reviewerName: r.reviewerName,
-      businessName: r.businessName ?? null,
-      expertId: r.expertId ?? null,
-      rating: r.rating,
-      body: r.body,
-      createdAt: r.createdAt.toISOString(),
-    }))
-  );
+  res.json(reviews.map(formatReview));
 });
 
 router.post("/reviews", async (req, res): Promise<void> => {
@@ -55,18 +61,56 @@ router.post("/reviews", async (req, res): Promise<void> => {
       expertId: parsed.data.expertId ?? null,
       rating: parsed.data.rating,
       body: parsed.data.body,
+      reviewType: "public",
     })
     .returning();
 
-  res.status(201).json({
-    id: review.id,
-    reviewerName: review.reviewerName,
-    businessName: review.businessName ?? null,
-    expertId: review.expertId ?? null,
-    rating: review.rating,
-    body: review.body,
-    createdAt: review.createdAt.toISOString(),
-  });
+  res.status(201).json(formatReview(review));
+});
+
+router.post("/reviews/verified", requireAuth, async (req, res): Promise<void> => {
+  const parsed = CreateVerifiedReviewBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { expertId, bookingId, rating, body, businessName } = parsed.data;
+
+  const [booking] = await db
+    .select()
+    .from(bookingsTable)
+    .where(
+      and(
+        eq(bookingsTable.id, bookingId),
+        eq(bookingsTable.clientId, req.userId!),
+        eq(bookingsTable.expertId, expertId),
+        eq(bookingsTable.status, "completed")
+      )
+    );
+
+  if (!booking) {
+    res.status(400).json({ error: "No completed booking found for this expert" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  const [review] = await db
+    .insert(reviewsTable)
+    .values({
+      reviewerName: user?.name ?? "Anonymous",
+      businessName: businessName ?? null,
+      expertId,
+      rating,
+      body,
+      reviewType: "verified",
+      bookingId,
+      clientId: req.userId!,
+    })
+    .returning();
+
+  res.status(201).json(formatReview(review));
 });
 
 router.delete("/reviews/:id", requireAuth, async (req, res): Promise<void> => {

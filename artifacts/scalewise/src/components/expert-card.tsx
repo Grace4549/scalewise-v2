@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import type { Expert } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { Expert } from "@workspace/api-client-react";
 
 export function ExpertCard({ expert }: { expert: Expert }) {
   return (
@@ -29,7 +29,7 @@ export function ExpertCard({ expert }: { expert: Expert }) {
 
           {expert.skills && expert.skills.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-1.5">
-              {expert.skills.slice(0, 3).map(skill => (
+              {expert.skills.slice(0, 3).map((skill: string) => (
                 <span key={skill} className="text-xs text-muted-foreground border rounded-md px-2 py-1">
                   {skill}
                 </span>

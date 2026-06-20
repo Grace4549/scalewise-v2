@@ -5,6 +5,7 @@
  * ScaleWise API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminBookingPayoutStatus } from './adminBookingPayoutStatus';
 
 export interface AdminBooking {
   id: number;
@@ -14,6 +15,9 @@ export interface AdminBooking {
   scheduledTime: string;
   durationMinutes: number;
   status: string;
+  payoutStatus: AdminBookingPayoutStatus;
+  /** @nullable */
+  payoutPaidAt?: string | null;
   /** @nullable */
   notes?: string | null;
   /** @nullable */
@@ -24,6 +28,8 @@ export interface AdminBooking {
   commission: number | null;
   /** @nullable */
   commissionRate?: number | null;
+  /** @nullable */
+  expertEarnings?: number | null;
   /** @nullable */
   clientName?: string | null;
   /** @nullable */

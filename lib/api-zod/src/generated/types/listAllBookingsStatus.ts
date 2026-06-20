@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof typeof BookingStatusUpdateStatus];
+export type ListAllBookingsStatus = typeof ListAllBookingsStatus[keyof typeof ListAllBookingsStatus];
 
 
-export const BookingStatusUpdateStatus = {
+export const ListAllBookingsStatus = {
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',

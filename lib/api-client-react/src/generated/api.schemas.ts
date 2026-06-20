@@ -97,6 +97,14 @@ export interface ExpertList {
   limit: number;
 }
 
+export type ReviewReviewType = typeof ReviewReviewType[keyof typeof ReviewReviewType];
+
+
+export const ReviewReviewType = {
+  public: 'public',
+  verified: 'verified',
+} as const;
+
 export interface Review {
   id: number;
   reviewerName: string;
@@ -106,6 +114,11 @@ export interface Review {
   expertId?: number | null;
   rating: number;
   body: string;
+  reviewType: ReviewReviewType;
+  /** @nullable */
+  bookingId?: number | null;
+  /** @nullable */
+  clientId?: number | null;
   createdAt: string;
 }
 
@@ -134,6 +147,7 @@ export interface ExpertProfile {
   growthPrice6mo?: number | null;
   createdAt: string;
   reviews: Review[];
+  verifiedReviews: Review[];
 }
 
 export interface ExpertApplicationInput {
@@ -206,10 +220,18 @@ export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 
 
 export const BookingStatus = {
-  pending: 'pending',
-  approved: 'approved',
+  upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',
+  'no-show': 'no-show',
+} as const;
+
+export type BookingPayoutStatus = typeof BookingPayoutStatus[keyof typeof BookingPayoutStatus];
+
+
+export const BookingPayoutStatus = {
+  pending: 'pending',
+  paid: 'paid',
 } as const;
 
 export interface Booking {
@@ -220,6 +242,9 @@ export interface Booking {
   scheduledTime: string;
   durationMinutes: number;
   status: BookingStatus;
+  payoutStatus: BookingPayoutStatus;
+  /** @nullable */
+  payoutPaidAt?: string | null;
   /** @nullable */
   notes?: string | null;
   /** @nullable */
@@ -257,15 +282,23 @@ export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof t
 
 
 export const BookingStatusUpdateStatus = {
-  pending: 'pending',
-  approved: 'approved',
+  upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',
+  'no-show': 'no-show',
 } as const;
 
 export interface BookingStatusUpdate {
   status: BookingStatusUpdateStatus;
 }
+
+export type AdminBookingPayoutStatus = typeof AdminBookingPayoutStatus[keyof typeof AdminBookingPayoutStatus];
+
+
+export const AdminBookingPayoutStatus = {
+  pending: 'pending',
+  paid: 'paid',
+} as const;
 
 export interface AdminBooking {
   id: number;
@@ -275,6 +308,9 @@ export interface AdminBooking {
   scheduledTime: string;
   durationMinutes: number;
   status: string;
+  payoutStatus: AdminBookingPayoutStatus;
+  /** @nullable */
+  payoutPaidAt?: string | null;
   /** @nullable */
   notes?: string | null;
   /** @nullable */
@@ -286,10 +322,26 @@ export interface AdminBooking {
   /** @nullable */
   commissionRate?: number | null;
   /** @nullable */
+  expertEarnings?: number | null;
+  /** @nullable */
   clientName?: string | null;
   /** @nullable */
   expertName?: string | null;
   createdAt: string;
+}
+
+export interface AdminExpertBreakdown {
+  expertId: number;
+  expertName: string;
+  industry: string;
+  rating: number;
+  totalBookings: number;
+  completedBookings: number;
+  totalRevenue: number;
+  totalCommission: number;
+  expertEarnings: number;
+  pendingPayout: number;
+  paidPayout: number;
 }
 
 export interface ReviewInput {
@@ -304,9 +356,24 @@ export interface ReviewInput {
   body: string;
 }
 
+export interface VerifiedReviewInput {
+  expertId: number;
+  bookingId: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  body: string;
+  businessName?: string;
+}
+
 export interface Message {
   id: number;
-  bookingId: number;
+  /** @nullable */
+  bookingId?: number | null;
+  /** @nullable */
+  expertId?: number | null;
   senderId: number;
   senderName?: string;
   senderRole?: string;
@@ -316,6 +383,27 @@ export interface Message {
 
 export interface MessageInput {
   body: string;
+}
+
+export type InboxThreadThreadType = typeof InboxThreadThreadType[keyof typeof InboxThreadThreadType];
+
+
+export const InboxThreadThreadType = {
+  booking: 'booking',
+  admin: 'admin',
+} as const;
+
+export interface InboxThread {
+  threadType: InboxThreadThreadType;
+  /** @nullable */
+  bookingId?: number | null;
+  /** @nullable */
+  expertId?: number | null;
+  otherPartyName?: string;
+  otherPartyRole?: string;
+  lastMessage: string;
+  lastMessageAt?: string;
+  unreadCount: number;
 }
 
 export interface PlatformStats {
@@ -329,18 +417,24 @@ export interface AdminStats {
   totalExperts: number;
   pendingApplications: number;
   totalBookings: number;
+  upcomingBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
   totalRevenue: number;
   totalCommission: number;
+  pendingPayout: number;
+  paidPayout: number;
   recentBookings: AdminBooking[];
 }
 
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];
-  pendingRequests: Booking[];
+  completedBookings: Booking[];
   totalEarnings: number;
   commissionPaid: number;
   netEarnings: number;
+  pendingPayout: number;
 }
 
 export type ListExpertsParams = {
@@ -357,4 +451,21 @@ q: string;
 export type ListReviewsParams = {
 expertId?: number;
 };
+
+export type ListAllBookingsParams = {
+status?: ListAllBookingsStatus;
+expertId?: number;
+dateFrom?: string;
+dateTo?: string;
+};
+
+export type ListAllBookingsStatus = typeof ListAllBookingsStatus[keyof typeof ListAllBookingsStatus];
+
+
+export const ListAllBookingsStatus = {
+  upcoming: 'upcoming',
+  completed: 'completed',
+  cancelled: 'cancelled',
+  'no-show': 'no-show',
+} as const;
 

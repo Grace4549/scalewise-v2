@@ -8,7 +8,10 @@
 
 export interface Message {
   id: number;
-  bookingId: number;
+  /** @nullable */
+  bookingId?: number | null;
+  /** @nullable */
+  expertId?: number | null;
   senderId: number;
   senderName?: string;
   senderRole?: string;

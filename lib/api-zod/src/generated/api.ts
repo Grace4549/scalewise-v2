@@ -137,6 +137,21 @@ export const GetExpertResponse = zod.object({
   "expertId": zod.number().nullish(),
   "rating": zod.number(),
   "body": zod.string(),
+  "reviewType": zod.enum(['public', 'verified']),
+  "bookingId": zod.number().nullish(),
+  "clientId": zod.number().nullish(),
+  "createdAt": zod.string()
+})),
+  "verifiedReviews": zod.array(zod.object({
+  "id": zod.number(),
+  "reviewerName": zod.string(),
+  "businessName": zod.string().nullish(),
+  "expertId": zod.number().nullish(),
+  "rating": zod.number(),
+  "body": zod.string(),
+  "reviewType": zod.enum(['public', 'verified']),
+  "bookingId": zod.number().nullish(),
+  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 }))
 })
@@ -199,7 +214,9 @@ export const ListMyBookingsResponseItem = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled']),
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullish(),
@@ -237,7 +254,9 @@ export const GetBookingResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled']),
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullish(),
@@ -256,7 +275,7 @@ export const UpdateBookingStatusParams = zod.object({
 })
 
 export const UpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled'])
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show'])
 })
 
 export const UpdateBookingStatusResponse = zod.object({
@@ -266,7 +285,9 @@ export const UpdateBookingStatusResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled']),
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullish(),
@@ -291,6 +312,9 @@ export const ListReviewsResponseItem = zod.object({
   "expertId": zod.number().nullish(),
   "rating": zod.number(),
   "body": zod.string(),
+  "reviewType": zod.enum(['public', 'verified']),
+  "bookingId": zod.number().nullish(),
+  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 })
 export const ListReviewsResponse = zod.array(ListReviewsResponseItem)
@@ -313,6 +337,22 @@ export const CreateReviewBody = zod.object({
 
 
 /**
+ * @summary Submit a verified review (must be logged in with a completed booking for that expert)
+ */
+export const createVerifiedReviewBodyRatingMax = 5;
+
+
+
+export const CreateVerifiedReviewBody = zod.object({
+  "expertId": zod.number(),
+  "bookingId": zod.number(),
+  "rating": zod.number().min(1).max(createVerifiedReviewBodyRatingMax),
+  "body": zod.string(),
+  "businessName": zod.string().optional()
+})
+
+
+/**
  * @summary Delete a review (admin only)
  */
 export const DeleteReviewParams = zod.object({
@@ -321,7 +361,7 @@ export const DeleteReviewParams = zod.object({
 
 
 /**
- * @summary List messages for a booking
+ * @summary List messages for a booking thread
  */
 export const ListMessagesParams = zod.object({
   "bookingId": zod.coerce.number()
@@ -329,7 +369,8 @@ export const ListMessagesParams = zod.object({
 
 export const ListMessagesResponseItem = zod.object({
   "id": zod.number(),
-  "bookingId": zod.number(),
+  "bookingId": zod.number().nullish(),
+  "expertId": zod.number().nullish(),
   "senderId": zod.number(),
   "senderName": zod.string().optional(),
   "senderRole": zod.string().optional(),
@@ -349,6 +390,54 @@ export const SendMessageParams = zod.object({
 export const SendMessageBody = zod.object({
   "body": zod.string()
 })
+
+
+/**
+ * @summary List admin-to-expert direct messages
+ */
+export const ListAdminMessagesParams = zod.object({
+  "expertId": zod.coerce.number()
+})
+
+export const ListAdminMessagesResponseItem = zod.object({
+  "id": zod.number(),
+  "bookingId": zod.number().nullish(),
+  "expertId": zod.number().nullish(),
+  "senderId": zod.number(),
+  "senderName": zod.string().optional(),
+  "senderRole": zod.string().optional(),
+  "body": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListAdminMessagesResponse = zod.array(ListAdminMessagesResponseItem)
+
+
+/**
+ * @summary Send admin-to-expert direct message
+ */
+export const SendAdminMessageParams = zod.object({
+  "expertId": zod.coerce.number()
+})
+
+export const SendAdminMessageBody = zod.object({
+  "body": zod.string()
+})
+
+
+/**
+ * @summary Get all inbox threads for the current user
+ */
+export const GetInboxResponseItem = zod.object({
+  "threadType": zod.enum(['booking', 'admin']),
+  "bookingId": zod.number().nullish(),
+  "expertId": zod.number().nullish(),
+  "otherPartyName": zod.string().optional(),
+  "otherPartyRole": zod.string().optional(),
+  "lastMessage": zod.string(),
+  "lastMessageAt": zod.string().optional(),
+  "unreadCount": zod.number()
+})
+export const GetInboxResponse = zod.array(GetInboxResponseItem)
 
 
 /**
@@ -424,8 +513,15 @@ export const RejectApplicationResponse = zod.object({
 
 
 /**
- * @summary List all bookings (admin only)
+ * @summary List all bookings (admin only) with optional filters
  */
+export const ListAllBookingsQueryParams = zod.object({
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']).optional(),
+  "expertId": zod.coerce.number().optional(),
+  "dateFrom": zod.coerce.string().optional(),
+  "dateTo": zod.coerce.string().optional()
+})
+
 export const ListAllBookingsResponseItem = zod.object({
   "id": zod.number(),
   "clientId": zod.number(),
@@ -434,16 +530,81 @@ export const ListAllBookingsResponseItem = zod.object({
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.string(),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullable(),
   "commission": zod.number().nullable(),
   "commissionRate": zod.number().nullish(),
+  "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListAllBookingsResponse = zod.array(ListAllBookingsResponseItem)
+
+
+/**
+ * @summary Admin force-update a booking status (cancel or no-show)
+ */
+export const AdminUpdateBookingStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AdminUpdateBookingStatusBody = zod.object({
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show'])
+})
+
+export const AdminUpdateBookingStatusResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.string(),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.string(),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullable(),
+  "commission": zod.number().nullable(),
+  "commissionRate": zod.number().nullish(),
+  "expertEarnings": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Mark a completed booking's payout as paid (admin only)
+ */
+export const MarkBookingPaidParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkBookingPaidResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.string(),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.string(),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullable(),
+  "commission": zod.number().nullable(),
+  "commissionRate": zod.number().nullish(),
+  "expertEarnings": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
 
 
 /**
@@ -453,8 +614,13 @@ export const GetAdminStatsResponse = zod.object({
   "totalExperts": zod.number(),
   "pendingApplications": zod.number(),
   "totalBookings": zod.number(),
+  "upcomingBookings": zod.number(),
+  "completedBookings": zod.number(),
+  "cancelledBookings": zod.number(),
   "totalRevenue": zod.number(),
   "totalCommission": zod.number(),
+  "pendingPayout": zod.number(),
+  "paidPayout": zod.number(),
   "recentBookings": zod.array(zod.object({
   "id": zod.number(),
   "clientId": zod.number(),
@@ -463,16 +629,38 @@ export const GetAdminStatsResponse = zod.object({
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
   "status": zod.string(),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullable(),
   "commission": zod.number().nullable(),
   "commissionRate": zod.number().nullish(),
+  "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 })
+
+
+/**
+ * @summary Per-expert earnings and payout breakdown (admin only)
+ */
+export const GetExpertBreakdownResponseItem = zod.object({
+  "expertId": zod.number(),
+  "expertName": zod.string(),
+  "industry": zod.string(),
+  "rating": zod.number(),
+  "totalBookings": zod.number(),
+  "completedBookings": zod.number(),
+  "totalRevenue": zod.number(),
+  "totalCommission": zod.number(),
+  "expertEarnings": zod.number(),
+  "pendingPayout": zod.number(),
+  "paidPayout": zod.number()
+})
+export const GetExpertBreakdownResponse = zod.array(GetExpertBreakdownResponseItem)
 
 
 /**
@@ -505,7 +693,9 @@ export const GetExpertDashboardResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled']),
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullish(),
@@ -514,14 +704,16 @@ export const GetExpertDashboardResponse = zod.object({
   "expertIndustry": zod.string().nullish(),
   "createdAt": zod.string()
 })),
-  "pendingRequests": zod.array(zod.object({
+  "completedBookings": zod.array(zod.object({
   "id": zod.number(),
   "clientId": zod.number(),
   "expertId": zod.number(),
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['pending', 'approved', 'completed', 'cancelled']),
+  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "meetLink": zod.string().nullish(),
   "amount": zod.number().nullish(),
@@ -532,7 +724,8 @@ export const GetExpertDashboardResponse = zod.object({
 })),
   "totalEarnings": zod.number(),
   "commissionPaid": zod.number(),
-  "netEarnings": zod.number()
+  "netEarnings": zod.number(),
+  "pendingPayout": zod.number()
 })
 
 
@@ -574,6 +767,21 @@ export const UpdateExpertProfileResponse = zod.object({
   "expertId": zod.number().nullish(),
   "rating": zod.number(),
   "body": zod.string(),
+  "reviewType": zod.enum(['public', 'verified']),
+  "bookingId": zod.number().nullish(),
+  "clientId": zod.number().nullish(),
+  "createdAt": zod.string()
+})),
+  "verifiedReviews": zod.array(zod.object({
+  "id": zod.number(),
+  "reviewerName": zod.string(),
+  "businessName": zod.string().nullish(),
+  "expertId": zod.number().nullish(),
+  "rating": zod.number(),
+  "body": zod.string(),
+  "reviewType": zod.enum(['public', 'verified']),
+  "bookingId": zod.number().nullish(),
+  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 }))
 })

@@ -5,6 +5,7 @@
  * ScaleWise API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingPayoutStatus } from './bookingPayoutStatus';
 import type { BookingSessionType } from './bookingSessionType';
 import type { BookingStatus } from './bookingStatus';
 
@@ -16,6 +17,9 @@ export interface Booking {
   scheduledTime: string;
   durationMinutes: number;
   status: BookingStatus;
+  payoutStatus: BookingPayoutStatus;
+  /** @nullable */
+  payoutPaidAt?: string | null;
   /** @nullable */
   notes?: string | null;
   /** @nullable */
