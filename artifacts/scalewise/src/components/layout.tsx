@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
 const P = {
   blue:   "#6395EE",
@@ -65,36 +65,55 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          {user ? (
-            <>
-              <div className="hidden md:block text-sm text-muted-foreground">
-                {user.name} ({user.role})
-              </div>
-              {user.role === "admin" && (
-                <Link href="/admin">
-                  <Button variant="ghost" size="sm">Admin Dashboard</Button>
-                </Link>
-              )}
-              {user.role === "expert" && (
-                <Link href="/expert/dashboard">
-                  <Button variant="ghost" size="sm">My Dashboard</Button>
-                </Link>
-              )}
-              {user.role === "client" && (
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">My Dashboard</Button>
-                </Link>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                disabled={logout.isPending}
-              >
-                {logout.isPending ? "Logging out…" : "Logout"}
-              </Button>
-            </>
-          ) : (
+          {user ? (() => {
+            const roleColor = user.role === "admin" ? P.blue : user.role === "expert" ? P.mgreen : P.mint;
+            const roleDark  = user.role === "admin" ? "#1a3a7a" : user.role === "expert" ? "#1a5730" : "#0f5248";
+            const initials  = user.name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
+            const dashHref  = user.role === "admin" ? "/admin" : user.role === "expert" ? "/expert/dashboard" : "/dashboard";
+            const dashLabel = user.role === "admin" ? "Admin Console" : "My Dashboard";
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-muted/60 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ backgroundColor: roleColor, color: roleDark }}>
+                      {initials}
+                    </span>
+                    <span className="hidden md:flex flex-col items-start leading-none gap-0.5">
+                      <span className="text-sm font-semibold max-w-[120px] truncate">{user.name}</span>
+                      <span className="text-[11px] capitalize px-1.5 py-0.5 rounded-full font-medium"
+                        style={{ backgroundColor: roleColor + "28", color: roleColor === P.mint ? "#0f7a6a" : roleColor }}>
+                        {user.role}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden md:block" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <div className="px-3 py-2.5">
+                    <p className="text-sm font-semibold truncate">{user.name}</p>
+                    <p className="text-xs capitalize mt-0.5 font-medium"
+                      style={{ color: roleColor === P.mint ? "#0f7a6a" : roleColor }}>{user.role}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={dashHref} className="flex items-center gap-2 cursor-pointer">
+                      <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                      {dashLabel}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                    className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4" />
+                    {logout.isPending ? "Logging out…" : "Logout"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })() : (
             <>
               {/* Login dropdown */}
               <DropdownMenu>

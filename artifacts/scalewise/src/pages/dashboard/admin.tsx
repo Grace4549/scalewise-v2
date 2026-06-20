@@ -8,7 +8,7 @@ import {
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Link, Redirect } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -300,6 +300,16 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">
+      {/* Back link */}
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 group">
+        <span className="w-7 h-7 rounded-full border flex items-center justify-center group-hover:border-foreground/40 transition-colors">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 1L3 6l5 5"/>
+          </svg>
+        </span>
+        Back to Home
+      </Link>
+
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <div className="w-1.5 h-12 rounded-full" style={{ background: `linear-gradient(to bottom, ${C.blue}, ${C.mint})` }} />

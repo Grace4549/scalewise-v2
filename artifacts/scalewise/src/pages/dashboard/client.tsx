@@ -23,6 +23,16 @@ export default function ClientDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
+      {/* Back link */}
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 group">
+        <span className="w-7 h-7 rounded-full border flex items-center justify-center group-hover:border-foreground/40 transition-colors">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 1L3 6l5 5"/>
+          </svg>
+        </span>
+        Back to Home
+      </Link>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold">My Dashboard</h1>
         <p className="text-muted-foreground">Manage your expert sessions.</p>
