@@ -86,7 +86,6 @@ export const ListExpertsQueryParams = zod.object({
 export const ListExpertsResponse = zod.object({
   "experts": zod.array(zod.object({
   "id": zod.number(),
-  "userId": zod.number(),
   "name": zod.string(),
   "headline": zod.string(),
   "industry": zod.string(),
@@ -118,7 +117,6 @@ export const GetExpertParams = zod.object({
 
 export const GetExpertResponse = zod.object({
   "id": zod.number(),
-  "userId": zod.number(),
   "name": zod.string(),
   "headline": zod.string(),
   "industry": zod.string(),
@@ -142,8 +140,6 @@ export const GetExpertResponse = zod.object({
   "rating": zod.number(),
   "body": zod.string(),
   "reviewType": zod.enum(['public', 'verified']),
-  "bookingId": zod.number().nullish(),
-  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 })),
   "verifiedReviews": zod.array(zod.object({
@@ -154,8 +150,6 @@ export const GetExpertResponse = zod.object({
   "rating": zod.number(),
   "body": zod.string(),
   "reviewType": zod.enum(['public', 'verified']),
-  "bookingId": zod.number().nullish(),
-  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 }))
 })
@@ -337,8 +331,6 @@ export const ListReviewsResponseItem = zod.object({
   "rating": zod.number(),
   "body": zod.string(),
   "reviewType": zod.enum(['public', 'verified']),
-  "bookingId": zod.number().nullish(),
-  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 })
 export const ListReviewsResponse = zod.array(ListReviewsResponseItem)
@@ -726,7 +718,6 @@ export const MarkExpertPaidResponse = zod.object({
 export const GetExpertDashboardResponse = zod.object({
   "expert": zod.object({
   "id": zod.number(),
-  "userId": zod.number(),
   "name": zod.string(),
   "headline": zod.string(),
   "industry": zod.string(),
@@ -801,7 +792,6 @@ export const UpdateExpertProfileBody = zod.object({
 
 export const UpdateExpertProfileResponse = zod.object({
   "id": zod.number(),
-  "userId": zod.number(),
   "name": zod.string(),
   "headline": zod.string(),
   "industry": zod.string(),
@@ -825,8 +815,6 @@ export const UpdateExpertProfileResponse = zod.object({
   "rating": zod.number(),
   "body": zod.string(),
   "reviewType": zod.enum(['public', 'verified']),
-  "bookingId": zod.number().nullish(),
-  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 })),
   "verifiedReviews": zod.array(zod.object({
@@ -837,8 +825,6 @@ export const UpdateExpertProfileResponse = zod.object({
   "rating": zod.number(),
   "body": zod.string(),
   "reviewType": zod.enum(['public', 'verified']),
-  "bookingId": zod.number().nullish(),
-  "clientId": zod.number().nullish(),
   "createdAt": zod.string()
 }))
 })

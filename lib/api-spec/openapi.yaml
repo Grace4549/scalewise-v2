@@ -785,11 +785,9 @@ components:
 
     Expert:
       type: object
-      required: [id, userId, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt]
+      required: [id, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt]
       properties:
         id:
-          type: integer
-        userId:
           type: integer
         name:
           type: string
@@ -842,11 +840,9 @@ components:
 
     ExpertProfile:
       type: object
-      required: [id, userId, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt, reviews, verifiedReviews]
+      required: [id, name, headline, industry, yearsExperience, rating, totalSessions, status, createdAt, reviews, verifiedReviews]
       properties:
         id:
-          type: integer
-        userId:
           type: integer
         name:
           type: string
@@ -1131,10 +1127,6 @@ components:
         reviewType:
           type: string
           enum: [public, verified]
-        bookingId:
-          type: ["integer", "null"]
-        clientId:
-          type: ["integer", "null"]
         createdAt:
           type: string
 

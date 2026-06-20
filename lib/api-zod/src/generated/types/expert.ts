@@ -9,7 +9,6 @@ import type { ExpertStatus } from './expertStatus';
 
 export interface Expert {
   id: number;
-  userId: number;
   name: string;
   headline: string;
   industry: string;

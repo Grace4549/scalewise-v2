@@ -341,7 +341,6 @@ export function formatExpert(expert: {
 }) {
   return {
     id: expert.id,
-    userId: expert.userId ?? 0,
     name: expert.name,
     headline: expert.headline ?? "",
     industry: expert.industry,
@@ -414,8 +413,6 @@ export function formatReview(r: {
     rating: r.rating,
     body: r.body,
     reviewType: r.reviewType,
-    bookingId: r.bookingId ?? null,
-    clientId: r.clientId ?? null,
     createdAt: r.createdAt.toISOString(),
   };
 }

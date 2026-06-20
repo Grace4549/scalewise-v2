@@ -17,9 +17,5 @@ export interface Review {
   rating: number;
   body: string;
   reviewType: ReviewReviewType;
-  /** @nullable */
-  bookingId?: number | null;
-  /** @nullable */
-  clientId?: number | null;
   createdAt: string;
 }

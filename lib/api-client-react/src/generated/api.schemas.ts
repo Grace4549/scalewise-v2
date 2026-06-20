@@ -68,7 +68,6 @@ export const ExpertStatus = {
 
 export interface Expert {
   id: number;
-  userId: number;
   name: string;
   headline: string;
   industry: string;
@@ -117,16 +116,11 @@ export interface Review {
   rating: number;
   body: string;
   reviewType: ReviewReviewType;
-  /** @nullable */
-  bookingId?: number | null;
-  /** @nullable */
-  clientId?: number | null;
   createdAt: string;
 }
 
 export interface ExpertProfile {
   id: number;
-  userId: number;
   name: string;
   headline: string;
   industry: string;

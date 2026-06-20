@@ -9,7 +9,6 @@ import type { Review } from './review';
 
 export interface ExpertProfile {
   id: number;
-  userId: number;
   name: string;
   headline: string;
   industry: string;
