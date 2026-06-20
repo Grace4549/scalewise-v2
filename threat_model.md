@@ -27,7 +27,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 ## Scan Anchors
 
 - **Production entry points:** `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/api-server/src/routes/*.ts`, `artifacts/scalewise/src/App.tsx`.
-- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers in `artifacts/api-server/src/routes/auth.ts`, booking lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, and route handlers for `messages`, `experts`, `reviews`, and `admin`.
+- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers and expert-account registration in `artifacts/api-server/src/routes/auth.ts`, expert application and public profile handlers in `artifacts/api-server/src/routes/experts.ts`, booking creation and lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, and route handlers for `messages`, `reviews`, and `admin`.
 - **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
 - **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, and public search/listing endpoints under `/api/experts*`.
 - **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
@@ -44,9 +44,13 @@ Password-based login is also in scope. Password verifiers must resist offline cr
 
 Account recovery is part of the same identity boundary. Password reset tokens must be high-entropy, short-lived bearer secrets, must not be logged or exposed through operational tooling, and must not be recoverable from low-privilege observability paths.
 
+Expert onboarding sits on the same boundary. Approval of an expert application MUST NOT by itself grant identity proof for the eventual expert account; the platform must verify that the registrant controls the approved email address or other approved identity token before linking the account to the expert profile.
+
 ### Tampering
 
 Clients, experts, and admins can all change marketplace state: account creation, expert applications, booking creation, booking status, payout state, profile edits, and messages. The backend must calculate sensitive fields server-side, validate all state transitions, and ensure users can only modify resources they own or are explicitly authorized to manage.
+
+Booking creation is especially sensitive because it crosses pricing, scheduling, and communications boundaries at once. The backend must reject unsupported session types, derive or validate allowed durations server-side, and avoid trusting client-controlled booking terms that can alter what experts and admins see or act on.
 
 ### Information Disclosure
 
