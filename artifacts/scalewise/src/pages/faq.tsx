@@ -38,7 +38,7 @@ const FAQ_GROUPS = [
       },
       {
         q: "What happens after I book?",
-        a: "You will receive a confirmation with a Google Meet link and access to our messaging platform to share details with your expert before the call.",
+        a: "You will be prompted to complete payment via M-Pesa. Once payment is confirmed, you will receive a Google Meet link and access to our messaging platform to share details with your expert before the call.",
       },
     ],
   },
@@ -52,7 +52,7 @@ const FAQ_GROUPS = [
       },
       {
         q: "How do I pay?",
-        a: "We accept M-Pesa, Airtel Money, and all major credit and debit cards.",
+        a: "We currently accept M-Pesa. More payment methods — including card and Airtel Money — are coming soon.",
       },
     ],
   },

@@ -202,7 +202,7 @@ export default function ExpertProfile() {
       },
     }, {
       onSuccess: () => {
-        toast({ title: "Booking request sent!", description: "You'll receive a Google Meet link once confirmed." });
+        toast({ title: "Booking request sent!", description: "Pay via M-Pesa to confirm — your Google Meet link will be sent once payment is received." });
         form.reset();
       },
       onError: (err: any) => {
@@ -406,7 +406,7 @@ export default function ExpertProfile() {
                 )}
 
                 <p className="text-xs text-center text-muted-foreground">
-                  You'll receive a Google Meet link upon confirmation.
+                  Pay via M-Pesa to confirm. Your Google Meet link will be sent once payment is received.
                 </p>
               </form>
             </Form>

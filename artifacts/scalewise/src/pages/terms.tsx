@@ -19,7 +19,7 @@ export default function Terms() {
       <ul>
         <li>Clients pay the session fee listed on the Expert's profile at the time of booking.</li>
         <li>Experts set their own session fees.</li>
-        <li>Payments are processed securely via third-party providers.</li>
+        <li>Payments are currently processed via M-Pesa. Additional payment methods are coming soon.</li>
         <li>Cancellations and refunds are subject to our cancellation policy.</li>
       </ul>
 

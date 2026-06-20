@@ -45,8 +45,8 @@ const HOW_IT_WORKS = [
   },
   {
     step: "03", color: P.mgreen, bg: "rgba(136,207,168,0.09)",  border: "rgba(136,207,168,0.22)",
-    title: "Book a session",
-    desc:  "Pick a time that works. Get a Google Meet link instantly. Pay securely on the spot.",
+    title: "Book & pay via M-Pesa",
+    desc:  "Pick a time, pay securely via M-Pesa, and receive a Google Meet link straight to your inbox — ready to go.",
   },
   {
     step: "04", color: P.mint,   bg: "rgba(133,222,203,0.09)",  border: "rgba(133,222,203,0.22)",
