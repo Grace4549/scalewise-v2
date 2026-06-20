@@ -14,6 +14,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 - **Expert application data** — applicant identity, contact information, pricing, biography, skills, and approval status. This includes PII and business-sensitive profile details.
 - **Administrative analytics and commission data** — commission rates, breakdowns, pending payouts, and cross-platform booking visibility. These are explicitly restricted to expert/admin surfaces.
 - **Application secrets** — `DATABASE_URL`, `SESSION_SECRET`, and any future third-party secrets. Secret compromise would let an attacker forge sessions or directly access backend data.
+- **Recovery tokens and operational logs** — password reset tokens and the logs or log sinks that may contain sensitive workflow data. Exposure enables direct account takeover or disclosure of privileged recovery artifacts.
 
 ## Trust Boundaries
 
@@ -26,8 +27,9 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 ## Scan Anchors
 
 - **Production entry points:** `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/api-server/src/routes/*.ts`, `artifacts/scalewise/src/App.tsx`.
-- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, and route handlers for `auth`, `bookings`, `messages`, `experts`, `reviews`, and `admin`.
+- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers in `artifacts/api-server/src/routes/auth.ts`, booking lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, and route handlers for `messages`, `experts`, `reviews`, and `admin`.
 - **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
+- **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, and public search/listing endpoints under `/api/experts*`.
 - **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
 - **Intentional public behavior:** `POST /api/reviews` is a product-defined unauthenticated “public review” surface; future scans should not treat lack of auth on that route alone as a vulnerability unless another control boundary is bypassed.
 - **Usually ignore as dev-only:** `artifacts/mockup-sandbox/`, generated `dist/` outputs, and workspace tooling unless they are executed in production paths.
@@ -39,6 +41,8 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 ScaleWise relies on server-side sessions stored in cookies. The application must use a high-entropy production session secret, protect session cookies from cross-site abuse, and ensure that only valid authenticated sessions can reach booking, messaging, expert, and admin routes.
 
 Password-based login is also in scope. Password verifiers must resist offline cracking if the user table is exposed, and login endpoints must not allow trivial credential-stuffing or brute-force attacks.
+
+Account recovery is part of the same identity boundary. Password reset tokens must be high-entropy, short-lived bearer secrets, must not be logged or exposed through operational tooling, and must not be recoverable from low-privilege observability paths.
 
 ### Tampering
 
