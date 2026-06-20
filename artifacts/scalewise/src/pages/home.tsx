@@ -698,8 +698,20 @@ function IndustriesSection() {
 
 // ── Main Page ──────────────────────────────────────────────────
 export default function Home() {
-  const [search, setSearch]   = useState("");
-  const [, navigate]          = useLocation();
+  const [search, setSearch]       = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef          = useRef<HTMLDivElement>(null);
+  const [, navigate]              = useLocation();
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   const { data: expertData, isLoading: expertsLoading } = useListExperts({ limit: 3 });
   const { data: reviewsData } = useListReviews();
 
@@ -769,19 +781,69 @@ export default function Home() {
           {/* Full-width search bar + trust indicators */}
           <Reveal delay={180}>
             <div className="flex flex-col items-center gap-4">
-              <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border w-full max-w-3xl">
-                <Input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleSearch()}
-                  placeholder="Search by industry or challenge, e.g. Beauty & Salons or Growth"
-                  className="border-0 shadow-none focus-visible:ring-0 text-base h-11 min-w-0"
-                />
-                <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0" onClick={handleSearch}>
-                  Find My Expert
-                </Button>
+              <div ref={searchWrapperRef} className="relative w-full max-w-3xl">
+                <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border w-full">
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={e => { setSearch(e.target.value); setShowSuggestions(true); }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") { setShowSuggestions(false); handleSearch(); }
+                      if (e.key === "Escape") setShowSuggestions(false);
+                    }}
+                    placeholder="Search by industry or challenge, e.g. Beauty & Salons or Growth"
+                    className="border-0 shadow-none focus-visible:ring-0 text-base h-11 min-w-0"
+                  />
+                  <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0"
+                    onClick={() => { setShowSuggestions(false); handleSearch(); }}>
+                    Find My Expert
+                  </Button>
+                </div>
+
+                {/* Industry autocomplete dropdown */}
+                {showSuggestions && (() => {
+                  const q = search.trim().toLowerCase();
+                  const matches = INDUSTRIES.filter(ind => !q || ind.name.toLowerCase().includes(q));
+                  return matches.length > 0 ? (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-card border rounded-2xl shadow-xl z-50 overflow-hidden">
+                      <p className="px-4 pt-3 pb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Industries</p>
+                      {matches.map(ind => (
+                        <button
+                          key={ind.name}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors text-left"
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            setSearch(ind.name);
+                            setShowSuggestions(false);
+                            navigate(`/experts?search=${encodeURIComponent(ind.name)}`);
+                          }}
+                        >
+                          <span className="text-base leading-none">{ind.icon}</span>
+                          <span className="font-medium" style={{ color: ind.color }}>{ind.name}</span>
+                        </button>
+                      ))}
+                      {q && (
+                        <>
+                          <div className="mx-4 my-1 border-t" />
+                          <button
+                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted/60 transition-colors text-left"
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setShowSuggestions(false);
+                              handleSearch();
+                            }}
+                          >
+                            <span className="text-base leading-none">🔍</span>
+                            <span className="text-muted-foreground">Search for <strong className="text-foreground">&ldquo;{search}&rdquo;</strong> as a challenge</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
               </div>
+
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
                 {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
                   <span key={txt} className="flex items-center gap-1.5">
