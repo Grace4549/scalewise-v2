@@ -85,6 +85,11 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
   if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
+  if (expert.userId === req.userId) {
+    res.status(403).json({ error: "Experts cannot book their own profile" });
+    return;
+  }
+
   const amount = getPriceForSession(expert, sessionType);
   const meetLink = generateMeetLink();
 
@@ -150,7 +155,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
     .where(eq(bookingsTable.id, id))
     .returning();
 
-  if (parsed.data.status === "completed") {
+  if (parsed.data.status === "completed" && booking.status !== "completed") {
     await db.update(expertsTable)
       .set({ totalSessions: sql`${expertsTable.totalSessions} + 1` })
       .where(eq(expertsTable.id, booking.expertId));

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, reviewsTable, bookingsTable, usersTable } from "@workspace/db";
+import { db, reviewsTable, bookingsTable, usersTable, expertsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { CreateReviewBody, CreateVerifiedReviewBody, ListReviewsQueryParams } from "@workspace/api-zod";
@@ -77,6 +77,16 @@ router.post("/reviews/verified", requireAuth, async (req, res): Promise<void> =>
 
   const { expertId, bookingId, rating, body, businessName } = parsed.data;
 
+  const [expert] = await db
+    .select()
+    .from(expertsTable)
+    .where(eq(expertsTable.id, expertId));
+
+  if (expert && expert.userId === req.userId) {
+    res.status(403).json({ error: "Experts cannot review their own profile" });
+    return;
+  }
+
   const [booking] = await db
     .select()
     .from(bookingsTable)
@@ -91,6 +101,21 @@ router.post("/reviews/verified", requireAuth, async (req, res): Promise<void> =>
 
   if (!booking) {
     res.status(400).json({ error: "No completed booking found for this expert" });
+    return;
+  }
+
+  const [existingReview] = await db
+    .select()
+    .from(reviewsTable)
+    .where(
+      and(
+        eq(reviewsTable.bookingId, bookingId),
+        eq(reviewsTable.clientId, req.userId!)
+      )
+    );
+
+  if (existingReview) {
+    res.status(409).json({ error: "A review for this booking already exists" });
     return;
   }
 
