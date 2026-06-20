@@ -744,32 +744,32 @@ export default function Home() {
               </Reveal>
               <Reveal delay={120}>
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                  Stuck on <strong style={{ color: P.mgreen }}>pricing</strong>? Losing <strong style={{ color: P.blue }}>staff</strong>? Stalled on <strong style={{ color: P.mint }}>growth</strong>?{" "}
-                  Talk to someone who has actually fixed this exact problem before. Not a textbook. Not a guess. Just real answers from people who have built what you are building.
+                  Stuck on <strong style={{ color: P.mgreen }}>pricing</strong>? Losing <strong style={{ color: P.blue }}>staff</strong>? Stalled on <strong style={{ color: P.mint }}>growth</strong>? Or wrestling with a problem you can&apos;t even put into words yet?{" "}
+                  Talk to someone who has already solved it. Not a textbook. Not a guess. Real answers, from people who have built exactly what you are building.
                 </p>
               </Reveal>
               <Reveal delay={180}>
-                <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border max-w-xl">
-                  <Input
-                    type="text"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSearch()}
-                    placeholder="Try 'pricing', 'staff turnover', 'growth'..."
-                    className="border-0 shadow-none focus-visible:ring-0 text-base h-11"
-                  />
-                  <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0" onClick={handleSearch}>
-                    Find My Expert
-                  </Button>
-                </div>
-              </Reveal>
-              <Reveal delay={220}>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
-                    <span key={txt} className="flex items-center gap-1.5">
-                      <span className="font-bold" style={{ color: col }}>✓</span> {txt}
-                    </span>
-                  ))}
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex gap-3 p-2 bg-card rounded-2xl shadow-lg border w-full">
+                    <Input
+                      type="text"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleSearch()}
+                      placeholder="Search by industry or challenge, e.g. Beauty & Salons or Growth"
+                      className="border-0 shadow-none focus-visible:ring-0 text-base h-11 min-w-0"
+                    />
+                    <Button size="lg" className="rounded-xl h-11 px-6 whitespace-nowrap shrink-0" onClick={handleSearch}>
+                      Find My Expert
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                    {[["Verified practitioners", P.mgreen], ["13 industries", P.blue], ["Real results", P.mint]].map(([txt, col]) => (
+                      <span key={txt} className="flex items-center gap-1.5">
+                        <span className="font-bold" style={{ color: col }}>✓</span> {txt}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </Reveal>
             </div>
