@@ -42,6 +42,11 @@ function JourneyFlowDiagram() {
             <stop offset="45%"  stopColor="#88CFA8"/>
             <stop offset="100%" stopColor="#85DECB"/>
           </linearGradient>
+          <clipPath id="sw-cp1"><path d="M -9,-78 C 29,-76 69,-47 76,-7 C 83,34 58,72 18,83 C -22,94 -67,72 -78,29 C -90,-13 -69,-56 -40,-76 C -25,-87 -47,-81 -9,-78 Z"/></clipPath>
+          <clipPath id="sw-cp2"><path d="M -4,-85 C 34,-81 74,-52 78,-9 C 83,34 56,76 13,87 C -29,99 -74,72 -85,25 C -96,-22 -67,-67 -31,-83 C -16,-92 -43,-90 -4,-85 Z"/></clipPath>
+          <clipPath id="sw-cp3"><path d="M -72,-47 C -72,-74 -43,-87 2,-85 C 47,-83 78,-63 83,-22 C 87,18 69,67 27,83 C -16,99 -65,78 -76,38 C -87,-2 -72,-20 -72,-47 Z"/></clipPath>
+          <clipPath id="sw-cp4"><path d="M -2,-81 C 38,-78 76,-52 81,-7 C 85,38 58,76 16,87 C -27,99 -72,74 -81,29 C -90,-16 -67,-60 -34,-78 C -18,-90 -40,-83 -2,-81 Z"/></clipPath>
+          <clipPath id="sw-cp5"><path d="M -4,-87 C 38,-83 81,-54 85,-7 C 90,40 60,85 16,94 C -29,103 -78,78 -90,29 C -101,-20 -74,-69 -38,-87 C -20,-99 -47,-92 -4,-87 Z"/></clipPath>
         </defs>
 
         {/* ── TOP STAGE LABELS ── */}
@@ -59,7 +64,7 @@ function JourneyFlowDiagram() {
 
         {/* ═══ STAGE 1 — THE PROBLEM ═══ */}
         <g transform="translate(112,152)" className="sw-sg">
-          <g className="sw-ga">
+          <g className="sw-ga" clipPath="url(#sw-cp1)">
             <ellipse cx="0" cy="6" rx="90" ry="74" fill="#90B8D6" fillOpacity="0.12" className="sw-gl"/>
             <path d="M -9,-78 C 29,-76 69,-47 76,-7 C 83,34 58,72 18,83 C -22,94 -67,72 -78,29 C -90,-13 -69,-56 -40,-76 C -25,-87 -47,-81 -9,-78 Z"
               fill="#90B8D6" fillOpacity="0.32" stroke="#90B8D6" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
@@ -74,7 +79,7 @@ function JourneyFlowDiagram() {
 
         {/* ═══ STAGE 2 — EXPERTS APPEAR ═══ */}
         <g transform="translate(308,144)" className="sw-sg">
-          <g className="sw-gb">
+          <g className="sw-gb" clipPath="url(#sw-cp2)">
             <ellipse cx="-10" cy="8" rx="92" ry="76" fill="#6395EE" fillOpacity="0.1" className="sw-gl" style={{animationDelay:".9s"}}/>
             <path d="M -4,-85 C 34,-81 74,-52 78,-9 C 83,34 56,76 13,87 C -29,99 -74,72 -85,25 C -96,-22 -67,-67 -31,-83 C -16,-92 -43,-90 -4,-85 Z"
               fill="#6395EE" fillOpacity="0.28" stroke="#6395EE" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
@@ -96,7 +101,7 @@ function JourneyFlowDiagram() {
 
         {/* ═══ STAGE 3 — BOOK & PAY ═══ */}
         <g transform="translate(530,152)" className="sw-sg">
-          <g className="sw-gc">
+          <g className="sw-gc" clipPath="url(#sw-cp3)">
             <ellipse cx="0" cy="6" rx="92" ry="76" fill="#88CFA8" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.6s"}}/>
             <path d="M -72,-47 C -72,-74 -43,-87 2,-85 C 47,-83 78,-63 83,-22 C 87,18 69,67 27,83 C -16,99 -65,78 -76,38 C -87,-2 -72,-20 -72,-47 Z"
               fill="#88CFA8" fillOpacity="0.3" stroke="#88CFA8" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
@@ -117,7 +122,7 @@ function JourneyFlowDiagram() {
 
         {/* ═══ STAGE 4 — THE MEETING ═══ */}
         <g transform="translate(750,144)" className="sw-sg">
-          <g className="sw-gd">
+          <g className="sw-gd" clipPath="url(#sw-cp4)">
             <ellipse cx="0" cy="8" rx="90" ry="75" fill="#85DECB" fillOpacity="0.12" className="sw-gl" style={{animationDelay:".6s"}}/>
             <path d="M -2,-81 C 38,-78 76,-52 81,-7 C 85,38 58,76 16,87 C -27,99 -72,74 -81,29 C -90,-16 -67,-60 -34,-78 C -18,-90 -40,-83 -2,-81 Z"
               fill="#85DECB" fillOpacity="0.28" stroke="#85DECB" strokeWidth="2" strokeOpacity="0.5" className="sw-ms"/>
@@ -137,7 +142,7 @@ function JourneyFlowDiagram() {
 
         {/* ═══ STAGE 5 — SUCCESS ═══ */}
         <g transform="translate(948,152)" className="sw-sg">
-          <g className="sw-ge">
+          <g className="sw-ge" clipPath="url(#sw-cp5)">
             <ellipse cx="4" cy="6" rx="94" ry="78" fill="url(#sw-g5)" fillOpacity="0.12" className="sw-gl" style={{animationDelay:"1.2s"}}/>
             <path d="M -4,-87 C 38,-83 81,-54 85,-7 C 90,40 60,85 16,94 C -29,103 -78,78 -90,29 C -101,-20 -74,-69 -38,-87 C -20,-99 -47,-92 -4,-87 Z"
               fill="url(#sw-g5)" fillOpacity="0.28" stroke="url(#sw-g5)" strokeWidth="2" strokeOpacity="0.55" className="sw-ms"/>
