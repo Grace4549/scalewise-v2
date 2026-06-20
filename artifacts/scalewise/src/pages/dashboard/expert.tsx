@@ -145,6 +145,7 @@ export default function ExpertDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedThread, setSelectedThread] = useState<SelectedThread>(null);
+  const [activeTab, setActiveTab] = useState("sessions");
 
   if (authLoading || dashLoading) {
     return (
@@ -196,7 +197,7 @@ export default function ExpertDashboard() {
         </Badge>
       </div>
 
-      <Tabs defaultValue="sessions" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 h-auto bg-muted/40 p-1.5 rounded-xl inline-flex gap-1 border">
           <TabsTrigger value="sessions" className="rounded-lg font-medium px-5">Sessions & Earnings</TabsTrigger>
           <TabsTrigger value="inbox" className="rounded-lg font-medium px-5">
@@ -264,6 +265,10 @@ export default function ExpertDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline"
+                        onClick={() => { setSelectedThread({ type: "booking", bookingId: booking.id }); setActiveTab("inbox"); }}>
+                        💬 Message Client
+                      </Button>
                       <Button size="sm" className="hover:opacity-90"
                         style={{ backgroundColor: C.green, color: "#1a5730" }}
                         onClick={() => handleStatusUpdate(booking.id, "completed")}>Mark Completed</Button>

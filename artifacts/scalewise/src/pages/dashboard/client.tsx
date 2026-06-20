@@ -84,6 +84,7 @@ export default function ClientDashboard() {
   const { data: bookings, isLoading: bookingsLoading } = useListMyBookings();
   const { data: threads, isLoading: threadsLoading } = useGetInbox();
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("bookings");
 
   if (authLoading) return <div className="p-8"><Skeleton className="h-[400px]" /></div>;
   if (!user || user.role !== "client") return <Redirect to="/login" />;
@@ -115,7 +116,7 @@ export default function ClientDashboard() {
         <p className="text-sm text-muted-foreground mt-0.5">Welcome back, {user.name}</p>
       </div>
 
-      <Tabs defaultValue="bookings" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 h-auto bg-muted/40 p-1.5 rounded-xl inline-flex gap-1 border">
           <TabsTrigger value="bookings" className="rounded-lg font-medium px-5">
             My Sessions
@@ -164,9 +165,15 @@ export default function ClientDashboard() {
                         )}
                       </div>
                     </div>
-                    <Link href={`/experts/${booking.expertId}`}>
-                      <Button variant="secondary">View Profile</Button>
-                    </Link>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" size="sm"
+                        onClick={() => { setSelectedBookingId(booking.id); setActiveTab("inbox"); }}>
+                        💬 Message Expert
+                      </Button>
+                      <Link href={`/experts/${booking.expertId}`}>
+                        <Button variant="secondary" size="sm">View Profile</Button>
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -229,7 +236,9 @@ export default function ClientDashboard() {
                 <>
                   <div className="p-4 border-b" style={{ backgroundColor: C.blue + "15" }}>
                     <h3 className="font-semibold text-sm" style={{ color: C.blue }}>
-                      {threads?.find((t) => t.bookingId === selectedBookingId)?.otherPartyName ?? "Session Thread"}
+                      {threads?.find((t) => t.bookingId === selectedBookingId)?.otherPartyName
+                        ?? bookings?.find((b) => b.id === selectedBookingId)?.expertName
+                        ?? "Session Thread"}
                     </h3>
                     <p className="text-xs text-muted-foreground">Booking #{selectedBookingId}</p>
                   </div>

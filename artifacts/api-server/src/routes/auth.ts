@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, expertsTable } from "@workspace/db";
+import crypto from "crypto";
+import { db, usersTable, expertsTable, passwordResetTokensTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { hashPassword, verifyPassword, requireAuth } from "../lib/auth";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
@@ -140,6 +141,63 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     bio: user.bio ?? null,
     createdAt: user.createdAt.toISOString(),
   });
+});
+
+router.post("/auth/forgot-password", async (req, res): Promise<void> => {
+  const { email } = req.body;
+  if (!email || typeof email !== "string") {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase().trim()));
+
+  if (!user) {
+    res.json({ ok: true });
+    return;
+  }
+
+  await db.delete(passwordResetTokensTable).where(eq(passwordResetTokensTable.userId, user.id));
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await db.insert(passwordResetTokensTable).values({ userId: user.id, token, expiresAt });
+
+  const domains = process.env.REPLIT_DOMAINS?.split(",")[0];
+  const baseUrl = domains ? `https://${domains}` : (process.env.SITE_URL || "http://localhost:80");
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  req.log.info({ resetUrl, email: user.email }, "Password reset link — share with user or configure SMTP to send automatically");
+
+  res.json({ ok: true });
+});
+
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    res.status(400).json({ error: "Token and new password are required" });
+    return;
+  }
+  if (typeof password !== "string" || password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+
+  const [resetToken] = await db.select().from(passwordResetTokensTable)
+    .where(eq(passwordResetTokensTable.token, token));
+
+  if (!resetToken || resetToken.expiresAt < new Date()) {
+    res.status(400).json({ error: "This reset link has expired or is invalid. Please request a new one." });
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, resetToken.userId));
+  await db.delete(passwordResetTokensTable).where(eq(passwordResetTokensTable.id, resetToken.id));
+
+  res.json({ ok: true });
 });
 
 export default router;

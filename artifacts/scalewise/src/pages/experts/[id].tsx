@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useGetExpert, useCreateBooking, useCreateReview } from "@workspace/api-client-react";
+import { useGetExpert, useCreateBooking, useCreateVerifiedReview, useListMyBookings } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,97 +59,147 @@ function ReviewCard({ review }: { review: ReviewData }) {
 const P_MGREEN = "#88CFA8";
 const P_BLUE   = "#6395EE";
 
-function LeaveExpertReviewForm({ expertId, defaultName }: { expertId: number; defaultName?: string }) {
-  const [open,     setOpen]     = useState(false);
-  const [name,     setName]     = useState(defaultName ?? "");
-  const [business, setBusiness] = useState("");
-  const [rating,   setRating]   = useState(5);
-  const [body,     setBody]     = useState("");
-  const [done,     setDone]     = useState(false);
-  const createReview = useCreateReview();
+function ClientReviewForm({ expertId }: { expertId: number }) {
+  const { data: myBookings } = useListMyBookings();
+  const createVerifiedReview = useCreateVerifiedReview();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !body.trim()) return;
-    createReview.mutate(
-      { data: { reviewerName: name.trim(), businessName: business.trim() || undefined, rating, body: body.trim(), expertId } },
-      { onSuccess: () => { setDone(true); setBody(""); setBusiness(""); setRating(5); } }
-    );
-  };
+  const completedBookings = myBookings?.filter(
+    (b) => b.expertId === expertId && b.status === "completed"
+  ) ?? [];
 
-  if (done) {
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [rating, setRating] = useState(5);
+  const [body, setBody] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [done, setDone] = useState(false);
+
+  const bookingId = selectedBookingId ?? (completedBookings.length === 1 ? completedBookings[0].id : null);
+
+  if (completedBookings.length === 0) {
     return (
-      <div className="bg-card border p-8 rounded-3xl shadow-sm text-center" style={{ borderColor: P_MGREEN + "40" }}>
-        <div className="text-3xl mb-3">🙏</div>
-        <p className="font-semibold text-lg" style={{ color: P_MGREEN }}>Thank you for your review!</p>
-        <p className="text-sm text-muted-foreground mt-1">Your feedback helps other business owners find the right expert.</p>
-        <button onClick={() => setDone(false)} className="text-sm underline mt-4" style={{ color: P_MGREEN }}>
-          Leave another review
-        </button>
+      <div className="text-center py-6">
+        <div className="text-3xl mb-3">🎓</div>
+        <p className="font-semibold">No completed sessions yet</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Only clients who have completed a session with this expert can leave a review.
+        </p>
+        <Link href={`/experts`}>
+          <Button variant="outline" className="mt-4">Browse Experts</Button>
+        </Link>
       </div>
     );
   }
 
+  if (done) {
+    return (
+      <div className="text-center py-6">
+        <div className="text-3xl mb-3">🙏</div>
+        <p className="font-semibold text-lg" style={{ color: P_MGREEN }}>Thank you for your review!</p>
+        <p className="text-sm text-muted-foreground mt-1">Your verified review helps other business owners.</p>
+      </div>
+    );
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingId || !body.trim()) return;
+    createVerifiedReview.mutate(
+      { data: { expertId, bookingId, rating, body: body.trim(), businessName: businessName.trim() || undefined } },
+      {
+        onSuccess: () => setDone(true),
+        onError: (err: any) => toast({ title: "Review failed", description: err.message, variant: "destructive" }),
+      }
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {completedBookings.length > 1 && (
+        <div>
+          <label className="block text-sm font-medium mb-1.5">Which session are you reviewing?</label>
+          <select
+            className="w-full h-10 px-3 rounded-lg border bg-background text-sm"
+            value={bookingId ?? ""}
+            onChange={(e) => setSelectedBookingId(Number(e.target.value) || null)}
+            required
+          >
+            <option value="">Select a session…</option>
+            {completedBookings.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.sessionType.replace(/_/g, " ")} — {new Date(b.scheduledTime).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Rating</label>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <button key={s} type="button" onClick={() => setRating(s)}
+              className="text-3xl transition-transform hover:scale-110 focus:outline-none">
+              <span style={{ color: s <= rating ? P_MGREEN : "#d1d5db" }}>★</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Business <span className="text-muted-foreground font-normal">(optional)</span>
+        </label>
+        <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
+          placeholder="Mama Chiku's Salon" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Your Review <span className="text-red-500">*</span></label>
+        <Textarea value={body} onChange={(e) => setBody(e.target.value)}
+          placeholder="Share what you found most valuable about working with this expert…"
+          rows={4} required />
+      </div>
+
+      <Button type="submit" className="w-full"
+        disabled={createVerifiedReview.isPending || !body.trim() || !bookingId}
+        style={{ background: P_MGREEN, color: "#083d2e" }}>
+        {createVerifiedReview.isPending ? "Submitting…" : "Submit Verified Review"}
+      </Button>
+    </form>
+  );
+}
+
+function GatedReviewSection({ expertId, user }: { expertId: number; user: any | null }) {
+  if (!user) {
+    return (
+      <div className="bg-card border p-8 rounded-3xl shadow-sm text-center">
+        <h2 className="text-2xl font-bold mb-2">Leave a Review</h2>
+        <p className="text-muted-foreground text-sm mb-5">
+          Only clients with a completed session can review this expert.
+        </p>
+        <Link href="/login">
+          <Button style={{ background: P_BLUE }}>Log in to Review</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (user.role === "expert" || user.role === "admin") return null;
+
   return (
     <div className="bg-card border p-8 rounded-3xl shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="text-2xl font-bold">Leave a Review</h2>
-        <span className="text-xs text-muted-foreground">No account needed</span>
+        <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+          style={{ backgroundColor: P_MGREEN + "20", color: "#1a5730" }}>
+          ✓ Verified sessions only
+        </span>
       </div>
-      {!open ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Worked with this expert? Share your experience — it helps other business owners.
-          </p>
-          <Button onClick={() => setOpen(true)} style={{ background: P_MGREEN, color: "#083d2e" }}>
-            Write a Review →
-          </Button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Star picker */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Rating</label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map(s => (
-                <button key={s} type="button" onClick={() => setRating(s)}
-                  className="text-3xl transition-transform hover:scale-110 focus:outline-none">
-                  <span style={{ color: s <= rating ? P_MGREEN : "#d1d5db" }}>★</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Your Name <span className="text-red-500">*</span></label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Business <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Mama Chiku's Salon" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Your Review <span className="text-red-500">*</span></label>
-            <Textarea value={body} onChange={e => setBody(e.target.value)}
-              placeholder="Share what you found most valuable about working with this expert…"
-              rows={4} required />
-          </div>
-
-          <div className="flex gap-3">
-            <Button type="submit" className="flex-1"
-              disabled={createReview.isPending || !name.trim() || !body.trim()}
-              style={{ background: P_MGREEN, color: "#083d2e" }}>
-              {createReview.isPending ? "Submitting…" : "Submit Review"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          </div>
-        </form>
-      )}
+      <p className="text-sm text-muted-foreground mb-6">
+        Your review is linked to a real session and shown as verified.
+      </p>
+      <ClientReviewForm expertId={expertId} />
     </div>
   );
 }
@@ -329,8 +379,8 @@ export default function ExpertProfile() {
             )}
           </div>
 
-          {/* Leave a Review — open to everyone */}
-          <LeaveExpertReviewForm expertId={expertId} defaultName={user?.name} />
+          {/* Leave a Review — gated to clients with completed sessions */}
+          <GatedReviewSection expertId={expertId} user={user} />
         </div>
 
         {/* Sticky Booking Widget */}

@@ -110,7 +110,15 @@ export default function Login() {
             </form>
           </Form>
 
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-4 text-center">
+            <Link href="/forgot-password"
+              className="text-sm hover:underline"
+              style={{ color: isExpert ? P.mgreen : P.blue }}>
+              Forgot your password?
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center text-sm">
             {isExpert ? (
               <>
                 <span className="text-muted-foreground">Not an expert yet? </span>

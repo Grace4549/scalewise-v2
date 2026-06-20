@@ -15,6 +15,8 @@ import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
+import ForgotPassword from "@/pages/auth/forgot-password";
+import ResetPassword from "@/pages/auth/reset-password";
 import ApplyExpert from "@/pages/apply-expert";
 import ExpertsList from "@/pages/experts/index";
 import ExpertProfile from "@/pages/experts/[id]";
@@ -84,6 +86,8 @@ function Router() {
           <Route path="/terms" component={Terms} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route path="/apply-expert" component={ApplyExpert} />
           <Route path="/experts" component={ExpertsList} />
           <Route path="/experts/:id" component={ExpertProfile} />

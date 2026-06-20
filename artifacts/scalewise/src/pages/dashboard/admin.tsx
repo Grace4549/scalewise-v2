@@ -470,6 +470,17 @@ export default function AdminDashboard() {
                           </Button>
                         </div>
                       )}
+                      {app.status === "approved" && (
+                        <Button size="sm" variant="outline" className="shrink-0"
+                          onClick={() => {
+                            const link = `${window.location.origin}/register?role=expert&email=${encodeURIComponent(app.email)}`;
+                            navigator.clipboard.writeText(link).then(() => {
+                              toast({ title: "Invite link copied!", description: "Share with the expert so they can create their login." });
+                            });
+                          }}>
+                          📧 Copy Invite Link
+                        </Button>
+                      )}
                     </div>
                     <div className="bg-muted/30 p-4 rounded-xl text-sm space-y-1.5 mb-3">
                       <p><strong>Headline:</strong> {app.headline}</p>
