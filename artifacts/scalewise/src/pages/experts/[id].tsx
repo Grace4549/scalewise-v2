@@ -52,7 +52,6 @@ function ReviewCard({ review }: { review: ReviewData }) {
       </div>
       <p className="text-muted-foreground leading-relaxed mb-2">"{review.body}"</p>
       <div className="text-sm font-semibold text-foreground">{review.reviewerName}</div>
-      {review.businessName && <div className="text-xs text-muted-foreground">{review.businessName}</div>}
     </div>
   );
 }
