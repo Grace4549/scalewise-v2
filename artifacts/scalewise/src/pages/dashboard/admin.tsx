@@ -304,8 +304,19 @@ export default function AdminDashboard() {
       <div className="mb-8 flex items-center gap-4">
         <div className="w-1.5 h-12 rounded-full" style={{ background: `linear-gradient(to bottom, ${C.blue}, ${C.mint})` }} />
         <div>
-          <h1 className="text-3xl font-bold">Admin Console</h1>
-          <p className="text-muted-foreground">Manage platform operations, payouts, and applications.</p>
+          <h1 className="text-3xl font-bold">
+            <span style={{ color: C.blue }}>Admin</span>
+            {" "}
+            <span style={{ color: C.mblue }}>Console</span>
+          </h1>
+          <p className="text-sm font-medium mt-0.5">
+            <span style={{ color: C.green }}>Manage</span>
+            <span className="text-muted-foreground"> platform operations, </span>
+            <span style={{ color: C.mint }}>payouts</span>
+            <span className="text-muted-foreground">, and </span>
+            <span style={{ color: C.blue }}>applications</span>
+            <span className="text-muted-foreground">.</span>
+          </p>
         </div>
       </div>
 
@@ -314,7 +325,7 @@ export default function AdminDashboard() {
         <Skeleton className="h-32 w-full mb-8" />
       ) : stats ? (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          <StatCard label="Total Experts" value={stats.totalExperts}
+          <StatCard label="Total Experts" value={stats.totalExperts} accent={C.mblue}
             onClick={() => navigateTo("payouts")} />
           <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue}
             onClick={() => navigateTo("applications", { appStatus: "pending" })} />
@@ -322,9 +333,9 @@ export default function AdminDashboard() {
             onClick={() => navigateTo("bookings", { bookingStatus: "upcoming" })} />
           <StatCard label="Completed" value={stats.completedBookings} accent={C.green}
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
-          <StatCard label="Cancelled" value={stats.cancelledBookings}
+          <StatCard label="Cancelled" value={stats.cancelledBookings} accent={C.blue}
             onClick={() => navigateTo("bookings", { bookingStatus: "cancelled" })} />
-          <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} sub="Total collected from clients"
+          <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} accent={C.mint} sub="Total collected from clients"
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
           <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue} sub="Your commission cut"
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
@@ -332,24 +343,61 @@ export default function AdminDashboard() {
             onClick={() => navigateTo("payouts")} />
           <StatCard label="Paid Out" value={`KES ${stats.paidPayout.toLocaleString()}`} accent={C.green}
             onClick={() => navigateTo("payouts")} />
-          <StatCard label="Total Bookings" value={stats.totalBookings}
+          <StatCard label="Total Bookings" value={stats.totalBookings} accent={C.mblue}
             onClick={() => navigateTo("bookings", { bookingStatus: "" })} />
         </div>
       ) : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 w-full justify-start h-12 bg-muted/50 p-1 rounded-xl flex-wrap gap-1">
-          <TabsTrigger value="applications" className="rounded-lg">
-            Applications
-            {pendingApps > 0 && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white font-semibold"
-                style={{ backgroundColor: C.blue }}>{pendingApps}</span>
-            )}
+        <TabsList className="mb-6 w-full justify-start h-auto bg-muted/40 p-1.5 rounded-xl flex-wrap gap-1 border">
+          <TabsTrigger value="applications"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm data-[state=active]:text-white"
+            style={activeTab === "applications" ? { backgroundColor: C.blue, color: "white" } : { color: C.blue }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.blue, opacity: activeTab === "applications" ? 0 : 1 }} />
+              Applications
+              {pendingApps > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-xs font-bold"
+                  style={activeTab === "applications"
+                    ? { backgroundColor: "rgba(255,255,255,0.3)", color: "white" }
+                    : { backgroundColor: C.blue + "22", color: C.blue }}>
+                  {pendingApps}
+                </span>
+              )}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="bookings" className="rounded-lg">All Bookings</TabsTrigger>
-          <TabsTrigger value="payouts" className="rounded-lg">Expert Payouts</TabsTrigger>
-          <TabsTrigger value="messaging" className="rounded-lg">Expert Messages</TabsTrigger>
-          <TabsTrigger value="reviews" className="rounded-lg">Reviews</TabsTrigger>
+          <TabsTrigger value="bookings"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "bookings" ? { backgroundColor: C.mint, color: "#0f5248" } : { color: C.mint === "#85DECB" ? "#0f7a6a" : C.mint }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.mint, opacity: activeTab === "bookings" ? 0 : 1 }} />
+              All Bookings
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="payouts"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "payouts" ? { backgroundColor: C.green, color: "#1a5730" } : { color: "#1a7a42" }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.green, opacity: activeTab === "payouts" ? 0 : 1 }} />
+              Expert Payouts
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="messaging"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "messaging" ? { backgroundColor: C.mblue, color: "#1a3a5c" } : { color: "#2a5a8c" }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.mblue, opacity: activeTab === "messaging" ? 0 : 1 }} />
+              Expert Messages
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="reviews"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "reviews" ? { backgroundColor: C.blue, color: "white" } : { color: C.blue }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.blue, opacity: activeTab === "reviews" ? 0 : 1 }} />
+              Reviews
+            </span>
+          </TabsTrigger>
         </TabsList>
 
         {/* ── APPLICATIONS ── */}
