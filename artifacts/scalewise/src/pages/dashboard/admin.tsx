@@ -47,16 +47,26 @@ function DateRangeFilter({
   );
 }
 
-function StatCard({ label, value, sub, accent }: {
-  label: string; value: string | number; sub?: string; accent?: string;
+function StatCard({ label, value, sub, accent, onClick }: {
+  label: string; value: string | number; sub?: string; accent?: string; onClick?: () => void;
 }) {
+  const clickable = !!onClick;
   return (
-    <div className="p-5 rounded-2xl border shadow-sm bg-card transition-shadow hover:shadow-md"
-      style={accent ? { borderColor: accent + "50", background: accent + "10" } : {}}>
+    <div
+      onClick={onClick}
+      className={`p-5 rounded-2xl border shadow-sm bg-card transition-all ${clickable ? "cursor-pointer hover:shadow-lg hover:-translate-y-0.5 active:scale-95 select-none" : ""}`}
+      style={accent ? { borderColor: accent + "50", background: accent + "10" } : {}}
+    >
       <div className="text-xs font-semibold uppercase tracking-wide mb-1"
         style={{ color: accent ?? "var(--muted-foreground)" }}>{label}</div>
       <div className="text-2xl font-bold" style={{ color: accent ?? "var(--foreground)" }}>{value}</div>
       {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+      {clickable && (
+        <div className="text-xs mt-2 font-medium opacity-60 flex items-center gap-1"
+          style={{ color: accent ?? "var(--muted-foreground)" }}>
+          View details →
+        </div>
+      )}
     </div>
   );
 }
@@ -106,6 +116,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState("applications");
   const [selectedExpertId, setSelectedExpertId] = useState<number | null>(null);
   const [adminMsgBody, setAdminMsgBody] = useState("");
 
@@ -114,6 +125,7 @@ export default function AdminDashboard() {
   const [bookingDateTo, setBookingDateTo] = useState("");
   const [expandedBookings, setExpandedBookings] = useState<Set<number>>(new Set());
 
+  const [appStatusFilter, setAppStatusFilter] = useState<"" | "pending" | "approved" | "rejected">("");
   const [appDateFrom, setAppDateFrom] = useState("");
   const [appDateTo, setAppDateTo] = useState("");
 
@@ -253,6 +265,16 @@ export default function AdminDashboard() {
     });
   };
 
+  const navigateTo = (tab: string, opts?: {
+    bookingStatus?: string;
+    appStatus?: "" | "pending" | "approved" | "rejected";
+  }) => {
+    setActiveTab(tab);
+    if (opts?.bookingStatus !== undefined) setBookingFilter(opts.bookingStatus);
+    if (opts?.appStatus !== undefined) setAppStatusFilter(opts.appStatus);
+    setTimeout(() => window.scrollTo({ top: 400, behavior: "smooth" }), 50);
+  };
+
   const toggleBooking = (id: number) => setExpandedBookings((p) => {
     const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n;
   });
@@ -292,20 +314,30 @@ export default function AdminDashboard() {
         <Skeleton className="h-32 w-full mb-8" />
       ) : stats ? (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          <StatCard label="Total Experts" value={stats.totalExperts} />
-          <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue} />
-          <StatCard label="Upcoming" value={stats.upcomingBookings} accent={C.mint} />
-          <StatCard label="Completed" value={stats.completedBookings} accent={C.green} />
-          <StatCard label="Cancelled" value={stats.cancelledBookings} />
-          <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} sub="Total collected from clients" />
-          <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue} sub="Your commission cut" />
-          <StatCard label="Pending Payout" value={`KES ${stats.pendingPayout.toLocaleString()}`} accent={C.mint} sub="Owed to experts via M-Pesa" />
-          <StatCard label="Paid Out" value={`KES ${stats.paidPayout.toLocaleString()}`} accent={C.green} />
-          <StatCard label="Total Bookings" value={stats.totalBookings} />
+          <StatCard label="Total Experts" value={stats.totalExperts}
+            onClick={() => navigateTo("payouts")} />
+          <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue}
+            onClick={() => navigateTo("applications", { appStatus: "pending" })} />
+          <StatCard label="Upcoming" value={stats.upcomingBookings} accent={C.mint}
+            onClick={() => navigateTo("bookings", { bookingStatus: "upcoming" })} />
+          <StatCard label="Completed" value={stats.completedBookings} accent={C.green}
+            onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
+          <StatCard label="Cancelled" value={stats.cancelledBookings}
+            onClick={() => navigateTo("bookings", { bookingStatus: "cancelled" })} />
+          <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} sub="Total collected from clients"
+            onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
+          <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue} sub="Your commission cut"
+            onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
+          <StatCard label="Pending Payout" value={`KES ${stats.pendingPayout.toLocaleString()}`} accent={C.mint} sub="Owed to experts via M-Pesa"
+            onClick={() => navigateTo("payouts")} />
+          <StatCard label="Paid Out" value={`KES ${stats.paidPayout.toLocaleString()}`} accent={C.green}
+            onClick={() => navigateTo("payouts")} />
+          <StatCard label="Total Bookings" value={stats.totalBookings}
+            onClick={() => navigateTo("bookings", { bookingStatus: "" })} />
         </div>
       ) : null}
 
-      <Tabs defaultValue="applications" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 w-full justify-start h-12 bg-muted/50 p-1 rounded-xl flex-wrap gap-1">
           <TabsTrigger value="applications" className="rounded-lg">
             Applications
@@ -323,15 +355,25 @@ export default function AdminDashboard() {
         {/* ── APPLICATIONS ── */}
         <TabsContent value="applications">
           <div className="mb-4 p-4 bg-card rounded-xl border flex flex-wrap gap-4 items-center">
+            <select value={appStatusFilter} onChange={(e) => setAppStatusFilter(e.target.value as any)}
+              className="h-9 px-3 rounded-lg border bg-background text-sm">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
             <DateRangeFilter from={appDateFrom} to={appDateTo}
               onFromChange={setAppDateFrom} onToChange={setAppDateTo} label="Applied between" />
+            <span className="text-sm text-muted-foreground ml-auto">
+              {(appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ?? 0} application{((appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ?? 0) !== 1 ? "s" : ""}
+            </span>
           </div>
           <div className="bg-card rounded-2xl border overflow-hidden">
             {appsLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading...</div>
-            ) : apps?.length ? (
+            ) : (appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)?.length ? (
               <div className="divide-y">
-                {apps.map((app) => (
+                {(appStatusFilter ? apps?.filter(a => a.status === appStatusFilter) : apps)!.map((app) => (
                   <div key={app.id} className="p-6">
                     <div className="flex justify-between items-start mb-3 gap-4">
                       <div className="min-w-0">
@@ -394,7 +436,9 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-muted-foreground">No applications in this date range.</div>
+              <div className="p-12 text-center text-muted-foreground">
+                No applications found{appStatusFilter ? ` with status "${appStatusFilter}"` : ""}.
+              </div>
             )}
           </div>
         </TabsContent>
