@@ -61,19 +61,21 @@ export default function Login() {
 
         <div className="relative z-10">
           <div className="text-center mb-8">
-            {isExpert && (
-              <div
-                className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-4"
-                style={{ background: P.mgreen + "18", color: P.mgreen }}
-              >
-                Expert Login
-              </div>
-            )}
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-4"
+              style={
+                isExpert
+                  ? { background: P.mgreen + "18", color: P.mgreen }
+                  : { background: P.blue + "18", color: P.blue }
+              }
+            >
+              {isExpert ? "Expert Login" : "Business Owner Login"}
+            </div>
             <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
             <p className="text-muted-foreground mt-2 text-sm">
               {isExpert
                 ? "Log in to manage your sessions and clients."
-                : "Log in to manage your sessions."}
+                : "Log in to your account and find the right expert."}
             </p>
           </div>
 
@@ -97,7 +99,11 @@ export default function Login() {
                 type="submit"
                 className="w-full"
                 disabled={login.isPending}
-                style={isExpert ? { background: P.mgreen, color: "#083d2e" } : {}}
+                style={
+                  isExpert
+                    ? { background: P.mgreen, color: "#083d2e" }
+                    : { background: P.blue }
+                }
               >
                 {login.isPending ? "Logging in…" : "Log In"}
               </Button>
