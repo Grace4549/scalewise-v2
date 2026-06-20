@@ -871,33 +871,54 @@ export default function Home() {
 
               <div ref={trustRef} className="flex flex-wrap items-center justify-center gap-4">
                 {/* Verified practitioners */}
-                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
-                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                <div
+                  className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 cursor-default
+                    shadow-[0_4px_18px_rgba(0,0,0,0.08)]
+                    transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_10px_32px_rgba(0,0,0,0.13)]"
+                  style={trustVisible
+                    ? { animation: "trust-card-in 0.45s ease both", animationDelay: "0ms" }
+                    : { opacity: 0 }}
+                >
                   <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
-                    style={{ background: `${P.blue}22` }}>
-                    <ShieldCheck size={18} style={{ color: P.blue }} strokeWidth={2} />
+                    style={{ background: `linear-gradient(135deg, #b8d4fa 0%, #4d7de8 100%)` }}>
+                    <ShieldCheck size={18} color="#fff" strokeWidth={2.2} />
                   </div>
                   <span className="text-sm font-semibold text-foreground">Verified practitioners</span>
                 </div>
 
                 {/* 13 industries — animated count */}
-                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
-                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                <div
+                  className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 cursor-default
+                    shadow-[0_4px_18px_rgba(0,0,0,0.08)]
+                    transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_10px_32px_rgba(0,0,0,0.13)]"
+                  style={trustVisible
+                    ? { animation: "trust-card-in 0.45s ease both", animationDelay: "120ms" }
+                    : { opacity: 0 }}
+                >
                   <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
-                    style={{ background: `${P.mgreen}22` }}>
-                    <LayoutGrid size={18} style={{ color: P.mgreen }} strokeWidth={2} />
+                    style={{ background: `linear-gradient(135deg, #c4ecda 0%, #4fae7e 100%)` }}>
+                    <LayoutGrid size={18} color="#fff" strokeWidth={2.2} />
                   </div>
-                  <span className="text-sm font-semibold text-foreground">
-                    <span className="tabular-nums" style={{ color: P.mgreen }}>{industryCount}</span> industries
+                  <span className="text-sm font-semibold text-foreground flex items-baseline gap-1">
+                    <span className="text-2xl font-black tabular-nums leading-none" style={{ color: P.mgreen }}>
+                      {industryCount}
+                    </span>
+                    industries
                   </span>
                 </div>
 
                 {/* Real results */}
-                <div className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 shadow-sm cursor-default
-                  transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                <div
+                  className="group flex items-center gap-3 bg-card border rounded-2xl px-5 py-3 cursor-default
+                    shadow-[0_4px_18px_rgba(0,0,0,0.08)]
+                    transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_10px_32px_rgba(0,0,0,0.13)]"
+                  style={trustVisible
+                    ? { animation: "trust-card-in 0.45s ease both", animationDelay: "240ms" }
+                    : { opacity: 0 }}
+                >
                   <div className="flex items-center justify-center w-9 h-9 rounded-full shrink-0"
-                    style={{ background: `${P.mint}22` }}>
-                    <TrendingUp size={18} style={{ color: P.mint }} strokeWidth={2} />
+                    style={{ background: `linear-gradient(135deg, #c0f0e8 0%, #3cb8a5 100%)` }}>
+                    <TrendingUp size={18} color="#fff" strokeWidth={2.2} />
                   </div>
                   <span className="text-sm font-semibold text-foreground">Real results</span>
                 </div>
