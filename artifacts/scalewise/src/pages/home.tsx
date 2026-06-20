@@ -322,8 +322,8 @@ function RoleLoginBanner() {
 
   if (user) {
     const dashboardPath =
-      user.role === "admin"  ? "/dashboard/admin"  :
-      user.role === "expert" ? "/dashboard/expert" : "/dashboard/client";
+      user.role === "admin"  ? "/admin" :
+      user.role === "expert" ? "/expert/dashboard" : "/dashboard";
 
     return (
       <div className="bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
