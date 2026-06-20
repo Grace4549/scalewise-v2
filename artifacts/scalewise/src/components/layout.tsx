@@ -34,9 +34,10 @@ export function Navbar() {
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
-        // Immediately clear the cached user so the UI updates right away
-        queryClient.setQueryData(getGetMeQueryKey(), undefined);
-        queryClient.removeQueries({ queryKey: getGetMeQueryKey() });
+        // Clear the entire cache so no authenticated data leaks to the next
+        // user session (bookings, messages, dashboards, etc. are all keyed
+        // by static route strings, not user identity).
+        queryClient.clear();
         refetch();
       },
     });

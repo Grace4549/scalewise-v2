@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, Redirect } from "wouter";
 import { useListMessages, useSendMessage, useGetBooking } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Messages() {
   const { bookingId: bookingIdStr } = useParams();
   const bookingId = parseInt(bookingIdStr!);
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   
   const { data: booking, isLoading: bookingLoading } = useGetBooking(bookingId);
   const { data: messages, isLoading: messagesLoading, refetch } = useListMessages(bookingId);
@@ -43,9 +43,11 @@ export default function Messages() {
     });
   };
 
-  if (bookingLoading || messagesLoading) {
+  if (authLoading || bookingLoading || messagesLoading) {
     return <div className="p-8 max-w-3xl mx-auto"><Skeleton className="h-[600px] rounded-3xl" /></div>;
   }
+
+  if (!user) return <Redirect to="/login" />;
 
   if (!booking) return <div className="p-8 text-center">Booking not found</div>;
 

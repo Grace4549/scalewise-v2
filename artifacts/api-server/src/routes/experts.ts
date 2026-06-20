@@ -139,7 +139,10 @@ router.get("/experts/:id", async (req, res): Promise<void> => {
   const id = parseInt(raw, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, id));
+  const [expert] = await db
+    .select()
+    .from(expertsTable)
+    .where(and(eq(expertsTable.id, id), eq(expertsTable.status, "approved")));
   if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
   const allReviews = await db
