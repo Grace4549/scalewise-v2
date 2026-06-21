@@ -4,7 +4,7 @@
 
 ScaleWise is a marketplace that connects clients with approved experts for paid advisory sessions. The production stack is a React/Vite frontend and an Express 5 API backed by PostgreSQL via Drizzle, with cookie-based session authentication through `express-session`.
 
-This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as production scope, treats shared packages under `lib/` as production-shared code when they are consumed by those artifacts, and treats `artifacts/mockup-sandbox/` as dev-only unless a production path proves otherwise. Per platform assumptions, deployed traffic is terminated over TLS by the platform. This project is not currently deployed.
+This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as production scope, treats shared packages under `lib/` as production-shared code when they are consumed by those artifacts, and treats `artifacts/mockup-sandbox/` as dev-only unless a production path proves otherwise. Per platform assumptions, deployed traffic is terminated over TLS by the platform. The application is publicly deployed at `https://scalewise.co.ke` with a Replit fallback domain, so public internet attackers can reach all intentionally exposed routes.
 
 ## Assets
 
@@ -42,9 +42,9 @@ ScaleWise relies on server-side sessions stored in cookies. The application must
 
 Password-based login is also in scope. Password verifiers must resist offline cracking if the user table is exposed, and login endpoints must not allow trivial credential-stuffing or brute-force attacks.
 
-Account recovery is part of the same identity boundary. Password reset tokens must be high-entropy, short-lived bearer secrets, must not be logged or exposed through operational tooling, and must not be recoverable from low-privilege observability paths.
+Account recovery is part of the same identity boundary. Password reset tokens must be high-entropy, short-lived bearer secrets, must not be logged or exposed through operational tooling, and must not be recoverable from low-privilege observability paths. A completed password reset MUST also revoke already-issued authenticated sessions for that account so recovery actually ejects an attacker who already has a valid session cookie.
 
-Expert onboarding sits on the same boundary. Approval of an expert application MUST NOT by itself grant identity proof for the eventual expert account; the platform must verify that the registrant controls the approved email address or other approved identity token before linking the account to the expert profile.
+Expert onboarding sits on the same boundary. Approval of an expert application MUST NOT by itself grant identity proof for the eventual expert account; the platform must verify that the registrant controls the approved email address or other approved identity token before linking the account to the expert profile. If expert onboarding reuses an already-existing user account for the approved email, it MUST also prove control of that existing account before role-upgrading or binding the expert profile to it.
 
 ### Tampering
 
