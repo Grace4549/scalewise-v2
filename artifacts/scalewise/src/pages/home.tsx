@@ -929,7 +929,7 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-12 bg-muted/30 overflow-hidden" style={{ scrollMarginTop: "72px" }}>
+      <section id="how-it-works" className="py-12 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
         <div className="container mx-auto px-4">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-7">
@@ -958,7 +958,7 @@ export default function Home() {
 
           {/* Journey flow diagram */}
           <Reveal delay={120}>
-            <div className="max-w-5xl mx-auto">
+            <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" as const }}>
               <JourneyFlowDiagram />
             </div>
           </Reveal>
@@ -1093,9 +1093,9 @@ export default function Home() {
       {/* ── EXPERT CTA ── */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <Reveal>
+          <Reveal className="w-full">
             <div
-              className="relative rounded-3xl border overflow-hidden"
+              className="relative rounded-3xl border overflow-hidden w-full"
               style={{ background: `linear-gradient(135deg, ${P.blue}07, rgba(255,255,255,0.6), ${P.mgreen}0F)`, borderColor: P.mgreen + "35" }}
             >
               {/* Decorative blob */}
