@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
 
 const P = {
   blue:   "#6395EE",
@@ -30,6 +31,177 @@ const SECTIONS = [
     body: "Your scars and successes have value. ScaleWise gives you a platform to monetize your experience on your own terms, helping the next generation of businesses succeed while building a meaningful second revenue stream.",
   },
 ];
+
+function BeforeAfterImage() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [shimmer, setShimmer] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => setShimmer(true), 600);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative rounded-3xl overflow-hidden shadow-2xl"
+      style={{ aspectRatio: "4/3" }}
+    >
+      {/* ── LEFT: Before ── */}
+      <div
+        className="absolute inset-y-0 left-0 overflow-hidden"
+        style={{
+          width: "50%",
+          transition: "opacity 0.9s ease",
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        <img
+          src="/photos/about-before.jpg"
+          alt="Business owner overwhelmed, alone with paperwork"
+          className="w-full h-full object-cover object-center"
+          style={{
+            filter: "saturate(0.22) brightness(0.88) contrast(1.05)",
+            transform: "scale(1.04)",
+          }}
+          loading="eager"
+        />
+        {/* dark-left vignette */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.22) 0%, transparent 80%)" }}
+        />
+        {/* label */}
+        <div
+          className="absolute bottom-4 left-4 rounded-xl px-3 py-1.5 text-xs font-semibold text-white/80 backdrop-blur-sm"
+          style={{
+            background: "rgba(0,0,0,0.38)",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(8px)",
+            transition: "opacity 0.6s ease 0.8s, transform 0.6s ease 0.8s",
+          }}
+        >
+          Before
+        </div>
+      </div>
+
+      {/* ── RIGHT: After ── */}
+      <div
+        className="absolute inset-y-0 right-0 overflow-hidden"
+        style={{
+          width: "50%",
+          transition: "opacity 0.9s ease 0.15s",
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        <img
+          src="/photos/about-after.jpg"
+          alt="Business owner confident, engaged on a video call"
+          className="w-full h-full object-cover object-center"
+          style={{
+            filter: "saturate(1.12) brightness(1.04)",
+            transform: "scale(1.04)",
+          }}
+          loading="eager"
+        />
+        {/* brand-tinted overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(to left, ${P.mgreen}28 0%, transparent 70%)` }}
+        />
+        {/* label */}
+        <div
+          className="absolute bottom-4 right-4 rounded-xl px-3 py-1.5 text-xs font-semibold backdrop-blur-sm"
+          style={{
+            background: P.mgreen + "CC",
+            color: "#083d2e",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(8px)",
+            transition: "opacity 0.6s ease 0.9s, transform 0.6s ease 0.9s",
+          }}
+        >
+          After
+        </div>
+      </div>
+
+      {/* ── DIVIDER ── */}
+      <div
+        className="absolute inset-y-0 pointer-events-none"
+        style={{
+          left: "calc(50% - 2px)",
+          width: "4px",
+          background: "rgba(255,255,255,0.55)",
+          transition: "opacity 0.6s ease 0.4s",
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        {/* shimmer wipe animation */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: "-8px",
+            width: "20px",
+            height: "100%",
+            background: `linear-gradient(to bottom, transparent 0%, ${P.mint}CC 30%, white 50%, ${P.mgreen}BB 70%, transparent 100%)`,
+            animation: shimmer ? "dividerWipe 2.4s ease-in-out forwards" : "none",
+          }}
+        />
+        {/* circle icon at center */}
+        <div
+          className="absolute rounded-full border-2 border-white flex items-center justify-center"
+          style={{
+            width: 28,
+            height: 28,
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: `linear-gradient(135deg, ${P.mgreen}, ${P.blue})`,
+            boxShadow: `0 0 0 4px rgba(255,255,255,0.35), 0 0 16px ${P.mgreen}88`,
+            opacity: visible ? 1 : 0,
+            transition: "opacity 0.5s ease 0.7s",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M3 6h6M7 4l2 2-2 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* gradient overlay blending the two halves at join */}
+      <div
+        className="absolute inset-y-0 pointer-events-none"
+        style={{
+          left: "calc(50% - 24px)",
+          width: "48px",
+          background: "linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(255,255,255,0.12) 50%, rgba(0,0,0,0.06) 100%)",
+        }}
+      />
+
+      <style>{`
+        @keyframes dividerWipe {
+          0%   { transform: translateY(-100%); opacity: 0; }
+          15%  { opacity: 1; }
+          85%  { opacity: 1; }
+          100% { transform: translateY(100%); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 export default function About() {
   return (
@@ -63,14 +235,8 @@ export default function About() {
                 </Link>
               </div>
             </div>
-            <div className="hidden md:block relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
-              <img
-                src="/photos/about-hero.png"
-                alt="Entrepreneurs collaborating in a modern workspace"
-                className="w-full h-full object-cover"
-                loading="eager"
-              />
-              <div className="absolute inset-0 rounded-3xl" style={{ background: `linear-gradient(to bottom left, ${P.mgreen}20, transparent 60%)` }} />
+            <div className="hidden md:block">
+              <BeforeAfterImage />
             </div>
           </div>
         </div>
