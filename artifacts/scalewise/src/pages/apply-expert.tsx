@@ -11,19 +11,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
+const P = {
+  blue:   "#6395EE",
+  mgreen: "#88CFA8",
+  mint:   "#85DECB",
+};
+
 const applySchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Valid email is required"),
+  companyName: z.string().optional(),
   industry: z.string().min(1, "Industry is required"),
   yearsExperience: z.coerce.number().min(1, "Must have at least 1 year of experience"),
   headline: z.string().min(10, "Headline is required (min 10 chars)"),
   bio: z.string().min(50, "Bio must be at least 50 characters"),
   skills: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
+  linkedinUrl: z.string().url("Enter a valid LinkedIn URL").optional().or(z.literal("")),
+  socialMediaUrl: z.string().url("Enter a valid social media URL").optional().or(z.literal("")),
   discoveryPrice: z.coerce.number().optional(),
   consultancyPrice: z.coerce.number().optional(),
   growthPrice3mo: z.coerce.number().optional(),
   growthPrice6mo: z.coerce.number().optional(),
-});
+}).refine(
+  (d) => (d.linkedinUrl && d.linkedinUrl.length > 0) || (d.socialMediaUrl && d.socialMediaUrl.length > 0),
+  { message: "Please provide at least one social media or LinkedIn link for verification.", path: ["linkedinUrl"] }
+);
 
 export default function ApplyExpert() {
   const [submitted, setSubmitted] = useState(false);
@@ -36,16 +48,34 @@ export default function ApplyExpert() {
     defaultValues: {
       name: "",
       email: "",
+      companyName: "",
       industry: "",
       yearsExperience: 5,
       headline: "",
       bio: "",
       skills: "" as any,
+      linkedinUrl: "",
+      socialMediaUrl: "",
     },
   });
 
   const onSubmit = (data: z.infer<typeof applySchema>) => {
-    applyAsExpert.mutate({ data }, {
+    applyAsExpert.mutate({ data: {
+      name: data.name,
+      email: data.email,
+      companyName: data.companyName || undefined,
+      industry: data.industry,
+      yearsExperience: data.yearsExperience,
+      headline: data.headline,
+      bio: data.bio,
+      skills: data.skills,
+      linkedinUrl: data.linkedinUrl || undefined,
+      socialMediaUrl: data.socialMediaUrl || undefined,
+      discoveryPrice: data.discoveryPrice,
+      consultancyPrice: data.consultancyPrice,
+      growthPrice3mo: data.growthPrice3mo,
+      growthPrice6mo: data.growthPrice6mo,
+    }}, {
       onSuccess: () => setSubmitted(true),
       onError: (err: any) => {
         toast({
@@ -60,14 +90,22 @@ export default function ApplyExpert() {
   if (submitted) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="text-center max-w-md p-8 rounded-3xl bg-card border shadow-lg">
-          <div className="w-16 h-16 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">✓</div>
-          <h1 className="text-3xl font-bold mb-4">Application Received</h1>
+        <div className="text-center max-w-lg p-10 rounded-3xl bg-card border shadow-lg">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl text-white"
+            style={{ background: P.mgreen }}
+          >
+            ✓
+          </div>
+          <h1 className="text-3xl font-bold mb-4">Application Received!</h1>
+          <p className="text-muted-foreground mb-3">
+            Thank you for applying to be a Founding Expert on ScaleWise. Our team will carefully review your application.
+          </p>
           <p className="text-muted-foreground mb-8">
-            Thank you for applying to be a Founding Expert on ScaleWise. Our team will review your application and get back to you shortly.
+            <span className="font-semibold" style={{ color: P.blue }}>If approved</span>, we will send you an email with the next steps to complete your profile and start accepting bookings.
           </p>
           <Link href="/">
-            <Button>Return Home</Button>
+            <Button className="rounded-xl px-8" style={{ background: P.blue }}>Return Home</Button>
           </Link>
         </div>
       </div>
@@ -103,6 +141,14 @@ export default function ApplyExpert() {
                   </FormItem>
                 )} />
               </div>
+              <FormField control={form.control} name="companyName" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company / Business Name <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                  <FormDescription>The business or organisation you currently operate or have built.</FormDescription>
+                  <FormControl><Input {...field} placeholder="e.g., Acme Ltd, Freelance" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
 
             <div className="space-y-6">
@@ -164,6 +210,29 @@ export default function ApplyExpert() {
             </div>
 
             <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold border-b pb-2 mb-1">Online Presence</h2>
+                <p className="text-sm text-muted-foreground mt-2">These links help us verify your professional background. Please provide at least one.</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="linkedinUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn Profile</FormLabel>
+                    <FormControl><Input {...field} placeholder="https://linkedin.com/in/yourname" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="socialMediaUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Social Media Page <span className="text-muted-foreground font-normal">(Facebook, Instagram or TikTok)</span></FormLabel>
+                    <FormControl><Input {...field} placeholder="https://instagram.com/yourbusiness" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+            </div>
+
+            <div className="space-y-6">
               <h2 className="text-2xl font-semibold border-b pb-2">Set Your Session Prices</h2>
               <p className="text-sm text-muted-foreground mb-4">Set the prices you want to charge clients per session type. You can leave fields blank if you don't wish to offer that session type.</p>
               
@@ -199,7 +268,8 @@ export default function ApplyExpert() {
               </div>
             </div>
 
-            <Button type="submit" size="lg" className="w-full text-lg" disabled={applyAsExpert.isPending}>
+            <Button type="submit" size="lg" className="w-full text-lg" disabled={applyAsExpert.isPending}
+              style={{ background: P.blue }}>
               {applyAsExpert.isPending ? "Submitting..." : "Submit Application"}
             </Button>
           </form>

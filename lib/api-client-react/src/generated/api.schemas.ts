@@ -160,6 +160,12 @@ export interface ExpertApplicationInput {
   bio?: string;
   /** @maxItems 20 */
   skills?: string[];
+  /** @maxLength 200 */
+  companyName?: string;
+  /** @maxLength 500 */
+  linkedinUrl?: string;
+  /** @maxLength 500 */
+  socialMediaUrl?: string;
   discoveryPrice?: number;
   consultancyPrice?: number;
   growthPrice3mo?: number;

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Mail, MessageSquare, Clock } from "lucide-react";
+import { Mail, MessageSquare, Clock, Phone, MapPin } from "lucide-react";
 
 const P = {
   blue:   "#6395EE",
@@ -15,24 +15,24 @@ const CONTACT_OPTIONS = [
     color: P.blue,
     title: "Email Us",
     desc: "For general enquiries, billing, or account support.",
-    action: "hello@scalewise.co.ke",
-    href: "mailto:hello@scalewise.co.ke",
+    action: "support@scalewise.co.ke",
+    href: "mailto:support@scalewise.co.ke",
     cta: "Send an Email",
   },
   {
-    icon: <MessageSquare className="h-6 w-6" />,
+    icon: <Phone className="h-6 w-6" />,
     color: P.mgreen,
-    title: "Platform Support",
-    desc: "Having trouble with a booking, session, or your account?",
-    action: "Open a Support Ticket",
-    href: "mailto:support@scalewise.co.ke",
-    cta: "Get Help",
+    title: "Call Us",
+    desc: "Speak directly with our team during business hours.",
+    action: "+254 707 346 331",
+    href: "tel:+254707346331",
+    cta: "Call Now",
   },
   {
     icon: <Clock className="h-6 w-6" />,
     color: P.mint,
-    title: "Response Time",
-    desc: "We aim to respond to all enquiries within 24 hours on business days.",
+    title: "Working Hours",
+    desc: "Our team is available Monday to Friday.",
     action: "Mon – Fri, 8am – 6pm EAT",
     href: null,
     cta: null,
@@ -112,26 +112,59 @@ export default function Contact() {
           ))}
         </div>
 
-        {/* ── Direct email card ── */}
+        {/* ── Direct contact card ── */}
         <div
-          className="rounded-3xl border p-10 text-center"
+          className="rounded-3xl border p-10"
           style={{ background: P.blue + "06", borderColor: P.blue + "28" }}
         >
-          <div
-            className="h-14 w-14 rounded-2xl flex items-center justify-center mx-auto mb-5 text-white"
-            style={{ background: P.blue }}
-          >
-            <Mail className="h-7 w-7" />
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <div
+                className="h-14 w-14 rounded-2xl flex items-center justify-center mb-5 text-white"
+                style={{ background: P.blue }}
+              >
+                <Mail className="h-7 w-7" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: P.blue }}>Drop Us a Line</h2>
+              <p className="text-muted-foreground mb-6">
+                Our team reads every message and will get back to you as soon as possible.
+              </p>
+              <a href="mailto:support@scalewise.co.ke">
+                <Button size="lg" className="rounded-xl px-8 h-13 text-lg" style={{ background: P.blue }}>
+                  Email support@scalewise.co.ke
+                </Button>
+              </a>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 text-white" style={{ background: P.mgreen }}>
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Phone</p>
+                  <a href="tel:+254707346331" className="font-semibold hover:underline" style={{ color: P.mgreen }}>+254 707 346 331</a>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 text-white" style={{ background: P.mint }}>
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="font-semibold" style={{ color: P.mint.replace("85", "0c5a") }}>Nairobi, Kenya</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 text-white" style={{ background: P.mblue }}>
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Working Hours</p>
+                  <p className="font-semibold" style={{ color: P.mblue }}>Mon – Fri, 8am – 6pm EAT</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2" style={{ color: P.blue }}>Drop Us a Line</h2>
-          <p className="text-muted-foreground mb-6">
-            Our team reads every message and will get back to you as soon as possible.
-          </p>
-          <a href="mailto:hello@scalewise.co.ke">
-            <Button size="lg" className="rounded-xl px-8 h-13 text-lg" style={{ background: P.blue }}>
-              Email hello@scalewise.co.ke
-            </Button>
-          </a>
         </div>
 
         {/* ── Also check FAQ ── */}

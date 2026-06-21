@@ -912,6 +912,15 @@ components:
           items:
             type: string
             maxLength: 100
+        companyName:
+          type: string
+          maxLength: 200
+        linkedinUrl:
+          type: string
+          maxLength: 500
+        socialMediaUrl:
+          type: string
+          maxLength: 500
         discoveryPrice:
           type: number
         consultancyPrice:

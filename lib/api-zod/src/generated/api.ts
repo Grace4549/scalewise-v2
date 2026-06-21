@@ -172,6 +172,12 @@ export const applyAsExpertBodySkillsItemMax = 100;
 
 export const applyAsExpertBodySkillsMax = 20;
 
+export const applyAsExpertBodyCompanyNameMax = 200;
+
+export const applyAsExpertBodyLinkedinUrlMax = 500;
+
+export const applyAsExpertBodySocialMediaUrlMax = 500;
+
 
 
 export const ApplyAsExpertBody = zod.object({
@@ -182,6 +188,9 @@ export const ApplyAsExpertBody = zod.object({
   "headline": zod.string().max(applyAsExpertBodyHeadlineMax).optional(),
   "bio": zod.string().max(applyAsExpertBodyBioMax).optional(),
   "skills": zod.array(zod.string().max(applyAsExpertBodySkillsItemMax)).max(applyAsExpertBodySkillsMax).optional(),
+  "companyName": zod.string().max(applyAsExpertBodyCompanyNameMax).optional(),
+  "linkedinUrl": zod.string().max(applyAsExpertBodyLinkedinUrlMax).optional(),
+  "socialMediaUrl": zod.string().max(applyAsExpertBodySocialMediaUrlMax).optional(),
   "discoveryPrice": zod.number().optional(),
   "consultancyPrice": zod.number().optional(),
   "growthPrice3mo": zod.number().optional(),
