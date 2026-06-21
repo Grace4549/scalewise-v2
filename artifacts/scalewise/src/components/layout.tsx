@@ -235,7 +235,8 @@ export function Footer() {
             <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mblue }}>Support</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
-              <li><a href="mailto:hello@scalewise.co.ke" className="hover:text-foreground transition-colors">hello@scalewise.co.ke</a></li>
+              <li><a href="mailto:support@scalewise.co.ke" className="hover:text-foreground transition-colors">support@scalewise.co.ke</a></li>
+              <li><a href="tel:+254707346331" className="hover:text-foreground transition-colors">+254 707 346 331</a></li>
             </ul>
           </div>
         </div>

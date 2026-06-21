@@ -129,11 +129,12 @@ export default function Contact() {
               <p className="text-muted-foreground mb-6">
                 Our team reads every message and will get back to you as soon as possible.
               </p>
-              <a href="mailto:support@scalewise.co.ke">
-                <Button size="lg" className="rounded-xl px-8 h-13 text-lg" style={{ background: P.blue }}>
-                  Email support@scalewise.co.ke
+              <a href="mailto:support@scalewise.co.ke" className="block">
+                <Button size="lg" className="rounded-xl px-8 h-13 text-lg w-full" style={{ background: P.blue }}>
+                  Send Us an Email
                 </Button>
               </a>
+              <p className="text-sm text-muted-foreground mt-2">support@scalewise.co.ke</p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
