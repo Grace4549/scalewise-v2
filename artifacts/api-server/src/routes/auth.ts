@@ -1,13 +1,24 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
 import { db, usersTable, expertsTable, passwordResetTokensTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { hashPassword, verifyPassword, requireAuth } from "../lib/auth";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 
 const ADMIN_EMAIL = "kihongegrace4549@gmail.com";
 
 const router: IRouter = Router();
+
+async function setSessionUser(req: Parameters<typeof requireAuth>[0], userId: number, sessionVersion: number): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+  req.session.userId = userId;
+  req.session.sessionVersion = sessionVersion;
+}
 
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
@@ -63,7 +74,16 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         return;
       }
 
-      // Existing client account — upgrade role to expert in place (no new account needed)
+      // Verify the registrant controls the existing account by checking the password
+      const verifyResult = await verifyPassword(password, existing.passwordHash);
+      if (!verifyResult) {
+        res.status(401).json({
+          error: "An account with this email already exists. Please provide your existing account password to link it to your expert profile.",
+        });
+        return;
+      }
+
+      // Upgrade role to expert in place — password verified, ownership proven
       const [upgraded] = await db
         .update(usersTable)
         .set({ role: "expert" })
@@ -86,13 +106,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         eq(expertsTable.inviteToken, tokenHash)
       ));
 
-    await new Promise<void>((resolve, reject) => {
-      req.session.regenerate((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    (req.session as { userId?: number }).userId = user.id;
+    await setSessionUser(req, user.id, user.sessionVersion);
 
     res.status(201).json({
       user: {
@@ -118,13 +132,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const passwordHash = await hashPassword(password);
   const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
 
-  await new Promise<void>((resolve, reject) => {
-    req.session.regenerate((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-  (req.session as { userId?: number }).userId = user.id;
+  await setSessionUser(req, user.id, user.sessionVersion);
 
   res.status(201).json({
     user: {
@@ -167,13 +175,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     user.role = "admin";
   }
 
-  await new Promise<void>((resolve, reject) => {
-    req.session.regenerate((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-  (req.session as { userId?: number }).userId = user.id;
+  await setSessionUser(req, user.id, user.sessionVersion);
 
   res.json({
     user: {
@@ -260,7 +262,13 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
   }
 
   const passwordHash = await hashPassword(password);
-  await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, resetToken.userId));
+
+  // Increment sessionVersion to invalidate all existing sessions for this user
+  await db
+    .update(usersTable)
+    .set({ passwordHash, sessionVersion: sql`${usersTable.sessionVersion} + 1` })
+    .where(eq(usersTable.id, resetToken.userId));
+
   await db.delete(passwordResetTokensTable).where(eq(passwordResetTokensTable.id, resetToken.id));
 
   res.json({ ok: true });

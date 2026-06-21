@@ -30,7 +30,8 @@ export function generateMeetLink(): string {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const userId = (req.session as { userId?: number }).userId;
+  const session = req.session as { userId?: number; sessionVersion?: number };
+  const userId = session.userId;
   if (!userId) {
     res.status(401).json({ error: "Not authenticated" });
     return;
@@ -39,6 +40,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(401).json({ error: "User not found" });
+    return;
+  }
+  if (session.sessionVersion !== user.sessionVersion) {
+    req.session.destroy(() => {});
+    res.status(401).json({ error: "Session expired. Please log in again." });
     return;
   }
   req.userRole = user.role;

@@ -10,6 +10,7 @@ import { logger } from "./lib/logger";
 declare module "express-session" {
   interface SessionData {
     userId?: number;
+    sessionVersion?: number;
   }
 }
 
