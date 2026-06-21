@@ -87,7 +87,10 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   const { expertId, sessionType, scheduledTime, notes } = parsed.data;
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
-  if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
+  if (!expert || expert.status !== "approved" || expert.userId === null) {
+    res.status(404).json({ error: "Expert not found" });
+    return;
+  }
 
   if (expert.userId === req.userId) {
     res.status(403).json({ error: "Experts cannot book their own profile" });
