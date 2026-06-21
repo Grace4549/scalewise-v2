@@ -101,8 +101,7 @@ export default function About() {
         >
           <div className="text-5xl mb-6">✨</div>
           <h3 className="text-2xl md:text-3xl font-bold mb-5 text-foreground">
-            "You are not alone in this.{" "}
-            <span style={{ color: P.blue }}>Not anymore.</span>"
+            "We built ScaleWise because brilliant ideas deserve brilliant counsel. Our promise is simple: bring you the right expert, at the right moment, for the decisions that matter most."
           </h3>
           <div>
             <p className="font-semibold text-foreground">Grace Kihonge</p>

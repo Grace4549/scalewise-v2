@@ -929,7 +929,7 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-12 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
+      <section id="how-it-works" className="py-12 bg-muted/30 overflow-hidden" style={{ scrollMarginTop: "72px" }}>
         <div className="container mx-auto px-4">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-7">
@@ -1101,7 +1101,7 @@ export default function Home() {
               {/* Decorative blob */}
               <div className="pointer-events-none absolute -top-24 -right-24 h-[280px] w-[280px] rounded-full opacity-[0.18] blur-[80px]" style={{ background: P.mgreen }} />
 
-              <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center p-10 md:p-14">
+              <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center p-5 sm:p-8 md:p-14">
                 <div className="relative hidden md:block">
                   <img
                     src="/photos/expert-cta.png"
