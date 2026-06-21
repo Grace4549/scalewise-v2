@@ -32,7 +32,7 @@ const SECTIONS = [
   },
 ];
 
-function BeforeAfterImage() {
+function BeforeAfterImage({ wide = false }: { wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [shimmer, setShimmer] = useState(false);
@@ -57,8 +57,8 @@ function BeforeAfterImage() {
   return (
     <div
       ref={ref}
-      className="relative rounded-3xl overflow-hidden shadow-2xl"
-      style={{ aspectRatio: "4/3" }}
+      className="relative rounded-3xl overflow-hidden shadow-xl"
+      style={wide ? { height: 320 } : { aspectRatio: "4/3" }}
     >
       {/* ── LEFT: Before ── */}
       <div
@@ -235,8 +235,14 @@ export default function About() {
                 </Link>
               </div>
             </div>
-            <div className="hidden md:block">
-              <BeforeAfterImage />
+            <div className="hidden md:block relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
+              <img
+                src="/photos/about-hero.png"
+                alt="Entrepreneurs collaborating in a modern workspace"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-0 rounded-3xl" style={{ background: `linear-gradient(to bottom left, ${P.mgreen}20, transparent 60%)` }} />
             </div>
           </div>
         </div>
@@ -275,16 +281,9 @@ export default function About() {
           </div>
         </div>
 
-        {/* ── Story photo ── */}
-        <div className="mt-14 rounded-3xl overflow-hidden shadow-xl relative">
-          <img
-            src="/photos/about-story.png"
-            alt="Business coaching moment"
-            className="w-full object-cover"
-            style={{ maxHeight: 320 }}
-            loading="lazy"
-          />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(26,37,64,0.3) 0%, transparent 50%)" }} />
+        {/* ── Story before/after image ── */}
+        <div className="mt-14">
+          <BeforeAfterImage wide />
         </div>
       </div>
     </div>
