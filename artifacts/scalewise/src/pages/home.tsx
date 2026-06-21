@@ -956,12 +956,14 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Journey flow diagram */}
-          <Reveal delay={120}>
-            <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" as const }}>
-              <JourneyFlowDiagram />
-            </div>
-          </Reveal>
+          {/* Journey flow diagram — hidden on mobile, shown sm+ */}
+          <div className="hidden sm:block">
+            <Reveal delay={120}>
+              <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" as const }}>
+                <JourneyFlowDiagram />
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
