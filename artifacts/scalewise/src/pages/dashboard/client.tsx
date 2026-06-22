@@ -81,7 +81,8 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
 
 export default function ClientDashboard() {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: bookings, isLoading: bookingsLoading } = useListMyBookings();
+  const { data: rawBookings, isLoading: bookingsLoading } = useListMyBookings();
+  const bookings = rawBookings?.filter((b) => b.status !== "pending_payment");
   const { data: threads, isLoading: threadsLoading } = useGetInbox();
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("bookings");
@@ -90,17 +91,13 @@ export default function ClientDashboard() {
   if (!user || user.role !== "client") return <Redirect to="/login" />;
 
   const getStatusStyle = (status: string) => {
-    if (status === "pending_payment") return { backgroundColor: "#fef9c3", color: "#854d0e" };
     if (status === "upcoming")  return { backgroundColor: C.blue + "22", color: C.blue };
     if (status === "completed") return { backgroundColor: C.green + "33", color: "#1a5730" };
     if (status === "cancelled") return { backgroundColor: "#fecaca", color: "#b91c1c" };
     return {};
   };
 
-  const getStatusLabel = (status: string) => {
-    if (status === "pending_payment") return "Awaiting Payment";
-    return status.replace(/_/g, " ");
-  };
+  const getStatusLabel = (status: string) => status.replace(/_/g, " ");
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">

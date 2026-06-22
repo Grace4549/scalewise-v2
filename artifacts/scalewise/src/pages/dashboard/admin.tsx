@@ -365,7 +365,7 @@ export default function AdminDashboard() {
       {/* Stats */}
       {statsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          {Array.from({ length: 12 }).map((_, i) => (
+          {Array.from({ length: 11 }).map((_, i) => (
             <Skeleton key={i} className="h-[88px] rounded-2xl" />
           ))}
         </div>
@@ -384,9 +384,6 @@ export default function AdminDashboard() {
             onClick={() => navigateTo("applications", { appStatus: "awaiting_registration" })} />
           <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue}
             onClick={() => navigateTo("applications", { appStatus: "pending" })} />
-          <StatCard label="Awaiting Payment" value={stats.pendingPaymentBookings} accent="#d97706"
-            sub="Bookings not yet paid"
-            onClick={() => navigateTo("bookings", { bookingStatus: "pending_payment" })} />
           <StatCard label="Upcoming" value={stats.upcomingBookings} accent={C.mint}
             onClick={() => navigateTo("bookings", { bookingStatus: "upcoming" })} />
           <StatCard label="Completed" value={stats.completedBookings} accent={C.green}
