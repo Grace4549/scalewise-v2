@@ -21,6 +21,7 @@ export const expertsTable = pgTable("experts", {
   linkedinUrl: text("linkedin_url"),
   socialMediaUrl: text("social_media_url"),
   inviteToken: text("invite_token"),
+  inviteExpiresAt: timestamp("invite_expires_at", { withTimezone: true }),
   discoveryPrice: real("discovery_price"),
   consultancyPrice: real("consultancy_price"),
   growthPrice3mo: real("growth_price_3mo"),

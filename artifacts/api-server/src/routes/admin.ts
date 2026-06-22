@@ -89,10 +89,11 @@ router.post("/admin/applications/:id/approve", adminMiddleware(), async (req, re
 
   const plaintextInviteToken = crypto.randomBytes(32).toString("hex");
   const inviteTokenHash = crypto.createHash("sha256").update(plaintextInviteToken).digest("hex");
+  const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const [expert] = await db
     .update(expertsTable)
-    .set({ status: "approved", inviteToken: inviteTokenHash })
+    .set({ status: "approved", inviteToken: inviteTokenHash, inviteExpiresAt })
     .where(eq(expertsTable.id, id))
     .returning();
 
@@ -115,8 +116,9 @@ router.post("/admin/applications/:id/regenerate-invite", adminMiddleware(), asyn
 
   const plaintextInviteToken = crypto.randomBytes(32).toString("hex");
   const inviteTokenHash = crypto.createHash("sha256").update(plaintextInviteToken).digest("hex");
+  const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  await db.update(expertsTable).set({ inviteToken: inviteTokenHash }).where(eq(expertsTable.id, id));
+  await db.update(expertsTable).set({ inviteToken: inviteTokenHash, inviteExpiresAt }).where(eq(expertsTable.id, id));
 
   res.json({ inviteToken: plaintextInviteToken });
 });

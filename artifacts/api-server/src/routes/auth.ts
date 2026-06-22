@@ -63,6 +63,13 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       return;
     }
 
+    if (!application.inviteExpiresAt || application.inviteExpiresAt < new Date()) {
+      res.status(400).json({
+        error: "Invalid or expired invite token. Please contact your administrator.",
+      });
+      return;
+    }
+
     const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
 
     let user: typeof existing;

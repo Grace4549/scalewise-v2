@@ -192,34 +192,30 @@ router.post("/experts/apply", publicWriteLimiter, async (req, res): Promise<void
       )
     );
 
-  if (existing) {
-    res.status(409).json({ error: "An application with this email address is already pending or approved." });
-    return;
+  if (!existing) {
+    await db
+      .insert(expertsTable)
+      .values({
+        userId: null,
+        name: parsed.data.name,
+        email: parsed.data.email,
+        companyName: parsed.data.companyName ?? null,
+        headline: parsed.data.headline ?? null,
+        industry: parsed.data.industry,
+        yearsExperience: parsed.data.yearsExperience,
+        bio: parsed.data.bio ?? null,
+        skills: parsed.data.skills ?? [],
+        linkedinUrl: parsed.data.linkedinUrl ?? null,
+        socialMediaUrl: parsed.data.socialMediaUrl ?? null,
+        discoveryPrice: parsed.data.discoveryPrice ?? null,
+        consultancyPrice: parsed.data.consultancyPrice ?? null,
+        growthPrice3mo: parsed.data.growthPrice3mo ?? null,
+        growthPrice6mo: parsed.data.growthPrice6mo ?? null,
+        status: "pending",
+      });
   }
 
-  const [expert] = await db
-    .insert(expertsTable)
-    .values({
-      userId: null,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      companyName: parsed.data.companyName ?? null,
-      headline: parsed.data.headline ?? null,
-      industry: parsed.data.industry,
-      yearsExperience: parsed.data.yearsExperience,
-      bio: parsed.data.bio ?? null,
-      skills: parsed.data.skills ?? [],
-      linkedinUrl: parsed.data.linkedinUrl ?? null,
-      socialMediaUrl: parsed.data.socialMediaUrl ?? null,
-      discoveryPrice: parsed.data.discoveryPrice ?? null,
-      consultancyPrice: parsed.data.consultancyPrice ?? null,
-      growthPrice3mo: parsed.data.growthPrice3mo ?? null,
-      growthPrice6mo: parsed.data.growthPrice6mo ?? null,
-      status: "pending",
-    })
-    .returning();
-
-  res.status(201).json(formatApplication(expert));
+  res.status(200).json({ message: "Your application has been received. We will be in touch soon." });
 });
 
 router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => {
