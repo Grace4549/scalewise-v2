@@ -22,7 +22,49 @@ tags:
     description: Messaging
   - name: admin
     description: Admin operations
+  - name: launch
+    description: Pre-launch notification capture
 paths:
+  /launch/subscribe:
+    post:
+      operationId: subscribeLaunchNotification
+      tags: [launch]
+      summary: Subscribe to launch notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LaunchSubscribeInput"
+      responses:
+        "201":
+          description: Subscribed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaunchNotification"
+        "400":
+          description: Invalid email
+        "409":
+          description: Already subscribed
+
+  /admin/launch-notifications:
+    get:
+      operationId: listLaunchNotifications
+      tags: [launch]
+      summary: List all launch notification subscribers (admin only)
+      responses:
+        "200":
+          description: List of subscribers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LaunchNotification"
+        "403":
+          description: Forbidden
+
   /healthz:
     get:
       operationId: healthCheck
@@ -1393,6 +1435,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminBooking"
+
+    LaunchSubscribeInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    LaunchNotification:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     ExpertDashboard:
       type: object

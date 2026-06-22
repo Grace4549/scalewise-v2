@@ -538,6 +538,16 @@ export interface AdminStats {
   recentBookings: AdminBooking[];
 }
 
+export interface LaunchSubscribeInput {
+  email: string;
+}
+
+export interface LaunchNotification {
+  id: number;
+  email: string;
+  createdAt: string;
+}
+
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];

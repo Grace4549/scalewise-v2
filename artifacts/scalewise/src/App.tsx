@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Navbar, Footer } from "@/components/layout";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 // Pages
 import Home from "@/pages/home";
@@ -75,6 +76,7 @@ function Router() {
   return (
     <div className="flex flex-col min-h-screen">
       <ScrollToHash />
+      <AnnouncementBanner />
       <Navbar />
       <main className="flex-1">
         <Switch>

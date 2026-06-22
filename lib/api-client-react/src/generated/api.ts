@@ -38,6 +38,8 @@ import type {
   GetSearchSuggestionsParams,
   HealthStatus,
   InboxThread,
+  LaunchNotification,
+  LaunchSubscribeInput,
   ListAllBookingsParams,
   ListApplicationsParams,
   ListExpertsParams,
@@ -64,6 +66,154 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+export const getSubscribeLaunchNotificationUrl = () => {
+
+
+
+
+  return `/api/launch/subscribe`
+}
+
+/**
+ * @summary Subscribe to launch notification
+ */
+export const subscribeLaunchNotification = async (launchSubscribeInput: LaunchSubscribeInput, options?: RequestInit): Promise<LaunchNotification> => {
+
+  return customFetch<LaunchNotification>(getSubscribeLaunchNotificationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      launchSubscribeInput,)
+  }
+);}
+
+
+
+
+export const getSubscribeLaunchNotificationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeLaunchNotification>>, TError,{data: BodyType<LaunchSubscribeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscribeLaunchNotification>>, TError,{data: BodyType<LaunchSubscribeInput>}, TContext> => {
+
+const mutationKey = ['subscribeLaunchNotification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeLaunchNotification>>, {data: BodyType<LaunchSubscribeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  subscribeLaunchNotification(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubscribeLaunchNotificationMutationResult = NonNullable<Awaited<ReturnType<typeof subscribeLaunchNotification>>>
+    export type SubscribeLaunchNotificationMutationBody = BodyType<LaunchSubscribeInput>
+    export type SubscribeLaunchNotificationMutationError = ErrorType<void>
+
+    /**
+ * @summary Subscribe to launch notification
+ */
+export const useSubscribeLaunchNotification = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeLaunchNotification>>, TError,{data: BodyType<LaunchSubscribeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof subscribeLaunchNotification>>,
+        TError,
+        {data: BodyType<LaunchSubscribeInput>},
+        TContext
+      > => {
+      return useMutation(getSubscribeLaunchNotificationMutationOptions(options));
+    }
+
+export const getListLaunchNotificationsUrl = () => {
+
+
+
+
+  return `/api/admin/launch-notifications`
+}
+
+/**
+ * @summary List all launch notification subscribers (admin only)
+ */
+export const listLaunchNotifications = async ( options?: RequestInit): Promise<LaunchNotification[]> => {
+
+  return customFetch<LaunchNotification[]>(getListLaunchNotificationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListLaunchNotificationsQueryKey = () => {
+    return [
+    `/api/admin/launch-notifications`
+    ] as const;
+    }
+
+
+export const getListLaunchNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listLaunchNotifications>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLaunchNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLaunchNotificationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLaunchNotifications>>> = ({ signal }) => listLaunchNotifications({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLaunchNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListLaunchNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listLaunchNotifications>>>
+export type ListLaunchNotificationsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List all launch notification subscribers (admin only)
+ */
+
+export function useListLaunchNotifications<TData = Awaited<ReturnType<typeof listLaunchNotifications>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLaunchNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListLaunchNotificationsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
 
 
 

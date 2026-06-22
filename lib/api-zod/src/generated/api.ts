@@ -9,6 +9,25 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Subscribe to launch notification
+ */
+export const SubscribeLaunchNotificationBody = zod.object({
+  "email": zod.string().email()
+})
+
+
+/**
+ * @summary List all launch notification subscribers (admin only)
+ */
+export const ListLaunchNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListLaunchNotificationsResponse = zod.array(ListLaunchNotificationsResponseItem)
+
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

@@ -38,6 +38,8 @@ export * from './getSearchSuggestionsParams';
 export * from './healthStatus';
 export * from './inboxThread';
 export * from './inboxThreadThreadType';
+export * from './launchNotification';
+export * from './launchSubscribeInput';
 export * from './listAllBookingsParams';
 export * from './listAllBookingsStatus';
 export * from './listApplicationsParams';

@@ -4,6 +4,7 @@ import {
   useApproveApplication, useRejectApplication, useDeleteReview,
   useGetExpertBreakdown, useMarkBookingPaid, useAdminUpdateBookingStatus,
   useListAdminMessages, useSendAdminMessage, useMarkExpertPaid, useMarkRefundPaid,
+  useListLaunchNotifications,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -188,6 +189,10 @@ export default function AdminDashboard() {
 
   const { data: adminMessages } = useListAdminMessages(selectedExpertId ?? 0, {
     query: { queryKey: getListAdminMessagesQueryKey(selectedExpertId ?? 0), enabled: selectedExpertId !== null },
+  });
+
+  const { data: waitlist, isLoading: waitlistLoading } = useListLaunchNotifications({
+    query: { queryKey: ["listLaunchNotifications"], refetchInterval: 30000 },
   });
 
   const approveApp = useApproveApplication();
@@ -519,6 +524,14 @@ export default function AdminDashboard() {
                   {stats!.pendingRefunds}
                 </span>
               )}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="waitlist"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "waitlist" ? { backgroundColor: "#88CFA8", color: "white" } : { color: "#1a5730" }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#88CFA8", opacity: activeTab === "waitlist" ? 0 : 1 }} />
+              Waitlist
             </span>
           </TabsTrigger>
         </TabsList>
@@ -1250,6 +1263,55 @@ export default function AdminDashboard() {
                 </div>
               );
             })()}
+          </div>
+        </TabsContent>
+
+        {/* ── WAITLIST ── */}
+        <TabsContent value="waitlist">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex-1">
+              <h2 className="text-lg font-bold" style={{ color: C.green }}>Waiting for Launch</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Visitors who signed up to be notified when ScaleWise launches. Polled every 30 seconds.
+              </p>
+            </div>
+            <div className="px-5 py-3 rounded-2xl border text-center"
+              style={{ borderColor: C.green + "60", backgroundColor: C.green + "10" }}>
+              <div className="text-2xl font-bold" style={{ color: C.green }}>
+                {waitlistLoading ? "—" : (waitlist?.length ?? 0)}
+              </div>
+              <div className="text-xs text-muted-foreground font-medium mt-0.5">Signed up</div>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl border overflow-hidden">
+            {waitlistLoading ? (
+              <div className="p-8 text-center text-muted-foreground">Loading...</div>
+            ) : !waitlist?.length ? (
+              <div className="p-12 text-center text-muted-foreground">
+                No sign-ups yet. Share the site to start collecting early interest.
+              </div>
+            ) : (
+              <div className="divide-y">
+                {waitlist.map((entry) => (
+                  <div key={entry.id} className="px-5 py-3.5 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: C.green + "20", color: "#1a5730" }}>
+                        {entry.email.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-medium text-sm">{entry.email}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      {new Date(entry.createdAt).toLocaleString("en-KE", {
+                        day: "numeric", month: "short", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
