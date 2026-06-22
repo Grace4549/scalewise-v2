@@ -140,7 +140,7 @@ export default function AdminDashboard() {
   const [reviewDateFrom, setReviewDateFrom] = useState("");
   const [reviewDateTo, setReviewDateTo] = useState("");
 
-  const { data: stats, isLoading: statsLoading } = useGetAdminStats();
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats();
 
   const appParams = (appDateFrom || appDateTo)
     ? { dateFrom: appDateFrom || undefined, dateTo: appDateTo || undefined }
@@ -364,7 +364,17 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       {statsLoading ? (
-        <Skeleton className="h-32 w-full mb-8" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+          {Array.from({ length: 11 }).map((_, i) => (
+            <Skeleton key={i} className="h-[88px] rounded-2xl" />
+          ))}
+        </div>
+      ) : statsError ? (
+        <div className="mb-8 p-4 rounded-2xl border bg-card text-sm text-muted-foreground flex items-center justify-between">
+          <span>Could not load stats — the server returned an error.</span>
+          <button onClick={() => queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() })}
+            className="text-xs font-semibold underline" style={{ color: C.blue }}>Retry</button>
+        </div>
       ) : stats ? (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
           <StatCard label="Total Experts" value={stats.totalExperts} accent={C.mblue}

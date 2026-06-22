@@ -23,11 +23,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentId = user?.id ?? null;
     const prevId = prevUserIdRef.current;
 
-    // Once we have observed at least one identity value, check whether it has
-    // changed to a *different* authenticated user. When that happens, flush the
-    // entire cache so no data belonging to the previous account survives. We
-    // re-seed the identity entry immediately so the auth context stays valid.
-    if (prevId !== undefined && prevId !== currentId && currentId !== null) {
+    // Only clear the cache when switching from one authenticated user to a
+    // *different* authenticated user (e.g. user A logs out and user B logs in
+    // within the same tab). Logging in from a logged-out state (prevId === null)
+    // does NOT need a cache flush — the previous cache only held public data.
+    if (prevId !== undefined && prevId !== null && prevId !== currentId && currentId !== null) {
       const meData = queryClient.getQueryData(getGetMeQueryKey());
       queryClient.clear();
       queryClient.setQueryData(getGetMeQueryKey(), meData);
