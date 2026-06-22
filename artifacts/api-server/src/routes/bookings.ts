@@ -25,11 +25,12 @@ function getPriceForSession(expert: typeof expertsTable.$inferSelect, sessionTyp
 export function formatBooking(
   b: typeof bookingsTable.$inferSelect,
   expertMap: Record<number, typeof expertsTable.$inferSelect>,
-  clientMap: Record<number, typeof usersTable.$inferSelect>
+  clientMap: Record<number, typeof usersTable.$inferSelect>,
+  includePayoutFields = false
 ) {
   const expert = expertMap[b.expertId];
   const client = clientMap[b.clientId];
-  return {
+  const base = {
     id: b.id,
     clientId: b.clientId,
     expertId: b.expertId,
@@ -37,8 +38,6 @@ export function formatBooking(
     scheduledTime: b.scheduledTime.toISOString(),
     durationMinutes: b.durationMinutes,
     status: b.status,
-    payoutStatus: b.payoutStatus,
-    payoutPaidAt: b.payoutPaidAt ? b.payoutPaidAt.toISOString() : null,
     notes: b.notes ?? null,
     meetLink: b.meetLink ?? null,
     amount: b.amount ?? null,
@@ -47,6 +46,14 @@ export function formatBooking(
     expertIndustry: expert?.industry ?? null,
     createdAt: b.createdAt.toISOString(),
   };
+  if (includePayoutFields) {
+    return {
+      ...base,
+      payoutStatus: b.payoutStatus,
+      payoutPaidAt: b.payoutPaidAt ? b.payoutPaidAt.toISOString() : null,
+    };
+  }
+  return base;
 }
 
 router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
@@ -73,7 +80,8 @@ router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
   const expertMap = Object.fromEntries(experts.map((e) => [e.id, e]));
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));
 
-  res.json(bookings.map((b) => formatBooking(b, expertMap, clientMap)));
+  const includePayoutFields = req.userRole === "expert" || req.userRole === "admin";
+  res.json(bookings.map((b) => formatBooking(b, expertMap, clientMap, includePayoutFields)));
 });
 
 function getDurationForSession(sessionType: string): number {
@@ -122,7 +130,7 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
-  res.status(201).json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
+  res.status(201).json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }, false));
 });
 
 router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
@@ -141,14 +149,11 @@ router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
-  res.json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }));
+  const includePayoutFields = req.userRole === "expert" || req.userRole === "admin";
+  res.json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }, includePayoutFields));
 });
 
 const TERMINAL_STATUSES = new Set(["completed", "cancelled", "no-show"]);
-
-const EXPERT_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
-  upcoming: new Set(["no-show"]),
-};
 
 const ADMIN_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
   upcoming: new Set(["completed", "cancelled", "no-show"]),
@@ -173,17 +178,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
   const newStatus = parsed.data.status;
 
   if (req.userRole === "expert") {
-    const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
-    if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
-    const allowed = EXPERT_ALLOWED_TRANSITIONS[booking.status];
-    if (!allowed || !allowed.has(newStatus)) {
-      res.status(403).json({ error: "Experts may only mark an upcoming booking as no-show after the scheduled session time" });
-      return;
-    }
-    if (new Date() < booking.scheduledTime) {
-      res.status(409).json({ error: "A booking cannot be marked as no-show before the scheduled session time" });
-      return;
-    }
+    res.status(403).json({ error: "Forbidden" }); return;
   } else if (req.userRole === "admin") {
     const allowed = ADMIN_ALLOWED_TRANSITIONS[booking.status];
     if (!allowed || !allowed.has(newStatus)) {
@@ -209,7 +204,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
-  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
+  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
 });
 
 export default router;
