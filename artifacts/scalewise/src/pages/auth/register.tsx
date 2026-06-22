@@ -46,6 +46,10 @@ export default function Register() {
     if (role === "expert" && tokenParam) payload.inviteToken = tokenParam;
     registerMutation.mutate({ data: payload }, {
       onSuccess: (res) => {
+        // Clear the entire cache before setting the new identity so no
+        // previously-cached authenticated data (bookings, inbox, dashboard)
+        // leaks to the newly-registered account.
+        queryClient.clear();
         queryClient.setQueryData(getGetMeQueryKey(), (res as any).user ?? null);
         refetch();
         if (data.role === "expert") {

@@ -37,6 +37,10 @@ export default function Login() {
     login.mutate({ data }, {
       onSuccess: (res) => {
         const role = (res as any)?.user?.role;
+        // Clear the entire cache before setting the new identity so no
+        // previously-cached authenticated data (bookings, inbox, dashboard)
+        // leaks to the newly-signed-in account.
+        queryClient.clear();
         queryClient.setQueryData(getGetMeQueryKey(), (res as any)?.user ?? null);
         refetch();
         if (role === "admin")  setLocation("/admin");
