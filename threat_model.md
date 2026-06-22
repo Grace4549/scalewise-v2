@@ -22,6 +22,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 - **API to PostgreSQL** — the API has direct read/write access to core marketplace data. Injection or broken authorization at the API layer can expose the full dataset.
 - **Unauthenticated to authenticated** — public browsing, reviews, login, registration, and expert applications are reachable without a session; bookings, inboxes, and dashboards are not.
 - **Authenticated to role-restricted** — expert and admin capabilities sit on top of ordinary authenticated access and must be enforced server-side, not in frontend routing alone.
+- **Authenticated browser state to new authenticated browser state** — SPA-side caches, query state, and in-memory data must be cleared or namespaced when identity changes so data from one signed-in account is not shown to the next account in the same tab.
 - **Production to dev-only** — `artifacts/mockup-sandbox/` is assumed non-production and should be ignored unless a production entry point or build path proves reachability.
 
 ## Scan Anchors
@@ -31,7 +32,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 - **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
 - **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, and public search/listing endpoints under `/api/experts*`.
 - **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
-- **Intentional public behavior:** `POST /api/reviews` is a product-defined unauthenticated “public review” surface; future scans should not treat lack of auth on that route alone as a vulnerability unless another control boundary is bypassed.
+- **Intentional public behavior:** `POST /api/reviews` is a product-defined unauthenticated “public review” surface; future scans should not treat lack of auth on that route alone as a vulnerability unless another control boundary is bypassed. Expert profiles intentionally render both public reviews and verified reviews, so the mere fact that a public review can reference an expert profile should not be re-proposed without stronger evidence of a separate abuse-control failure.
 - **Usually ignore as dev-only:** `artifacts/mockup-sandbox/`, generated `dist/` outputs, and workspace tooling unless they are executed in production paths.
 
 ## Threat Categories
@@ -55,6 +56,8 @@ Booking creation is especially sensitive because it crosses pricing, scheduling,
 ### Information Disclosure
 
 The platform stores personal data, private messages, meet links, booking notes, and admin-only financial information. API responses must be scoped to the requesting user’s role and relationship to the resource. Public endpoints must not leak internal identifiers, hidden business data, or admin/expert-only financial details beyond what the product intentionally publishes.
+
+Frontend cache isolation is also part of this category: dashboards, inboxes, booking objects, and admin views must not be reusable across account switches inside the same SPA tab.
 
 ### Denial of Service
 
