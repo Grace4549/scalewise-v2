@@ -558,7 +558,7 @@ paths:
           name: status
           schema:
             type: string
-            enum: [upcoming, completed, cancelled, no-show]
+            enum: [pending_payment, upcoming, completed, cancelled, no-show]
         - in: query
           name: expertId
           schema:
@@ -1007,7 +1007,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [upcoming, completed, cancelled, no-show]
+          enum: [pending_payment, upcoming, completed, cancelled, no-show]
         payoutStatus:
           type: string
           enum: [pending, paid]
@@ -1048,7 +1048,7 @@ components:
       properties:
         status:
           type: string
-          enum: [upcoming, completed, cancelled, no-show]
+          enum: [pending_payment, upcoming, completed, cancelled, no-show]
 
     AdminBooking:
       type: object
@@ -1260,7 +1260,7 @@ components:
 
     AdminStats:
       type: object
-      required: [totalExperts, pendingRegistration, pendingApplications, totalBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
+      required: [totalExperts, pendingRegistration, pendingApplications, totalBookings, pendingPaymentBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
       properties:
         totalExperts:
           type: integer
@@ -1269,6 +1269,8 @@ components:
         pendingApplications:
           type: integer
         totalBookings:
+          type: integer
+        pendingPaymentBookings:
           type: integer
         upcomingBookings:
           type: integer

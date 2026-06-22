@@ -230,6 +230,7 @@ export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 
 
 export const BookingStatus = {
+  pending_payment: 'pending_payment',
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',
@@ -291,6 +292,7 @@ export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof t
 
 
 export const BookingStatusUpdateStatus = {
+  pending_payment: 'pending_payment',
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',
@@ -446,6 +448,7 @@ export interface AdminStats {
   pendingRegistration: number;
   pendingApplications: number;
   totalBookings: number;
+  pendingPaymentBookings: number;
   upcomingBookings: number;
   completedBookings: number;
   cancelledBookings: number;
@@ -504,6 +507,7 @@ export type ListAllBookingsStatus = typeof ListAllBookingsStatus[keyof typeof Li
 
 
 export const ListAllBookingsStatus = {
+  pending_payment: 'pending_payment',
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',

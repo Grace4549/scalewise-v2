@@ -10,6 +10,7 @@ export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof t
 
 
 export const BookingStatusUpdateStatus = {
+  pending_payment: 'pending_payment',
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',

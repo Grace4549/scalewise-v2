@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
 import { db, expertsTable, bookingsTable, reviewsTable, usersTable } from "@workspace/db";
-import { and, eq, gte, lte, sql, isNotNull, isNull, inArray } from "drizzle-orm";
+import { and, eq, ne, gte, lte, sql, isNotNull, isNull, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
 import { UpdateBookingStatusBody } from "@workspace/api-zod";
@@ -162,8 +162,8 @@ router.get("/admin/bookings", adminMiddleware(), async (req, res): Promise<void>
   const dateFrom = req.query.dateFrom as string | undefined;
   const dateTo = req.query.dateTo as string | undefined;
 
-  if (status && ["upcoming", "completed", "cancelled", "no-show"].includes(status)) {
-    conditions.push(eq(bookingsTable.status, status as "upcoming" | "completed" | "cancelled" | "no-show"));
+  if (status && ["pending_payment", "upcoming", "completed", "cancelled", "no-show"].includes(status)) {
+    conditions.push(eq(bookingsTable.status, status as "pending_payment" | "upcoming" | "completed" | "cancelled" | "no-show"));
   }
   if (expertIdRaw) {
     const eid = parseInt(expertIdRaw, 10);
@@ -350,7 +350,13 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
 
   const [bookingCount] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(bookingsTable);
+    .from(bookingsTable)
+    .where(ne(bookingsTable.status, "pending_payment"));
+
+  const [pendingPaymentCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookingsTable)
+    .where(eq(bookingsTable.status, "pending_payment"));
 
   const [upcomingCount] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -414,6 +420,7 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     pendingRegistration: pendingRegistrationCount?.count ?? 0,
     pendingApplications: pendingCount?.count ?? 0,
     totalBookings: bookingCount?.count ?? 0,
+    pendingPaymentBookings: pendingPaymentCount?.count ?? 0,
     upcomingBookings: upcomingCount?.count ?? 0,
     completedBookings: completedCount?.count ?? 0,
     cancelledBookings: cancelledCount?.count ?? 0,

@@ -112,7 +112,6 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   }
 
   const durationMinutes = getDurationForSession(sessionType);
-  const meetLink = generateMeetLink();
 
   const [booking] = await db
     .insert(bookingsTable)
@@ -123,9 +122,9 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
       scheduledTime: new Date(scheduledTime),
       durationMinutes,
       notes: notes ?? null,
-      meetLink,
+      meetLink: null,
       amount,
-      status: "upcoming",
+      status: "pending_payment",
     })
     .returning();
 
@@ -156,7 +155,12 @@ router.get("/bookings/:id", requireAuth, async (req, res): Promise<void> => {
 const TERMINAL_STATUSES = new Set(["completed", "cancelled", "no-show"]);
 
 const ADMIN_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
+  pending_payment: new Set(["upcoming", "cancelled"]),
   upcoming: new Set(["completed", "cancelled", "no-show"]),
+};
+
+const CLIENT_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
+  pending_payment: new Set(["cancelled"]),
 };
 
 router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void> => {
@@ -186,12 +190,21 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
       return;
     }
   } else {
-    res.status(403).json({ error: "Forbidden" }); return;
+    if (booking.clientId !== req.userId) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    const allowed = CLIENT_ALLOWED_TRANSITIONS[booking.status];
+    if (!allowed || !allowed.has(newStatus)) {
+      res.status(400).json({ error: `You cannot change this booking to '${newStatus}'` });
+      return;
+    }
   }
+
+  const meetLink = newStatus === "upcoming" && !booking.meetLink ? generateMeetLink() : booking.meetLink;
 
   const [updated] = await db
     .update(bookingsTable)
-    .set({ status: newStatus })
+    .set({ status: newStatus, meetLink })
     .where(eq(bookingsTable.id, id))
     .returning();
 

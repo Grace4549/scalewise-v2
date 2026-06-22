@@ -10,6 +10,7 @@ export type ListAllBookingsStatus = typeof ListAllBookingsStatus[keyof typeof Li
 
 
 export const ListAllBookingsStatus = {
+  pending_payment: 'pending_payment',
   upcoming: 'upcoming',
   completed: 'completed',
   cancelled: 'cancelled',

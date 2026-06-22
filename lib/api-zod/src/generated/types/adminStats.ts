@@ -12,6 +12,7 @@ export interface AdminStats {
   pendingRegistration: number;
   pendingApplications: number;
   totalBookings: number;
+  pendingPaymentBookings: number;
   upcomingBookings: number;
   completedBookings: number;
   cancelledBookings: number;

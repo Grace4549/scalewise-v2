@@ -90,10 +90,16 @@ export default function ClientDashboard() {
   if (!user || user.role !== "client") return <Redirect to="/login" />;
 
   const getStatusStyle = (status: string) => {
+    if (status === "pending_payment") return { backgroundColor: "#fef9c3", color: "#854d0e" };
     if (status === "upcoming")  return { backgroundColor: C.blue + "22", color: C.blue };
     if (status === "completed") return { backgroundColor: C.green + "33", color: "#1a5730" };
     if (status === "cancelled") return { backgroundColor: "#fecaca", color: "#b91c1c" };
     return {};
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "pending_payment") return "Awaiting Payment";
+    return status.replace(/_/g, " ");
   };
 
   return (
@@ -153,7 +159,7 @@ export default function ClientDashboard() {
                         <h3 className="font-semibold text-lg">{booking.expertName}</h3>
                         <Badge variant="secondary" className="capitalize">{booking.sessionType.replace(/_/g, " ")}</Badge>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-                          style={getStatusStyle(booking.status)}>{booking.status}</span>
+                          style={getStatusStyle(booking.status)}>{getStatusLabel(booking.status)}</span>
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>📅 {new Date(booking.scheduledTime).toLocaleString()}</p>

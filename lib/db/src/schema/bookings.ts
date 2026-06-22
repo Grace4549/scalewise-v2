@@ -11,7 +11,7 @@ export const bookingsTable = pgTable("bookings", {
   sessionType: text("session_type", { enum: ["discovery", "consultancy", "growth_3mo", "growth_6mo"] }).notNull(),
   scheduledTime: timestamp("scheduled_time", { withTimezone: true }).notNull(),
   durationMinutes: integer("duration_minutes").notNull().default(60),
-  status: text("status", { enum: ["upcoming", "completed", "cancelled", "no-show"] }).notNull().default("upcoming"),
+  status: text("status", { enum: ["pending_payment", "upcoming", "completed", "cancelled", "no-show"] }).notNull().default("pending_payment"),
   payoutStatus: text("payout_status", { enum: ["pending", "paid"] }).notNull().default("pending"),
   payoutPaidAt: timestamp("payout_paid_at", { withTimezone: true }),
   notes: text("notes"),

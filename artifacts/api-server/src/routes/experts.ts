@@ -236,6 +236,7 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
   const upcomingBookings = allBookings.filter((b) => b.status === "upcoming");
   const completedBookings = allBookings.filter((b) => b.status === "completed");
 
+
   const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
   const commissionPaid = completedBookings.reduce((sum, b) => {
     return sum + (b.amount ?? 0) * getCommissionRate(b.sessionType);
@@ -248,7 +249,7 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
 
   const clientIds = [...new Set(allBookings.map((b) => b.clientId))];
   const clients = clientIds.length > 0
-    ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${clientIds})`)
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, clientIds))
     : [];
 
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));

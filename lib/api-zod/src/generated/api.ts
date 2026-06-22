@@ -242,7 +242,7 @@ export const ListMyBookingsResponseItem = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
   "payoutStatus": zod.enum(['pending', 'paid']),
   "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
@@ -281,7 +281,7 @@ export const GetBookingResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
   "payoutStatus": zod.enum(['pending', 'paid']),
   "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
@@ -302,7 +302,7 @@ export const UpdateBookingStatusParams = zod.object({
 })
 
 export const UpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show'])
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show'])
 })
 
 export const UpdateBookingStatusResponse = zod.object({
@@ -312,7 +312,7 @@ export const UpdateBookingStatusResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
   "payoutStatus": zod.enum(['pending', 'paid']),
   "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
@@ -556,7 +556,7 @@ export const RejectApplicationResponse = zod.object({
  * @summary List all bookings (admin only) with optional filters
  */
 export const ListAllBookingsQueryParams = zod.object({
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']).optional(),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']).optional(),
   "expertId": zod.coerce.number().optional(),
   "dateFrom": zod.coerce.string().optional(),
   "dateTo": zod.coerce.string().optional()
@@ -593,7 +593,7 @@ export const AdminUpdateBookingStatusParams = zod.object({
 })
 
 export const AdminUpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show'])
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show'])
 })
 
 export const AdminUpdateBookingStatusResponse = zod.object({
@@ -655,6 +655,7 @@ export const GetAdminStatsResponse = zod.object({
   "pendingRegistration": zod.number(),
   "pendingApplications": zod.number(),
   "totalBookings": zod.number(),
+  "pendingPaymentBookings": zod.number(),
   "upcomingBookings": zod.number(),
   "completedBookings": zod.number(),
   "cancelledBookings": zod.number(),
@@ -754,7 +755,7 @@ export const GetExpertDashboardResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
   "payoutStatus": zod.enum(['pending', 'paid']),
   "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
@@ -772,7 +773,7 @@ export const GetExpertDashboardResponse = zod.object({
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
   "durationMinutes": zod.number(),
-  "status": zod.enum(['upcoming', 'completed', 'cancelled', 'no-show']),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
   "payoutStatus": zod.enum(['pending', 'paid']),
   "payoutPaidAt": zod.string().nullish(),
   "notes": zod.string().nullish(),
