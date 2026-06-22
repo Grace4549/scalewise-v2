@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
 import { db, expertsTable, bookingsTable, reviewsTable, usersTable } from "@workspace/db";
-import { and, eq, gte, lte, sql, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, gte, lte, sql, isNotNull, isNull, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
 import { UpdateBookingStatusBody } from "@workspace/api-zod";
@@ -186,10 +186,10 @@ router.get("/admin/bookings", adminMiddleware(), async (req, res): Promise<void>
   const clientIds = [...new Set(bookings.map((b) => b.clientId))];
 
   const experts = expertIds.length > 0
-    ? await db.select().from(expertsTable).where(sql`${expertsTable.id} = ANY(${expertIds})`)
+    ? await db.select().from(expertsTable).where(inArray(expertsTable.id, expertIds))
     : [];
   const clients = clientIds.length > 0
-    ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${clientIds})`)
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, clientIds))
     : [];
 
   const expertMap = Object.fromEntries(experts.map((e) => [e.id, e]));
@@ -400,10 +400,10 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
   const clientIds = [...new Set(recentBookings.map((b) => b.clientId))];
 
   const experts = expertIds.length > 0
-    ? await db.select().from(expertsTable).where(sql`${expertsTable.id} = ANY(${expertIds})`)
+    ? await db.select().from(expertsTable).where(inArray(expertsTable.id, expertIds))
     : [];
   const clients = clientIds.length > 0
-    ? await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(${clientIds})`)
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, clientIds))
     : [];
 
   const expertMap = Object.fromEntries(experts.map((e) => [e.id, e]));
