@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, bookingsTable, expertsTable, usersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, not, inArray, lt } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { generateMeetLink } from "../lib/auth";
 import { CreateBookingBody, UpdateBookingStatusBody } from "@workspace/api-zod";
@@ -45,6 +45,15 @@ export function formatBooking(
     expertName: expert?.name ?? null,
     expertIndustry: expert?.industry ?? null,
     createdAt: b.createdAt.toISOString(),
+    cancelledBy: b.cancelledBy ?? null,
+    cancellationReason: b.cancellationReason ?? null,
+    refundStatus: b.refundStatus,
+    refundAmount: b.refundAmount ?? null,
+    refundPercent: b.refundPercent ?? null,
+    expertCancellationEarning: b.expertCancellationEarning ?? null,
+    rescheduledBy: b.rescheduledBy ?? null,
+    rescheduledFromTime: b.rescheduledFromTime ? b.rescheduledFromTime.toISOString() : null,
+    rescheduledAt: b.rescheduledAt ? b.rescheduledAt.toISOString() : null,
   };
   if (includePayoutFields) {
     return {
@@ -54,6 +63,33 @@ export function formatBooking(
     };
   }
   return base;
+}
+
+function calcRefund(
+  amount: number,
+  cancelledBy: "client" | "expert" | "admin",
+  scheduledTime: Date,
+  wasNoShow = false
+): { refundPercent: number; refundAmount: number; expertCancellationEarning: number } {
+  if (wasNoShow) {
+    return {
+      refundPercent: 50,
+      refundAmount: amount * 0.5,
+      expertCancellationEarning: amount * 0.35,
+    };
+  }
+  if (cancelledBy === "expert" || cancelledBy === "admin") {
+    return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
+  }
+  const hoursUntil = (scheduledTime.getTime() - Date.now()) / 3600000;
+  if (hoursUntil > 24) {
+    return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
+  }
+  return {
+    refundPercent: 75,
+    refundAmount: amount * 0.75,
+    expertCancellationEarning: amount * 0.20,
+  };
 }
 
 router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
@@ -112,6 +148,25 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
   }
 
   const durationMinutes = getDurationForSession(sessionType);
+  const newStart = new Date(scheduledTime);
+  const newEnd = new Date(newStart.getTime() + durationMinutes * 60_000);
+
+  const conflicts = await db
+    .select()
+    .from(bookingsTable)
+    .where(
+      and(
+        eq(bookingsTable.expertId, expertId),
+        not(inArray(bookingsTable.status, ["cancelled", "no-show", "completed"])),
+        lt(bookingsTable.scheduledTime, newEnd),
+        sql`${bookingsTable.scheduledTime} + (${bookingsTable.durationMinutes} * interval '1 minute') > ${newStart}`
+      )
+    );
+
+  if (conflicts.length > 0) {
+    res.status(409).json({ error: "This expert is already booked for the selected time slot. Please choose a different time." });
+    return;
+  }
 
   const [booking] = await db
     .insert(bookingsTable)
@@ -119,7 +174,7 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
       clientId: req.userId!,
       expertId,
       sessionType: sessionType as "discovery" | "consultancy" | "growth_3mo" | "growth_6mo",
-      scheduledTime: new Date(scheduledTime),
+      scheduledTime: newStart,
       durationMinutes,
       notes: notes ?? null,
       meetLink: null,
@@ -161,6 +216,7 @@ const ADMIN_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
 
 const CLIENT_ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
   pending_payment: new Set(["cancelled"]),
+  upcoming: new Set(["cancelled"]),
 };
 
 router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void> => {
@@ -180,6 +236,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
   }
 
   const newStatus = parsed.data.status;
+  let effectiveCancelledBy: "client" | "expert" | "admin" | null = null;
 
   if (req.userRole === "expert") {
     res.status(403).json({ error: "Forbidden" }); return;
@@ -188,6 +245,9 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
     if (!allowed || !allowed.has(newStatus)) {
       res.status(400).json({ error: `Transition from '${booking.status}' to '${newStatus}' is not permitted` });
       return;
+    }
+    if (newStatus === "cancelled") {
+      effectiveCancelledBy = (parsed.data as { cancelledBy?: string }).cancelledBy as "client" | "expert" | "admin" ?? "admin";
     }
   } else {
     if (booking.clientId !== req.userId) {
@@ -198,13 +258,40 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
       res.status(400).json({ error: `You cannot change this booking to '${newStatus}'` });
       return;
     }
+    if (newStatus === "cancelled") effectiveCancelledBy = "client";
   }
 
   const meetLink = newStatus === "upcoming" && !booking.meetLink ? generateMeetLink() : booking.meetLink;
 
+  const updateFields: Partial<typeof bookingsTable.$inferInsert> & Record<string, unknown> = { status: newStatus, meetLink };
+
+  if (newStatus === "cancelled" && effectiveCancelledBy) {
+    updateFields.cancelledBy = effectiveCancelledBy;
+    updateFields.cancellationReason = (parsed.data as { reason?: string }).reason ?? null;
+
+    if (booking.status === "upcoming" && booking.amount) {
+      const ref = calcRefund(booking.amount, effectiveCancelledBy, booking.scheduledTime);
+      updateFields.refundStatus = "pending";
+      updateFields.refundPercent = ref.refundPercent;
+      updateFields.refundAmount = ref.refundAmount;
+      updateFields.expertCancellationEarning = ref.expertCancellationEarning;
+    } else {
+      updateFields.refundStatus = "none";
+    }
+  }
+
+  if (newStatus === "no-show" && booking.amount) {
+    const ref = calcRefund(booking.amount, "client", booking.scheduledTime, true);
+    updateFields.refundStatus = "pending";
+    updateFields.refundPercent = ref.refundPercent;
+    updateFields.refundAmount = ref.refundAmount;
+    updateFields.expertCancellationEarning = ref.expertCancellationEarning;
+  }
+
   const [updated] = await db
     .update(bookingsTable)
-    .set({ status: newStatus, meetLink })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .set(updateFields as any)
     .where(eq(bookingsTable.id, id))
     .returning();
 
@@ -213,6 +300,76 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
       .set({ totalSessions: sql`${expertsTable.totalSessions} + 1` })
       .where(eq(expertsTable.id, booking.expertId));
   }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+
+  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
+});
+
+router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const { newTime, rescheduledBy } = req.body as { newTime?: string; rescheduledBy?: string };
+  if (!newTime) { res.status(400).json({ error: "newTime is required" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  if (TERMINAL_STATUSES.has(booking.status)) {
+    res.status(409).json({ error: "Cannot reschedule a completed, cancelled, or no-show booking" });
+    return;
+  }
+
+  let actor: "client" | "expert" | "admin" = "client";
+  if (req.userRole === "admin") {
+    actor = "admin";
+  } else if (req.userRole === "expert") {
+    const [ex] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+    if (!ex || ex.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+    actor = "expert";
+  } else {
+    if (booking.clientId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+    actor = "client";
+  }
+
+  if (rescheduledBy && ["client", "expert", "admin"].includes(rescheduledBy)) {
+    actor = rescheduledBy as "client" | "expert" | "admin";
+  }
+
+  const newStart = new Date(newTime);
+  const newEnd = new Date(newStart.getTime() + booking.durationMinutes * 60_000);
+
+  const conflicts = await db
+    .select()
+    .from(bookingsTable)
+    .where(
+      and(
+        eq(bookingsTable.expertId, booking.expertId),
+        not(inArray(bookingsTable.status, ["cancelled", "no-show", "completed"])),
+        sql`${bookingsTable.id} != ${id}`,
+        lt(bookingsTable.scheduledTime, newEnd),
+        sql`${bookingsTable.scheduledTime} + (${bookingsTable.durationMinutes} * interval '1 minute') > ${newStart}`
+      )
+    );
+
+  if (conflicts.length > 0) {
+    res.status(409).json({ error: "The expert is already booked at that time. Please choose another slot." });
+    return;
+  }
+
+  const [updated] = await db
+    .update(bookingsTable)
+    .set({
+      scheduledTime: newStart,
+      rescheduledBy: actor,
+      rescheduledFromTime: booking.scheduledTime,
+      rescheduledAt: new Date(),
+    })
+    .where(eq(bookingsTable.id, id))
+    .returning();
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));

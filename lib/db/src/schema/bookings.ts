@@ -18,6 +18,17 @@ export const bookingsTable = pgTable("bookings", {
   meetLink: text("meet_link"),
   amount: real("amount"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+
+  cancelledBy: text("cancelled_by", { enum: ["client", "expert", "admin"] }),
+  cancellationReason: text("cancellation_reason"),
+  refundStatus: text("refund_status", { enum: ["none", "pending", "paid"] }).notNull().default("none"),
+  refundAmount: real("refund_amount"),
+  refundPercent: real("refund_percent"),
+  expertCancellationEarning: real("expert_cancellation_earning"),
+
+  rescheduledBy: text("rescheduled_by", { enum: ["client", "expert", "admin"] }),
+  rescheduledFromTime: timestamp("rescheduled_from_time", { withTimezone: true }),
+  rescheduledAt: timestamp("rescheduled_at", { withTimezone: true }),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({ id: true, createdAt: true, status: true, meetLink: true });

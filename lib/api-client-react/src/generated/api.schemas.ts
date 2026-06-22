@@ -245,6 +245,15 @@ export const BookingPayoutStatus = {
   paid: 'paid',
 } as const;
 
+export type BookingRefundStatus = typeof BookingRefundStatus[keyof typeof BookingRefundStatus];
+
+
+export const BookingRefundStatus = {
+  none: 'none',
+  pending: 'pending',
+  paid: 'paid',
+} as const;
+
 export interface Booking {
   id: number;
   clientId: number;
@@ -269,6 +278,23 @@ export interface Booking {
   /** @nullable */
   expertIndustry?: string | null;
   createdAt: string;
+  /** @nullable */
+  cancelledBy?: string | null;
+  /** @nullable */
+  cancellationReason?: string | null;
+  refundStatus?: BookingRefundStatus;
+  /** @nullable */
+  refundAmount?: number | null;
+  /** @nullable */
+  refundPercent?: number | null;
+  /** @nullable */
+  expertCancellationEarning?: number | null;
+  /** @nullable */
+  rescheduledBy?: string | null;
+  /** @nullable */
+  rescheduledFromTime?: string | null;
+  /** @nullable */
+  rescheduledAt?: string | null;
 }
 
 export type BookingInputSessionType = typeof BookingInputSessionType[keyof typeof BookingInputSessionType];
@@ -299,14 +325,48 @@ export const BookingStatusUpdateStatus = {
   'no-show': 'no-show',
 } as const;
 
+export type BookingStatusUpdateCancelledBy = typeof BookingStatusUpdateCancelledBy[keyof typeof BookingStatusUpdateCancelledBy];
+
+
+export const BookingStatusUpdateCancelledBy = {
+  client: 'client',
+  expert: 'expert',
+  admin: 'admin',
+} as const;
+
 export interface BookingStatusUpdate {
   status: BookingStatusUpdateStatus;
+  cancelledBy?: BookingStatusUpdateCancelledBy;
+  reason?: string;
+}
+
+export type BookingRescheduleRescheduledBy = typeof BookingRescheduleRescheduledBy[keyof typeof BookingRescheduleRescheduledBy];
+
+
+export const BookingRescheduleRescheduledBy = {
+  client: 'client',
+  expert: 'expert',
+  admin: 'admin',
+} as const;
+
+export interface BookingReschedule {
+  newTime: string;
+  rescheduledBy?: BookingRescheduleRescheduledBy;
 }
 
 export type AdminBookingPayoutStatus = typeof AdminBookingPayoutStatus[keyof typeof AdminBookingPayoutStatus];
 
 
 export const AdminBookingPayoutStatus = {
+  pending: 'pending',
+  paid: 'paid',
+} as const;
+
+export type AdminBookingRefundStatus = typeof AdminBookingRefundStatus[keyof typeof AdminBookingRefundStatus];
+
+
+export const AdminBookingRefundStatus = {
+  none: 'none',
   pending: 'pending',
   paid: 'paid',
 } as const;
@@ -339,6 +399,23 @@ export interface AdminBooking {
   /** @nullable */
   expertName?: string | null;
   createdAt: string;
+  /** @nullable */
+  cancelledBy?: string | null;
+  /** @nullable */
+  cancellationReason?: string | null;
+  refundStatus?: AdminBookingRefundStatus;
+  /** @nullable */
+  refundAmount?: number | null;
+  /** @nullable */
+  refundPercent?: number | null;
+  /** @nullable */
+  expertCancellationEarning?: number | null;
+  /** @nullable */
+  rescheduledBy?: string | null;
+  /** @nullable */
+  rescheduledFromTime?: string | null;
+  /** @nullable */
+  rescheduledAt?: string | null;
 }
 
 export interface AdminExpertBreakdown {
@@ -456,6 +533,8 @@ export interface AdminStats {
   totalCommission: number;
   pendingPayout: number;
   paidPayout: number;
+  pendingRefunds?: number;
+  paidRefunds?: number;
   recentBookings: AdminBooking[];
 }
 

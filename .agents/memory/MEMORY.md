@@ -1,0 +1,2 @@
+- [Refund calculation rules](refund-rules.md) — client cancel >24h=100%, <24h=75/20/5, no-show=50/35/15, expert cancel=100%
+- [Calendar conflict check](calendar-conflict.md) — booking creation and reschedule both run overlap SQL; pending_payment blocks slot

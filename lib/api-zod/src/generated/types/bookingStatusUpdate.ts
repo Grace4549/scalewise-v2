@@ -5,8 +5,11 @@
  * ScaleWise API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { BookingStatusUpdateCancelledBy } from './bookingStatusUpdateCancelledBy';
 import type { BookingStatusUpdateStatus } from './bookingStatusUpdateStatus';
 
 export interface BookingStatusUpdate {
   status: BookingStatusUpdateStatus;
+  cancelledBy?: BookingStatusUpdateCancelledBy;
+  reason?: string;
 }

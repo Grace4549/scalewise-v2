@@ -283,6 +283,33 @@ paths:
         "404":
           description: Not found
 
+  /bookings/{id}/reschedule:
+    patch:
+      operationId: rescheduleBooking
+      tags: [bookings]
+      summary: Reschedule a booking (client, expert, or admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingReschedule"
+      responses:
+        "200":
+          description: Rescheduled booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "409":
+          description: Time slot conflict
+
   /bookings/{id}/status:
     patch:
       operationId: updateBookingStatus
@@ -601,6 +628,25 @@ paths:
       responses:
         "200":
           description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBooking"
+
+  /admin/bookings/{id}/mark-refund-paid:
+    post:
+      operationId: markRefundPaid
+      tags: [admin]
+      summary: Mark a booking's client refund as paid (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Refund marked paid
           content:
             application/json:
               schema:
@@ -1027,6 +1073,25 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+        cancelledBy:
+          type: ["string", "null"]
+        cancellationReason:
+          type: ["string", "null"]
+        refundStatus:
+          type: string
+          enum: [none, pending, paid]
+        refundAmount:
+          type: ["number", "null"]
+        refundPercent:
+          type: ["number", "null"]
+        expertCancellationEarning:
+          type: ["number", "null"]
+        rescheduledBy:
+          type: ["string", "null"]
+        rescheduledFromTime:
+          type: ["string", "null"]
+        rescheduledAt:
+          type: ["string", "null"]
 
     BookingInput:
       type: object
@@ -1049,6 +1114,21 @@ components:
         status:
           type: string
           enum: [pending_payment, upcoming, completed, cancelled, no-show]
+        cancelledBy:
+          type: string
+          enum: [client, expert, admin]
+        reason:
+          type: string
+
+    BookingReschedule:
+      type: object
+      required: [newTime]
+      properties:
+        newTime:
+          type: string
+        rescheduledBy:
+          type: string
+          enum: [client, expert, admin]
 
     AdminBooking:
       type: object
@@ -1091,6 +1171,25 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+        cancelledBy:
+          type: ["string", "null"]
+        cancellationReason:
+          type: ["string", "null"]
+        refundStatus:
+          type: string
+          enum: [none, pending, paid]
+        refundAmount:
+          type: ["number", "null"]
+        refundPercent:
+          type: ["number", "null"]
+        expertCancellationEarning:
+          type: ["number", "null"]
+        rescheduledBy:
+          type: ["string", "null"]
+        rescheduledFromTime:
+          type: ["string", "null"]
+        rescheduledAt:
+          type: ["string", "null"]
 
     AdminExpertBreakdown:
       type: object
@@ -1286,6 +1385,10 @@ components:
           type: number
         paidPayout:
           type: number
+        pendingRefunds:
+          type: integer
+        paidRefunds:
+          type: integer
         recentBookings:
           type: array
           items:

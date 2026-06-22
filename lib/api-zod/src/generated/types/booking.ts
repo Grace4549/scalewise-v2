@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { BookingPayoutStatus } from './bookingPayoutStatus';
+import type { BookingRefundStatus } from './bookingRefundStatus';
 import type { BookingSessionType } from './bookingSessionType';
 import type { BookingStatus } from './bookingStatus';
 
@@ -33,4 +34,21 @@ export interface Booking {
   /** @nullable */
   expertIndustry?: string | null;
   createdAt: string;
+  /** @nullable */
+  cancelledBy?: string | null;
+  /** @nullable */
+  cancellationReason?: string | null;
+  refundStatus?: BookingRefundStatus;
+  /** @nullable */
+  refundAmount?: number | null;
+  /** @nullable */
+  refundPercent?: number | null;
+  /** @nullable */
+  expertCancellationEarning?: number | null;
+  /** @nullable */
+  rescheduledBy?: string | null;
+  /** @nullable */
+  rescheduledFromTime?: string | null;
+  /** @nullable */
+  rescheduledAt?: string | null;
 }

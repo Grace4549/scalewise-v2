@@ -26,6 +26,7 @@ import type {
   AuthResponse,
   Booking,
   BookingInput,
+  BookingReschedule,
   BookingStatusUpdate,
   ExpertApplication,
   ExpertApplicationInput,
@@ -1126,6 +1127,78 @@ export function useGetBooking<TData = Awaited<ReturnType<typeof getBooking>>, TE
 
 
 
+
+export const getRescheduleBookingUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/reschedule`
+}
+
+/**
+ * @summary Reschedule a booking (client, expert, or admin)
+ */
+export const rescheduleBooking = async (id: number,
+    bookingReschedule: BookingReschedule, options?: RequestInit): Promise<Booking> => {
+
+  return customFetch<Booking>(getRescheduleBookingUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      bookingReschedule,)
+  }
+);}
+
+
+
+
+export const getRescheduleBookingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rescheduleBooking>>, TError,{id: number;data: BodyType<BookingReschedule>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rescheduleBooking>>, TError,{id: number;data: BodyType<BookingReschedule>}, TContext> => {
+
+const mutationKey = ['rescheduleBooking'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rescheduleBooking>>, {id: number;data: BodyType<BookingReschedule>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  rescheduleBooking(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RescheduleBookingMutationResult = NonNullable<Awaited<ReturnType<typeof rescheduleBooking>>>
+    export type RescheduleBookingMutationBody = BodyType<BookingReschedule>
+    export type RescheduleBookingMutationError = ErrorType<void>
+
+    /**
+ * @summary Reschedule a booking (client, expert, or admin)
+ */
+export const useRescheduleBooking = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rescheduleBooking>>, TError,{id: number;data: BodyType<BookingReschedule>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof rescheduleBooking>>,
+        TError,
+        {id: number;data: BodyType<BookingReschedule>},
+        TContext
+      > => {
+      return useMutation(getRescheduleBookingMutationOptions(options));
+    }
 
 export const getUpdateBookingStatusUrl = (id: number,) => {
 
@@ -2248,6 +2321,76 @@ export const useAdminUpdateBookingStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAdminUpdateBookingStatusMutationOptions(options));
+    }
+
+export const getMarkRefundPaidUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/bookings/${id}/mark-refund-paid`
+}
+
+/**
+ * @summary Mark a booking's client refund as paid (admin only)
+ */
+export const markRefundPaid = async (id: number, options?: RequestInit): Promise<AdminBooking> => {
+
+  return customFetch<AdminBooking>(getMarkRefundPaidUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkRefundPaidMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markRefundPaid>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markRefundPaid>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markRefundPaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markRefundPaid>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markRefundPaid(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkRefundPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markRefundPaid>>>
+
+    export type MarkRefundPaidMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a booking's client refund as paid (admin only)
+ */
+export const useMarkRefundPaid = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markRefundPaid>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markRefundPaid>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkRefundPaidMutationOptions(options));
     }
 
 export const getMarkBookingPaidUrl = (id: number,) => {

@@ -3,7 +3,7 @@ import {
   useGetAdminStats, useListApplications, useListAllBookings, useListReviews,
   useApproveApplication, useRejectApplication, useDeleteReview,
   useGetExpertBreakdown, useMarkBookingPaid, useAdminUpdateBookingStatus,
-  useListAdminMessages, useSendAdminMessage, useMarkExpertPaid,
+  useListAdminMessages, useSendAdminMessage, useMarkExpertPaid, useMarkRefundPaid,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -83,7 +83,8 @@ function PayoutBadge({ status }: { status?: string | null }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
+  const map: Record<string, { bg: string; color: string; label?: string }> = {
+    pending_payment: { bg: "#fef9c3", color: "#854d0e", label: "Pending Payment" },
     upcoming: { bg: C.mint + "30", color: "#0f5248" },
     completed: { bg: C.green + "30", color: "#1a5730" },
     cancelled: { bg: "#fecaca", color: "#b91c1c" },
@@ -91,8 +92,20 @@ function StatusBadge({ status }: { status: string }) {
   };
   const s = map[status] ?? { bg: "#e5e7eb", color: "#6b7280" };
   return (
+    <span className="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap"
+      style={{ backgroundColor: s.bg, color: s.color }}>{s.label ?? status}</span>
+  );
+}
+
+function RefundBadge({ status }: { status?: string | null }) {
+  if (!status || status === "none") return null;
+  if (status === "paid") return (
     <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
-      style={{ backgroundColor: s.bg, color: s.color }}>{status}</span>
+      style={{ backgroundColor: C.green + "33", color: "#1a5730" }}>Refund Paid</span>
+  );
+  return (
+    <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
+      style={{ backgroundColor: "#fef9c3", color: "#854d0e" }}>Refund Pending</span>
   );
 }
 
@@ -140,6 +153,10 @@ export default function AdminDashboard() {
   const [reviewDateFrom, setReviewDateFrom] = useState("");
   const [reviewDateTo, setReviewDateTo] = useState("");
 
+  const [cancelDialog, setCancelDialog] = useState<{ bookingId: number; currentStatus: string } | null>(null);
+  const [cancelBy, setCancelBy] = useState<"client" | "expert" | "admin">("admin");
+  const [cancelReason, setCancelReason] = useState("");
+
   const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats();
 
   const appParams = (appDateFrom || appDateTo)
@@ -179,6 +196,7 @@ export default function AdminDashboard() {
   const markPaid = useMarkBookingPaid();
   const markExpertPaidMut = useMarkExpertPaid();
   const adminStatusUpdate = useAdminUpdateBookingStatus();
+  const markRefundPaidMut = useMarkRefundPaid();
   const sendAdminMsg = useSendAdminMessage();
 
   if (authLoading) return <div className="p-8"><Skeleton className="h-[400px]" /></div>;
@@ -267,12 +285,37 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleAdminStatus = (bookingId: number, status: string) => {
-    adminStatusUpdate.mutate({ id: bookingId, data: { status: status as any } }, {
+  const handleAdminStatus = (bookingId: number, status: string, extra?: { cancelledBy?: string; reason?: string }) => {
+    adminStatusUpdate.mutate({ id: bookingId, data: { status: status as any, ...(extra ?? {}) } as any }, {
       onSuccess: () => {
         toast({ title: `Booking marked as ${status}` });
         queryClient.invalidateQueries({ queryKey: getListAllBookingsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
+      },
+    });
+  };
+
+  const openCancelDialog = (bookingId: number, currentStatus: string) => {
+    setCancelDialog({ bookingId, currentStatus });
+    setCancelBy("admin");
+    setCancelReason("");
+  };
+
+  const confirmCancel = () => {
+    if (!cancelDialog) return;
+    handleAdminStatus(cancelDialog.bookingId, "cancelled", { cancelledBy: cancelBy, reason: cancelReason || undefined });
+    setCancelDialog(null);
+  };
+
+  const handleMarkRefundPaid = (bookingId: number) => {
+    markRefundPaidMut.mutate({ id: bookingId }, {
+      onSuccess: () => {
+        toast({ title: "Refund marked as paid" });
+        queryClient.invalidateQueries({ queryKey: getListAllBookingsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
+      },
+      onError: (err: any) => {
+        toast({ title: "Error", description: err?.message, variant: "destructive" });
       },
     });
   };
@@ -365,7 +408,7 @@ export default function AdminDashboard() {
       {/* Stats */}
       {statsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          {Array.from({ length: 11 }).map((_, i) => (
+          {Array.from({ length: 14 }).map((_, i) => (
             <Skeleton key={i} className="h-[88px] rounded-2xl" />
           ))}
         </div>
@@ -384,12 +427,21 @@ export default function AdminDashboard() {
             onClick={() => navigateTo("applications", { appStatus: "awaiting_registration" })} />
           <StatCard label="Pending Apps" value={stats.pendingApplications} accent={C.blue}
             onClick={() => navigateTo("applications", { appStatus: "pending" })} />
+          <StatCard label="Awaiting Payment" value={stats.pendingPaymentBookings} accent="#d97706"
+            sub="Booked — not yet paid"
+            onClick={() => navigateTo("bookings", { bookingStatus: "pending_payment" })} />
           <StatCard label="Upcoming" value={stats.upcomingBookings} accent={C.mint}
             onClick={() => navigateTo("bookings", { bookingStatus: "upcoming" })} />
           <StatCard label="Completed" value={stats.completedBookings} accent={C.green}
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
-          <StatCard label="Cancelled" value={stats.cancelledBookings} accent={C.blue}
+          <StatCard label="Cancelled" value={stats.cancelledBookings} accent="#ef4444"
             onClick={() => navigateTo("bookings", { bookingStatus: "cancelled" })} />
+          <StatCard label="Pending Refund" value={stats.pendingRefunds ?? 0} accent="#f59e0b"
+            sub="Awaiting client refund"
+            onClick={() => navigateTo("refunds")} />
+          <StatCard label="Refund Done" value={stats.paidRefunds ?? 0} accent={C.green}
+            sub="Refunds processed"
+            onClick={() => navigateTo("refunds")} />
           <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} accent={C.mint} sub="Total collected from clients"
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
           <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue} sub="Your commission cut"
@@ -451,6 +503,22 @@ export default function AdminDashboard() {
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: C.blue, opacity: activeTab === "reviews" ? 0 : 1 }} />
               Reviews
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="refunds"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "refunds" ? { backgroundColor: "#f59e0b", color: "white" } : { color: "#b45309" }}>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#f59e0b", opacity: activeTab === "refunds" ? 0 : 1 }} />
+              Refunds
+              {(stats?.pendingRefunds ?? 0) > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-xs font-bold"
+                  style={activeTab === "refunds"
+                    ? { backgroundColor: "rgba(255,255,255,0.3)", color: "white" }
+                    : { backgroundColor: "#fef9c3", color: "#854d0e" }}>
+                  {stats!.pendingRefunds}
+                </span>
+              )}
             </span>
           </TabsTrigger>
         </TabsList>
@@ -655,7 +723,7 @@ export default function AdminDashboard() {
                             {b.status === "completed" ? <PayoutBadge status={b.payoutStatus} /> : "—"}
                           </td>
                           <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               {b.status === "completed" && b.payoutStatus !== "paid" && (
                                 <Button size="sm" className="h-7 text-xs hover:opacity-90"
                                   style={{ backgroundColor: C.green, color: "#1a5730" }}
@@ -664,6 +732,27 @@ export default function AdminDashboard() {
                                   Mark Paid
                                 </Button>
                               )}
+                              {(b.refundStatus === "pending") && (
+                                <Button size="sm" className="h-7 text-xs hover:opacity-90"
+                                  style={{ backgroundColor: "#f59e0b", color: "white" }}
+                                  onClick={() => handleMarkRefundPaid(b.id)}
+                                  disabled={markRefundPaidMut.isPending}>
+                                  Refund Paid
+                                </Button>
+                              )}
+                              {b.status === "pending_payment" && (
+                                <>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs"
+                                    style={{ borderColor: C.mint, color: "#0f7a6a" }}
+                                    onClick={() => handleAdminStatus(b.id, "upcoming")}>
+                                    Confirm Payment
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs"
+                                    onClick={() => openCancelDialog(b.id, b.status)}>
+                                    Cancel
+                                  </Button>
+                                </>
+                              )}
                               {b.status === "upcoming" && (
                                 <>
                                   <Button size="sm" variant="outline" className="h-7 text-xs"
@@ -671,7 +760,7 @@ export default function AdminDashboard() {
                                     Complete
                                   </Button>
                                   <Button size="sm" variant="outline" className="h-7 text-xs"
-                                    onClick={() => handleAdminStatus(b.id, "cancelled")}>
+                                    onClick={() => openCancelDialog(b.id, b.status)}>
                                     Cancel
                                   </Button>
                                   <Button size="sm" variant="outline" className="h-7 text-xs"
@@ -729,6 +818,57 @@ export default function AdminDashboard() {
                                   )}
                                 </div>
                               </div>
+                              {/* Extra row: cancellation, reschedule, refund */}
+                              {(b.cancelledBy || b.rescheduledBy || (b.refundStatus && b.refundStatus !== "none")) && (
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-5 pt-4 border-t">
+                                  {b.cancelledBy && (
+                                    <div>
+                                      <SectionHeader color="#ef4444">Cancellation</SectionHeader>
+                                      <div>Cancelled by: <span className="font-semibold capitalize">{b.cancelledBy}</span></div>
+                                      {b.cancellationReason && (
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                          Reason: {b.cancellationReason}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  {b.rescheduledBy && (
+                                    <div>
+                                      <SectionHeader color={C.blue}>Rescheduled</SectionHeader>
+                                      <div>By: <span className="font-semibold capitalize">{b.rescheduledBy}</span></div>
+                                      {b.rescheduledFromTime && (
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                          From: {fmtDateTime(b.rescheduledFromTime)}
+                                        </div>
+                                      )}
+                                      {b.rescheduledAt && (
+                                        <div className="text-xs text-muted-foreground mt-0.5">
+                                          On: {fmtDate(b.rescheduledAt)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  {b.refundStatus && b.refundStatus !== "none" && (
+                                    <div>
+                                      <SectionHeader color="#f59e0b">Refund</SectionHeader>
+                                      <div className="flex items-center gap-2">
+                                        <RefundBadge status={b.refundStatus} />
+                                      </div>
+                                      {b.refundAmount != null && (
+                                        <div className="text-xs mt-1">
+                                          Client: <span className="font-semibold">KES {b.refundAmount.toFixed(0)}</span>
+                                          {b.refundPercent != null && <span className="text-muted-foreground"> ({b.refundPercent}%)</span>}
+                                        </div>
+                                      )}
+                                      {b.expertCancellationEarning != null && b.expertCancellationEarning > 0 && (
+                                        <div className="text-xs mt-0.5">
+                                          Expert earns: <span className="font-semibold">KES {b.expertCancellationEarning.toFixed(0)}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         )}
@@ -1026,7 +1166,150 @@ export default function AdminDashboard() {
             )}
           </div>
         </TabsContent>
+
+        {/* ── REFUNDS ── */}
+        <TabsContent value="refunds">
+          <p className="text-xs text-muted-foreground mb-3 ml-1">
+            Bookings where a client refund is due. Click "Refund Paid" once you've sent the M-Pesa refund.
+          </p>
+          <div className="bg-card rounded-2xl border overflow-hidden">
+            {bookingsLoading ? (
+              <div className="p-8 text-center text-muted-foreground">Loading...</div>
+            ) : (() => {
+              const refundable = (bookings ?? []).filter((b) => b.refundStatus === "pending" || b.refundStatus === "paid");
+              if (!refundable.length) return (
+                <div className="p-12 text-center text-muted-foreground">No refunds to process.</div>
+              );
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs uppercase tracking-wide"
+                      style={{ backgroundColor: "#f59e0b20", color: "#b45309" }}>
+                      <tr>
+                        <th className="px-4 py-3">Booking #</th>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Expert</th>
+                        <th className="px-4 py-3">Session</th>
+                        <th className="px-4 py-3">Cancelled By</th>
+                        <th className="px-4 py-3">Reason</th>
+                        <th className="px-4 py-3">Gross</th>
+                        <th className="px-4 py-3">Refund to Client</th>
+                        <th className="px-4 py-3">Expert Earns</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {refundable.map((b) => (
+                        <tr key={b.id} className="hover:bg-muted/10">
+                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">#{b.id}</td>
+                          <td className="px-4 py-3 font-medium">{b.clientName ?? "—"}</td>
+                          <td className="px-4 py-3">{b.expertName ?? "—"}</td>
+                          <td className="px-4 py-3 capitalize">{b.sessionType.replace(/_/g, " ")}</td>
+                          <td className="px-4 py-3">
+                            {b.cancelledBy ? (
+                              <span className="capitalize font-semibold">{b.cancelledBy}</span>
+                            ) : (
+                              <span className="text-muted-foreground">no-show</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">
+                            {b.cancellationReason ?? "—"}
+                          </td>
+                          <td className="px-4 py-3">{b.amount ? `KES ${b.amount.toLocaleString()}` : "—"}</td>
+                          <td className="px-4 py-3 font-semibold" style={{ color: "#b45309" }}>
+                            {b.refundAmount != null ? (
+                              <>
+                                KES {b.refundAmount.toFixed(0)}
+                                {b.refundPercent != null && (
+                                  <span className="text-xs ml-1 text-muted-foreground">({b.refundPercent}%)</span>
+                                )}
+                              </>
+                            ) : "—"}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: C.green }}>
+                            {b.expertCancellationEarning != null && b.expertCancellationEarning > 0
+                              ? `KES ${b.expertCancellationEarning.toFixed(0)}`
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3"><RefundBadge status={b.refundStatus} /></td>
+                          <td className="px-4 py-3">
+                            {b.refundStatus === "pending" && (
+                              <Button size="sm" className="h-7 text-xs hover:opacity-90"
+                                style={{ backgroundColor: "#f59e0b", color: "white" }}
+                                onClick={() => handleMarkRefundPaid(b.id)}
+                                disabled={markRefundPaidMut.isPending}>
+                                Refund Paid
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* ── CANCEL DIALOG ── */}
+      {cancelDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setCancelDialog(null)}>
+          <div className="bg-background rounded-2xl border shadow-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "#ef4444" }}>Cancel Booking</h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              Select who is cancelling and an optional reason. Refund will be calculated automatically.
+            </p>
+
+            <div className="mb-4">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 block">
+                Cancelled by
+              </label>
+              <div className="flex gap-2">
+                {(["client", "expert", "admin"] as const).map((opt) => (
+                  <button key={opt}
+                    onClick={() => setCancelBy(opt)}
+                    className="flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all capitalize"
+                    style={cancelBy === opt
+                      ? { backgroundColor: "#ef4444", color: "white", borderColor: "#ef4444" }
+                      : { borderColor: "#e5e7eb", color: "#6b7280" }}>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 block">
+                Reason (optional)
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Enter cancellation reason..."
+                className="w-full rounded-xl border px-3 py-2 text-sm resize-none h-20 bg-background"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setCancelDialog(null)}>
+                Keep Booking
+              </Button>
+              <Button
+                style={{ backgroundColor: "#ef4444", color: "white" }}
+                className="hover:opacity-90"
+                onClick={confirmCancel}
+                disabled={adminStatusUpdate.isPending}>
+                Confirm Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

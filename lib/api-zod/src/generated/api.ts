@@ -251,7 +251,16 @@ export const ListMyBookingsResponseItem = zod.object({
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "expertIndustry": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 export const ListMyBookingsResponse = zod.array(ListMyBookingsResponseItem)
 
@@ -290,7 +299,57 @@ export const GetBookingResponse = zod.object({
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "expertIndustry": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Reschedule a booking (client, expert, or admin)
+ */
+export const RescheduleBookingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RescheduleBookingBody = zod.object({
+  "newTime": zod.string(),
+  "rescheduledBy": zod.enum(['client', 'expert', 'admin']).optional()
+})
+
+export const RescheduleBookingResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "expertIndustry": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 
 
@@ -302,7 +361,9 @@ export const UpdateBookingStatusParams = zod.object({
 })
 
 export const UpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show'])
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
+  "cancelledBy": zod.enum(['client', 'expert', 'admin']).optional(),
+  "reason": zod.string().optional()
 })
 
 export const UpdateBookingStatusResponse = zod.object({
@@ -321,7 +382,16 @@ export const UpdateBookingStatusResponse = zod.object({
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "expertIndustry": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 
 
@@ -580,7 +650,16 @@ export const ListAllBookingsResponseItem = zod.object({
   "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 export const ListAllBookingsResponse = zod.array(ListAllBookingsResponseItem)
 
@@ -593,7 +672,9 @@ export const AdminUpdateBookingStatusParams = zod.object({
 })
 
 export const AdminUpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show'])
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
+  "cancelledBy": zod.enum(['client', 'expert', 'admin']).optional(),
+  "reason": zod.string().optional()
 })
 
 export const AdminUpdateBookingStatusResponse = zod.object({
@@ -614,7 +695,54 @@ export const AdminUpdateBookingStatusResponse = zod.object({
   "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Mark a booking's client refund as paid (admin only)
+ */
+export const MarkRefundPaidParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkRefundPaidResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.string(),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.string(),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullable(),
+  "commission": zod.number().nullable(),
+  "commissionRate": zod.number().nullish(),
+  "expertEarnings": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 
 
@@ -643,7 +771,16 @@ export const MarkBookingPaidResponse = zod.object({
   "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })
 
 
@@ -663,6 +800,8 @@ export const GetAdminStatsResponse = zod.object({
   "totalCommission": zod.number(),
   "pendingPayout": zod.number(),
   "paidPayout": zod.number(),
+  "pendingRefunds": zod.number().optional(),
+  "paidRefunds": zod.number().optional(),
   "recentBookings": zod.array(zod.object({
   "id": zod.number(),
   "clientId": zod.number(),
@@ -681,7 +820,16 @@ export const GetAdminStatsResponse = zod.object({
   "expertEarnings": zod.number().nullish(),
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 }))
 })
 
@@ -764,7 +912,16 @@ export const GetExpertDashboardResponse = zod.object({
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "expertIndustry": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })),
   "completedBookings": zod.array(zod.object({
   "id": zod.number(),
@@ -782,7 +939,16 @@ export const GetExpertDashboardResponse = zod.object({
   "clientName": zod.string().nullish(),
   "expertName": zod.string().nullish(),
   "expertIndustry": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
 })),
   "totalEarnings": zod.number(),
   "commissionPaid": zod.number(),

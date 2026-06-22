@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AdminBookingPayoutStatus } from './adminBookingPayoutStatus';
+import type { AdminBookingRefundStatus } from './adminBookingRefundStatus';
 
 export interface AdminBooking {
   id: number;
@@ -35,4 +36,21 @@ export interface AdminBooking {
   /** @nullable */
   expertName?: string | null;
   createdAt: string;
+  /** @nullable */
+  cancelledBy?: string | null;
+  /** @nullable */
+  cancellationReason?: string | null;
+  refundStatus?: AdminBookingRefundStatus;
+  /** @nullable */
+  refundAmount?: number | null;
+  /** @nullable */
+  refundPercent?: number | null;
+  /** @nullable */
+  expertCancellationEarning?: number | null;
+  /** @nullable */
+  rescheduledBy?: string | null;
+  /** @nullable */
+  rescheduledFromTime?: string | null;
+  /** @nullable */
+  rescheduledAt?: string | null;
 }

@@ -27,6 +27,25 @@ function adminMiddleware() {
   };
 }
 
+function calcRefundAdmin(
+  amount: number,
+  cancelledBy: "client" | "expert" | "admin",
+  scheduledTime: Date,
+  wasNoShow = false
+): { refundPercent: number; refundAmount: number; expertCancellationEarning: number } {
+  if (wasNoShow) {
+    return { refundPercent: 50, refundAmount: amount * 0.5, expertCancellationEarning: amount * 0.35 };
+  }
+  if (cancelledBy === "expert" || cancelledBy === "admin") {
+    return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
+  }
+  const hoursUntil = (scheduledTime.getTime() - Date.now()) / 3600000;
+  if (hoursUntil > 24) {
+    return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
+  }
+  return { refundPercent: 75, refundAmount: amount * 0.75, expertCancellationEarning: amount * 0.20 };
+}
+
 function formatAdminBooking(
   b: typeof bookingsTable.$inferSelect,
   expertMap: Record<number, typeof expertsTable.$inferSelect>,
@@ -55,6 +74,15 @@ function formatAdminBooking(
     clientName: clientMap[b.clientId]?.name ?? null,
     expertName: expertMap[b.expertId]?.name ?? null,
     createdAt: b.createdAt.toISOString(),
+    cancelledBy: b.cancelledBy ?? null,
+    cancellationReason: b.cancellationReason ?? null,
+    refundStatus: b.refundStatus,
+    refundAmount: b.refundAmount ?? null,
+    refundPercent: b.refundPercent ?? null,
+    expertCancellationEarning: b.expertCancellationEarning ?? null,
+    rescheduledBy: b.rescheduledBy ?? null,
+    rescheduledFromTime: b.rescheduledFromTime ? b.rescheduledFromTime.toISOString() : null,
+    rescheduledAt: b.rescheduledAt ? b.rescheduledAt.toISOString() : null,
   };
 }
 
@@ -209,13 +237,41 @@ router.patch("/admin/bookings/:id/status", adminMiddleware(), async (req, res): 
   const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
   if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
 
-  const [updated] = await db
-    .update(bookingsTable)
-    .set({ status: parsed.data.status })
-    .where(eq(bookingsTable.id, id))
-    .returning();
+  const newStatus = parsed.data.status;
+  const updateFields: Record<string, unknown> = { status: newStatus };
 
-  if (parsed.data.status === "completed") {
+  if (newStatus === "upcoming" && !booking.meetLink) {
+    const { generateMeetLink } = await import("../lib/auth");
+    updateFields.meetLink = generateMeetLink();
+  }
+
+  if (newStatus === "cancelled") {
+    const cancelledBy = (parsed.data as { cancelledBy?: string }).cancelledBy as "client" | "expert" | "admin" ?? "admin";
+    updateFields.cancelledBy = cancelledBy;
+    updateFields.cancellationReason = (parsed.data as { reason?: string }).reason ?? null;
+    if (booking.status === "upcoming" && booking.amount) {
+      const ref = calcRefundAdmin(booking.amount, cancelledBy, booking.scheduledTime);
+      updateFields.refundStatus = "pending";
+      updateFields.refundPercent = ref.refundPercent;
+      updateFields.refundAmount = ref.refundAmount;
+      updateFields.expertCancellationEarning = ref.expertCancellationEarning;
+    } else {
+      updateFields.refundStatus = "none";
+    }
+  }
+
+  if (newStatus === "no-show" && booking.amount) {
+    const ref = calcRefundAdmin(booking.amount, "client", booking.scheduledTime, true);
+    updateFields.refundStatus = "pending";
+    updateFields.refundPercent = ref.refundPercent;
+    updateFields.refundAmount = ref.refundAmount;
+    updateFields.expertCancellationEarning = ref.expertCancellationEarning;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [updated] = await db.update(bookingsTable).set(updateFields as any).where(eq(bookingsTable.id, id)).returning();
+
+  if (newStatus === "completed") {
     await db.update(expertsTable)
       .set({ totalSessions: sql`${expertsTable.totalSessions} + 1` })
       .where(eq(expertsTable.id, booking.expertId));
@@ -243,6 +299,31 @@ router.post("/admin/bookings/:id/mark-paid", adminMiddleware(), async (req, res)
   const [updated] = await db
     .update(bookingsTable)
     .set({ payoutStatus: "paid", payoutPaidAt: new Date() })
+    .where(eq(bookingsTable.id, id))
+    .returning();
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, updated.expertId));
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, updated.clientId));
+
+  res.json(formatAdminBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
+});
+
+router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  if (booking.refundStatus !== "pending") {
+    res.status(400).json({ error: "No pending refund on this booking" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(bookingsTable)
+    .set({ refundStatus: "paid" })
     .where(eq(bookingsTable.id, id))
     .returning();
 
@@ -415,6 +496,16 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
   const expertMap = Object.fromEntries(experts.map((e) => [e.id, e]));
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c]));
 
+  const [pendingRefundCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookingsTable)
+    .where(eq(bookingsTable.refundStatus, "pending"));
+
+  const [paidRefundCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookingsTable)
+    .where(eq(bookingsTable.refundStatus, "paid"));
+
   res.json({
     totalExperts: expertCount?.count ?? 0,
     pendingRegistration: pendingRegistrationCount?.count ?? 0,
@@ -428,6 +519,8 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     totalCommission,
     pendingPayout,
     paidPayout,
+    pendingRefunds: pendingRefundCount?.count ?? 0,
+    paidRefunds: paidRefundCount?.count ?? 0,
     recentBookings: recentBookings.map((b) => formatAdminBooking(b, expertMap, clientMap)),
   });
 });

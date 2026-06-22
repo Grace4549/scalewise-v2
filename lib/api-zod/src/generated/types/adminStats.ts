@@ -20,5 +20,7 @@ export interface AdminStats {
   totalCommission: number;
   pendingPayout: number;
   paidPayout: number;
+  pendingRefunds?: number;
+  paidRefunds?: number;
   recentBookings: AdminBooking[];
 }
