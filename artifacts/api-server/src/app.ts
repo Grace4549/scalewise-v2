@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import ConnectPgSimple from "connect-pg-simple";
+import pg from "pg";
 import rateLimit from "express-rate-limit";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -91,8 +93,21 @@ if (!sessionSecret) {
   logger.warn("SESSION_SECRET is not set — using insecure fallback. Set SESSION_SECRET before deploying.");
 }
 
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL environment variable must be set");
+}
+
+const PgSession = ConnectPgSimple(session);
+const pgPool = new pg.Pool({ connectionString: databaseUrl });
+
 app.use(
   session({
+    store: new PgSession({
+      pool: pgPool,
+      tableName: "user_sessions",
+      createTableIfMissing: true,
+    }),
     secret: sessionSecret ?? "scalewise-dev-secret-2026",
     resave: false,
     saveUninitialized: false,
