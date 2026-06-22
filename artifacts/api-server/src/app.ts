@@ -101,12 +101,25 @@ if (!databaseUrl) {
 const PgSession = ConnectPgSimple(session);
 const pgPool = new pg.Pool({ connectionString: databaseUrl });
 
+// create the session table inline so it works when bundled by esbuild
+// (connect-pg-simple's createTableIfMissing reads a .sql file from disk,
+//  which breaks after bundling because the path no longer exists)
+pgPool.query(`
+  CREATE TABLE IF NOT EXISTS "user_sessions" (
+    "sid"    varchar     NOT NULL COLLATE "default",
+    "sess"   json        NOT NULL,
+    "expire" timestamp(6) NOT NULL,
+    CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
+  ) WITH (OIDS=FALSE);
+  CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "user_sessions" ("expire");
+`).catch((err: Error) => logger.error({ err }, "Failed to ensure user_sessions table"));
+
 app.use(
   session({
     store: new PgSession({
       pool: pgPool,
       tableName: "user_sessions",
-      createTableIfMissing: true,
+      createTableIfMissing: false,
     }),
     secret: sessionSecret ?? "scalewise-dev-secret-2026",
     resave: false,
