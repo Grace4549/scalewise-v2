@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { useSubscribeLaunchNotification } from "@workspace/api-client-react";
 
-export function AnnouncementBanner() {
-  const [dismissed, setDismissed] = useState(false);
+function EmailCaptureForm({ compact }: { compact?: boolean }) {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-
   const subscribe = useSubscribeLaunchNotification();
-
-  if (dismissed) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +29,51 @@ export function AnnouncementBanner() {
     );
   };
 
+  if (submitted) {
+    return (
+      <p className="text-sm font-semibold" style={{ color: compact ? "#1a5730" : "#0f3d25" }}>
+        ✓ Thanks! We'll let you know when we launch.
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={`flex-1 px-3 rounded-lg text-sm border outline-none focus:ring-2 bg-white ${compact ? "h-9 border-border" : "h-7 border-0"}`}
+          style={{ color: "#111" }}
+        />
+        <button
+          type="submit"
+          disabled={subscribe.isPending}
+          className="h-9 px-4 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50 flex-shrink-0"
+          style={compact
+            ? { backgroundColor: "#88CFA8", color: "#0f3d25" }
+            : { backgroundColor: "#0f3d25", color: "#88CFA8" }}
+        >
+          {subscribe.isPending ? "..." : "Notify Me"}
+        </button>
+      </div>
+      {error && <span className="text-xs text-red-600">{error}</span>}
+    </form>
+  );
+}
+
+/** Full-width sticky banner shown above the navbar on every page. */
+export function AnnouncementBanner({ inline }: { inline?: boolean } = {}) {
+  const [dismissed, setDismissed] = useState(false);
+
+  if (inline) {
+    return <EmailCaptureForm compact />;
+  }
+
+  if (dismissed) return null;
+
   return (
     <div
       className="w-full py-2 px-4 flex items-center gap-3 flex-wrap justify-between text-sm"
@@ -43,38 +84,7 @@ export function AnnouncementBanner() {
       </p>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        {submitted ? (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full"
-            style={{ backgroundColor: "#0f3d2520", color: "#0f3d25" }}>
-            Thanks! We'll let you know when we launch.
-          </span>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex items-center gap-1.5">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-7 px-2.5 rounded-lg text-xs border-0 outline-none focus:ring-2 bg-white"
-                  style={{ color: "#0f3d25", minWidth: "160px" }}
-                />
-                <button
-                  type="submit"
-                  disabled={subscribe.isPending}
-                  className="h-7 px-3 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-50 flex-shrink-0"
-                  style={{ backgroundColor: "#0f3d25", color: "#88CFA8" }}
-                >
-                  {subscribe.isPending ? "..." : "Notify Me"}
-                </button>
-              </div>
-              {error && (
-                <span className="text-xs mt-0.5" style={{ color: "#7f1d1d" }}>{error}</span>
-              )}
-            </div>
-          </form>
-        )}
+        <EmailCaptureForm />
 
         <button
           onClick={() => setDismissed(true)}

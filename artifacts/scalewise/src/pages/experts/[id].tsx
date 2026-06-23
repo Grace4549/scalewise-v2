@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useGetExpert, useCreateBooking, useCreateVerifiedReview, useListMyBookings } from "@workspace/api-client-react";
+import { useGetExpert, useCreateVerifiedReview, useListMyBookings } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 const bookingSchema = z.object({
   sessionType: z.enum(["discovery", "consultancy", "growth_3mo", "growth_6mo"]),
@@ -208,9 +209,8 @@ export default function ExpertProfile() {
   const { id } = useParams();
   const expertId = parseInt(id!);
   const { user } = useAuth();
-  const { toast } = useToast();
   const [activeReviewTab, setActiveReviewTab] = useState<"all" | "verified">("all");
-  const createBooking = useCreateBooking();
+  const [bookingAttempted, setBookingAttempted] = useState(false);
 
   const { data: expert, isLoading } = useGetExpert(expertId);
 
@@ -232,32 +232,8 @@ export default function ExpertProfile() {
     }
   };
 
-  const getDuration = (type: string) => {
-    if (type === "discovery") return 30;
-    return 60;
-  };
-
-  const onSubmit = (data: z.infer<typeof bookingSchema>) => {
-    if (!user) {
-      toast({ title: "Please login to book", variant: "destructive" });
-      return;
-    }
-    createBooking.mutate({
-      data: {
-        expertId,
-        sessionType: data.sessionType as any,
-        scheduledTime: new Date(data.scheduledTime).toISOString(),
-        notes: data.notes,
-      },
-    }, {
-      onSuccess: () => {
-        toast({ title: "Booking request sent!", description: "Pay via M-Pesa to confirm — your Google Meet link will be sent once payment is received." });
-        form.reset();
-      },
-      onError: (err: any) => {
-        toast({ title: "Failed to book", description: err.message, variant: "destructive" });
-      },
-    });
+  const onSubmit = () => {
+    setBookingAttempted(true);
   };
 
   if (isLoading) {
@@ -385,80 +361,113 @@ export default function ExpertProfile() {
         {/* Sticky Booking Widget */}
         <aside className="w-full lg:w-[390px] shrink-0">
           <div className="sticky top-24 bg-card/90 backdrop-blur-md border rounded-3xl p-6 shadow-lg">
-            <h3 className="text-xl font-bold mb-2">Book a Session</h3>
-            <p className="text-sm text-muted-foreground mb-6">Choose your session type and preferred time.</p>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                <FormField control={form.control} name="sessionType" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Session Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12 bg-background">
-                          <SelectValue placeholder="Select session type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {expert.discoveryPrice != null && <SelectItem value="discovery">Business Discovery — 30 min</SelectItem>}
-                        {expert.consultancyPrice != null && <SelectItem value="consultancy">Consultancy — 60 min</SelectItem>}
-                        {expert.growthPrice3mo != null && <SelectItem value="growth_3mo">Growth Strategy (3 months)</SelectItem>}
-                        {expert.growthPrice6mo != null && <SelectItem value="growth_6mo">Growth Strategy (6 months)</SelectItem>}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+            {bookingAttempted ? (
+              /* ── Payment unavailable screen ── */
+              <div className="text-center py-2">
+                <div className="text-4xl mb-4">🚧</div>
+                <h3 className="text-lg font-bold mb-3 text-foreground">
+                  This service is currently unavailable
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  We're still working on our platform. Please bear with us while we get ready to launch.
+                </p>
 
-                <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex justify-between items-center">
-                  <span className="font-semibold text-foreground">Price</span>
-                  <span className="text-xl font-bold text-primary">
-                    {selectedPrice != null ? `KES ${selectedPrice.toLocaleString()}` : "Select a type"}
-                  </span>
+                <div className="bg-muted/40 rounded-2xl p-4 mb-5 text-left">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Get notified when we launch
+                  </p>
+                  <AnnouncementBanner inline />
                 </div>
 
-                <FormField control={form.control} name="scheduledTime" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date & Time</FormLabel>
-                    <FormControl>
-                      <Input type="datetime-local" className="bg-background" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                <button
+                  onClick={() => setBookingAttempted(false)}
+                  className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                >
+                  ← Back to session details
+                </button>
+              </div>
+            ) : (
+              /* ── Normal booking form ── */
+              <>
+                <h3 className="text-xl font-bold mb-2">Book a Session</h3>
+                <p className="text-sm text-muted-foreground mb-6">Choose your session type and preferred time.</p>
 
-                <FormField control={form.control} name="notes" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>What do you want to discuss?</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Share some context before the call..."
-                        className="bg-background resize-none"
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                    <FormField control={form.control} name="sessionType" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Session Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-12 bg-background">
+                              <SelectValue placeholder="Select session type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {expert.discoveryPrice != null && <SelectItem value="discovery">Business Discovery — 30 min</SelectItem>}
+                            {expert.consultancyPrice != null && <SelectItem value="consultancy">Consultancy — 60 min</SelectItem>}
+                            {expert.growthPrice3mo != null && <SelectItem value="growth_3mo">Growth Strategy (3 months)</SelectItem>}
+                            {expert.growthPrice6mo != null && <SelectItem value="growth_6mo">Growth Strategy (6 months)</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
 
-                {user ? (
-                  <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl" disabled={createBooking.isPending || selectedPrice == null}>
-                    {createBooking.isPending ? "Requesting..." : "Request Booking"}
-                  </Button>
-                ) : (
-                  <Link href="/login">
-                    <Button variant="outline" size="lg" className="w-full text-lg h-14 rounded-xl">
-                      Login to Book
-                    </Button>
-                  </Link>
-                )}
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex justify-between items-center">
+                      <span className="font-semibold text-foreground">Price</span>
+                      <span className="text-xl font-bold text-primary">
+                        {selectedPrice != null ? `KES ${selectedPrice.toLocaleString()}` : "Select a type"}
+                      </span>
+                    </div>
 
-                <p className="text-xs text-center text-muted-foreground">
-                  Pay via M-Pesa to confirm. Your Google Meet link will be sent once payment is received.
-                </p>
-              </form>
-            </Form>
+                    <FormField control={form.control} name="scheduledTime" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date & Time</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" className="bg-background" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="notes" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>What do you want to discuss?</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Share some context before the call..."
+                            className="bg-background resize-none"
+                            rows={3}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    {user ? (
+                      <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl"
+                        disabled={selectedPrice == null}
+                        style={{ background: P_BLUE, color: "white" }}>
+                        Request Booking
+                      </Button>
+                    ) : (
+                      <Link href="/login">
+                        <Button variant="outline" size="lg" className="w-full text-lg h-14 rounded-xl">
+                          Login to Book
+                        </Button>
+                      </Link>
+                    )}
+
+                    <p className="text-xs text-center text-muted-foreground">
+                      Payment is required to confirm your session.
+                    </p>
+                  </form>
+                </Form>
+              </>
+            )}
           </div>
         </aside>
       </div>
