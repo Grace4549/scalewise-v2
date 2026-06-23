@@ -30,7 +30,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 - **Production entry points:** `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/api-server/src/routes/*.ts`, `artifacts/scalewise/src/App.tsx`.
 - **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers and expert-account registration in `artifacts/api-server/src/routes/auth.ts`, expert application and public profile handlers in `artifacts/api-server/src/routes/experts.ts`, booking creation and lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, and route handlers for `messages`, `reviews`, and `admin`.
 - **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
-- **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, and public search/listing endpoints under `/api/experts*`.
+- **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, `POST /api/launch/subscribe`, and public search/listing endpoints under `/api/experts*`.
 - **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
 - **Intentional public behavior:** `POST /api/reviews` is a product-defined unauthenticated “public review” surface; future scans should not treat lack of auth on that route alone as a vulnerability unless another control boundary is bypassed. Expert profiles intentionally render both public reviews and verified reviews, so the mere fact that a public review can reference an expert profile should not be re-proposed without stronger evidence of a separate abuse-control failure.
 - **Usually ignore as dev-only:** `artifacts/mockup-sandbox/`, generated `dist/` outputs, and workspace tooling unless they are executed in production paths.
@@ -53,6 +53,8 @@ Clients, experts, and admins can all change marketplace state: account creation,
 
 Booking creation is especially sensitive because it crosses pricing, scheduling, and communications boundaries at once. The backend must reject unsupported session types, derive or validate allowed durations server-side, and avoid trusting client-controlled booking terms that can alter what experts and admins see or act on.
 
+Booking rescheduling and cancellation are part of the same money-flow boundary. A client-controlled reschedule must not let the client rewrite the timestamp used by refund policy decisions, forge who initiated the reschedule, or otherwise bypass late-cancellation rules.
+
 ### Information Disclosure
 
 The platform stores personal data, private messages, meet links, booking notes, and admin-only financial information. API responses must be scoped to the requesting user’s role and relationship to the resource. Public endpoints must not leak internal identifiers, hidden business data, or admin/expert-only financial details beyond what the product intentionally publishes.
@@ -62,6 +64,8 @@ Frontend cache isolation is also part of this category: dashboards, inboxes, boo
 ### Denial of Service
 
 Public routes such as login, registration, expert application, search, and public review submission are reachable without authentication. The application must prevent unauthenticated users from using these endpoints for brute-force attempts, spam, or resource exhaustion. Expensive operations and external calls must remain bounded.
+
+Public signup and waitlist endpoints are in scope for the same abuse category. They must not allow trivial bulk list poisoning or response-based probing of whether a target email address is already enrolled.
 
 ### Elevation of Privilege
 
