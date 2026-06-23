@@ -5,3 +5,4 @@ export * from "./reviews";
 export * from "./messages";
 export * from "./password-reset-tokens";
 export * from "./launch-notifications";
+export * from "./reminder-log";

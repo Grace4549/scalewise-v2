@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startReminderScheduler } from "./lib/reminder-scheduler";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,10 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Start the session reminder scheduler.
+  // Polls every 60 s; fires 48 hr / 24 hr / 1 hr reminders for upcoming bookings.
+  // Currently logs reminders only — wire dispatchReminder() to an email provider
+  // (see reminder-scheduler.ts ── EMAIL SEND HOOK ── comments) when ready.
+  startReminderScheduler();
 });
