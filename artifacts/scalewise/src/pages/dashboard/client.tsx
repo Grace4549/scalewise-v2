@@ -103,7 +103,7 @@ function ClientReceiptsTab() {
     <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
       <div className="p-6 border-b bg-muted/30">
         <h2 className="text-xl font-semibold">🧾 My Receipts</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Payment confirmations and refund receipts for all your bookings</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Check and download your receipts from here.</p>
       </div>
       {isLoading ? (
         <div className="p-8"><Skeleton className="h-48 w-full" /></div>
