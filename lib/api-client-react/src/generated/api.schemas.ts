@@ -567,6 +567,32 @@ export interface LaunchNotification {
   createdAt: string;
 }
 
+export type ExpertSettingsAvailabilityMode = typeof ExpertSettingsAvailabilityMode[keyof typeof ExpertSettingsAvailabilityMode];
+
+
+export const ExpertSettingsAvailabilityMode = {
+  week_by_week: 'week_by_week',
+  recurring: 'recurring',
+} as const;
+
+export interface ExpertSettings {
+  acceptingBookings: boolean;
+  availabilityMode: ExpertSettingsAvailabilityMode;
+}
+
+export type ExpertSettingsInputAvailabilityMode = typeof ExpertSettingsInputAvailabilityMode[keyof typeof ExpertSettingsInputAvailabilityMode];
+
+
+export const ExpertSettingsInputAvailabilityMode = {
+  week_by_week: 'week_by_week',
+  recurring: 'recurring',
+} as const;
+
+export interface ExpertSettingsInput {
+  acceptingBookings?: boolean;
+  availabilityMode?: ExpertSettingsInputAvailabilityMode;
+}
+
 export interface AvailabilitySlot {
   id: number;
   expertId: number;

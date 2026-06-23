@@ -1108,6 +1108,29 @@ export const GetExpertDashboardResponse = zod.object({
 
 
 /**
+ * @summary Get own availability settings (expert only)
+ */
+export const GetExpertSettingsResponse = zod.object({
+  "acceptingBookings": zod.boolean(),
+  "availabilityMode": zod.enum(['week_by_week', 'recurring'])
+})
+
+
+/**
+ * @summary Update availability settings (expert only)
+ */
+export const UpdateExpertSettingsBody = zod.object({
+  "acceptingBookings": zod.boolean().optional(),
+  "availabilityMode": zod.enum(['week_by_week', 'recurring']).optional()
+})
+
+export const UpdateExpertSettingsResponse = zod.object({
+  "acceptingBookings": zod.boolean(),
+  "availabilityMode": zod.enum(['week_by_week', 'recurring'])
+})
+
+
+/**
  * @summary Update own expert profile
  */
 export const UpdateExpertProfileBody = zod.object({

@@ -99,7 +99,7 @@ router.get("/experts", async (req, res): Promise<void> => {
   const limit = Math.min(rawLimit, 50);
   const offset = (page - 1) * limit;
 
-  const conditions = [eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)];
+  const conditions = [eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId), eq(expertsTable.acceptingBookings, true)];
 
   if (industry) {
     conditions.push(ilike(expertsTable.industry, `%${industry}%`));
@@ -145,7 +145,7 @@ router.get("/experts/:id", async (req, res): Promise<void> => {
   const [expert] = await db
     .select()
     .from(expertsTable)
-    .where(and(eq(expertsTable.id, id), eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId)));
+    .where(and(eq(expertsTable.id, id), eq(expertsTable.status, "approved"), isNotNull(expertsTable.userId), eq(expertsTable.acceptingBookings, true)));
   if (!expert) { res.status(404).json({ error: "Expert not found" }); return; }
 
   const allReviews = await db
@@ -281,6 +281,51 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     commissionPaid,
     netEarnings,
     pendingPayout,
+  });
+});
+
+// GET /expert/settings — return accepting_bookings + availability_mode for the logged-in expert
+router.get("/expert/settings", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Experts only" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert) { res.status(404).json({ error: "Expert profile not found" }); return; }
+
+  res.json({
+    acceptingBookings: expert.acceptingBookings,
+    availabilityMode: expert.availabilityMode,
+  });
+});
+
+// PATCH /expert/settings — update accepting_bookings and/or availability_mode
+router.patch("/expert/settings", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Experts only" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert) { res.status(404).json({ error: "Expert profile not found" }); return; }
+
+  const body = req.body as { acceptingBookings?: boolean; availabilityMode?: "week_by_week" | "recurring" };
+
+  const updates: Partial<typeof expertsTable.$inferInsert> = {};
+  if (typeof body.acceptingBookings === "boolean") updates.acceptingBookings = body.acceptingBookings;
+  if (body.availabilityMode === "week_by_week" || body.availabilityMode === "recurring") {
+    updates.availabilityMode = body.availabilityMode;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "No valid fields to update" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(expertsTable)
+    .set(updates)
+    .where(eq(expertsTable.id, expert.id))
+    .returning();
+
+  res.json({
+    acceptingBookings: updated.acceptingBookings,
+    availabilityMode: updated.availabilityMode,
   });
 });
 

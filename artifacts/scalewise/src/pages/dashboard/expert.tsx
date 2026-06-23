@@ -6,9 +6,11 @@ import {
   useListAdminMessages, useSendAdminMessage,
   useListNotifications, useMarkNotificationSeen,
   useListMyAvailability, useAddAvailabilitySlot, useDeleteAvailabilitySlot,
+  useGetExpertSettings, useUpdateExpertSettings,
   getListMessagesQueryKey, getGetInboxQueryKey,
   getListAdminMessagesQueryKey, getGetExpertDashboardQueryKey,
   getListNotificationsQueryKey, getListMyAvailabilityQueryKey,
+  getGetExpertSettingsQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -17,6 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -34,6 +38,123 @@ function getMondayOfWeek(d: Date): Date {
   day.setDate(day.getDate() + diff);
   day.setHours(0, 0, 0, 0);
   return day;
+}
+
+// ── Availability Settings ─────────────────────────────────────────────────────
+
+function AvailabilitySettings() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { data: settings, isLoading } = useGetExpertSettings();
+  const updateSettings = useUpdateExpertSettings();
+
+  const handleAcceptingBookings = (checked: boolean) => {
+    updateSettings.mutate({ data: { acceptingBookings: checked } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetExpertSettingsQueryKey() });
+        toast({
+          title: checked ? "Now accepting bookings" : "Bookings paused",
+          description: checked
+            ? "Your profile is visible in search results and clients can book you."
+            : "Your profile is hidden from search and clients cannot book you until you turn this back on.",
+        });
+      },
+      onError: () => toast({ title: "Failed to update setting", variant: "destructive" }),
+    });
+  };
+
+  const handleAvailabilityMode = (mode: "week_by_week" | "recurring") => {
+    updateSettings.mutate({ data: { availabilityMode: mode } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetExpertSettingsQueryKey() });
+        toast({
+          title: mode === "week_by_week" ? "Switched to week-by-week" : "Switched to recurring",
+          description: mode === "week_by_week"
+            ? "You'll be reminded to submit your availability each week."
+            : "Your calendar slots repeat on a long-term basis with no weekly reminders.",
+        });
+      },
+      onError: () => toast({ title: "Failed to update setting", variant: "destructive" }),
+    });
+  };
+
+  if (isLoading) {
+    return <div className="bg-card rounded-3xl border shadow-sm p-6 mb-4"><div className="h-16 animate-pulse bg-muted rounded-xl" /></div>;
+  }
+
+  const accepting = settings?.acceptingBookings ?? true;
+  const mode = settings?.availabilityMode ?? "week_by_week";
+
+  return (
+    <div className="bg-card rounded-3xl border shadow-sm overflow-hidden mb-4">
+      <div className="p-5 border-b bg-muted/30">
+        <h2 className="text-base font-semibold">Booking Settings</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Control your availability and how clients can find and book you.</p>
+      </div>
+      <div className="divide-y">
+        {/* Accepting bookings toggle */}
+        <div className="flex items-start justify-between gap-4 px-5 py-4">
+          <div>
+            <Label htmlFor="accepting-bookings" className="text-sm font-medium leading-none">
+              Available for new bookings
+            </Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              When off, your profile is hidden from search and no one can book you —
+              regardless of your calendar slots.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            <span className={`text-xs font-medium ${accepting ? "text-emerald-600" : "text-muted-foreground"}`}>
+              {accepting ? "On" : "Off"}
+            </span>
+            <Switch
+              id="accepting-bookings"
+              checked={accepting}
+              disabled={updateSettings.isPending}
+              onCheckedChange={handleAcceptingBookings}
+            />
+          </div>
+        </div>
+
+        {/* Availability mode */}
+        <div className="px-5 py-4">
+          <Label className="text-sm font-medium">Availability mode</Label>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">
+            Choose how you manage your calendar. Week-by-week means you set
+            availability each week and receive reminders on Fri/Sat/Sun if you haven't.
+            Recurring means your slots are set on a long-term basis with no weekly reminders.
+          </p>
+          <div className="flex gap-2">
+            {(["week_by_week", "recurring"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                disabled={updateSettings.isPending}
+                onClick={() => { if (mode !== m) handleAvailabilityMode(m); }}
+                className="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all"
+                style={mode === m
+                  ? { borderColor: C.blue, backgroundColor: C.blue + "12", color: C.blue }
+                  : { borderColor: "#e5e7eb", backgroundColor: "transparent", color: "#6b7280" }
+                }
+              >
+                {m === "week_by_week" ? "📅 Week by week" : "🔁 Long-term recurring"}
+              </button>
+            ))}
+          </div>
+          {mode === "week_by_week" && (
+            <p className="text-xs mt-2" style={{ color: C.mblue }}>
+              You'll receive email reminders on the Friday, Saturday, and Sunday before each upcoming week if you haven't set your slots yet. Reminders stop as soon as you submit availability for that week.
+            </p>
+          )}
+          {mode === "recurring" && (
+            <p className="text-xs mt-2 text-muted-foreground">
+              Your calendar is managed on a long-term basis. No weekly reminders will be sent.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AvailabilityCalendar() {
@@ -622,6 +743,7 @@ export default function ExpertDashboard() {
 
         {/* ── AVAILABILITY TAB ── */}
         <TabsContent value="availability">
+          <AvailabilitySettings />
           <AvailabilityCalendar />
         </TabsContent>
 

@@ -950,6 +950,40 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExpertDashboard"
 
+  /expert/settings:
+    get:
+      operationId: getExpertSettings
+      tags: [experts]
+      summary: Get own availability settings (expert only)
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpertSettings"
+    patch:
+      operationId: updateExpertSettings
+      tags: [experts]
+      summary: Update availability settings (expert only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpertSettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpertSettings"
+
   /expert/profile:
     patch:
       operationId: updateExpertProfile
@@ -1648,6 +1682,25 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    ExpertSettings:
+      type: object
+      required: [acceptingBookings, availabilityMode]
+      properties:
+        acceptingBookings:
+          type: boolean
+        availabilityMode:
+          type: string
+          enum: [week_by_week, recurring]
+
+    ExpertSettingsInput:
+      type: object
+      properties:
+        acceptingBookings:
+          type: boolean
+        availabilityMode:
+          type: string
+          enum: [week_by_week, recurring]
 
     AvailabilitySlot:
       type: object

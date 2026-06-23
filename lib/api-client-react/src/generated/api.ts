@@ -37,6 +37,8 @@ import type {
   ExpertList,
   ExpertProfile,
   ExpertProfileUpdate,
+  ExpertSettings,
+  ExpertSettingsInput,
   GetExpertBreakdownParams,
   GetSearchSuggestionsParams,
   HealthStatus,
@@ -3514,6 +3516,154 @@ export function useGetExpertDashboard<TData = Awaited<ReturnType<typeof getExper
 
 
 
+
+export const getGetExpertSettingsUrl = () => {
+
+
+
+
+  return `/api/expert/settings`
+}
+
+/**
+ * @summary Get own availability settings (expert only)
+ */
+export const getExpertSettings = async ( options?: RequestInit): Promise<ExpertSettings> => {
+
+  return customFetch<ExpertSettings>(getGetExpertSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExpertSettingsQueryKey = () => {
+    return [
+    `/api/expert/settings`
+    ] as const;
+    }
+
+
+export const getGetExpertSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getExpertSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExpertSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpertSettings>>> = ({ signal }) => getExpertSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExpertSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExpertSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getExpertSettings>>>
+export type GetExpertSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get own availability settings (expert only)
+ */
+
+export function useGetExpertSettings<TData = Awaited<ReturnType<typeof getExpertSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExpertSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateExpertSettingsUrl = () => {
+
+
+
+
+  return `/api/expert/settings`
+}
+
+/**
+ * @summary Update availability settings (expert only)
+ */
+export const updateExpertSettings = async (expertSettingsInput: ExpertSettingsInput, options?: RequestInit): Promise<ExpertSettings> => {
+
+  return customFetch<ExpertSettings>(getUpdateExpertSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expertSettingsInput,)
+  }
+);}
+
+
+
+
+export const getUpdateExpertSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExpertSettings>>, TError,{data: BodyType<ExpertSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateExpertSettings>>, TError,{data: BodyType<ExpertSettingsInput>}, TContext> => {
+
+const mutationKey = ['updateExpertSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateExpertSettings>>, {data: BodyType<ExpertSettingsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateExpertSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateExpertSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateExpertSettings>>>
+    export type UpdateExpertSettingsMutationBody = BodyType<ExpertSettingsInput>
+    export type UpdateExpertSettingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update availability settings (expert only)
+ */
+export const useUpdateExpertSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExpertSettings>>, TError,{data: BodyType<ExpertSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateExpertSettings>>,
+        TError,
+        {data: BodyType<ExpertSettingsInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateExpertSettingsMutationOptions(options));
+    }
 
 export const getUpdateExpertProfileUrl = () => {
 

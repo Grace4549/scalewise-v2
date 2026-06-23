@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -22,6 +22,8 @@ export const expertsTable = pgTable("experts", {
   socialMediaUrl: text("social_media_url"),
   inviteToken: text("invite_token"),
   inviteExpiresAt: timestamp("invite_expires_at", { withTimezone: true }),
+  acceptingBookings: boolean("accepting_bookings").notNull().default(true),
+  availabilityMode: text("availability_mode", { enum: ["week_by_week", "recurring"] }).notNull().default("week_by_week"),
   discoveryPrice: real("discovery_price"),
   consultancyPrice: real("consultancy_price"),
   growthPrice3mo: real("growth_price_3mo"),

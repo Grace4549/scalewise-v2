@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startReminderScheduler } from "./lib/reminder-scheduler";
+import { startAvailabilityReminderScheduler } from "./lib/availability-reminder-scheduler";
 
 const rawPort = process.env["PORT"];
 
@@ -29,4 +30,11 @@ app.listen(port, (err) => {
   // Currently logs reminders only — wire dispatchReminder() to an email provider
   // (see reminder-scheduler.ts ── EMAIL SEND HOOK ── comments) when ready.
   startReminderScheduler();
+
+  // Start the availability reminder scheduler.
+  // Polls every 60 s; on Fri/Sat/Sun before the upcoming week, fires a reminder
+  // to week-by-week experts who have not yet submitted slots for that week.
+  // Currently logs only — wire dispatchAvailabilityReminder() to an email provider
+  // (see availability-reminder-scheduler.ts ── EMAIL SEND HOOK ── comments) when ready.
+  startAvailabilityReminderScheduler();
 });
