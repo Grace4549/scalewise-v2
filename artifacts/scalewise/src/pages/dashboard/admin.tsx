@@ -1342,6 +1342,11 @@ export default function AdminDashboard() {
             )}
           </div>
         </TabsContent>
+
+        {/* ── RECEIPTS TAB ── */}
+        <TabsContent value="receipts">
+          <AdminReceiptsTab />
+        </TabsContent>
       </Tabs>
 
       {/* ── CANCEL DIALOG ── */}
@@ -1401,10 +1406,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-        {/* ── RECEIPTS TAB ── */}
-        <TabsContent value="receipts">
-          <AdminReceiptsTab />
-        </TabsContent>
     </div>
   );
 }
