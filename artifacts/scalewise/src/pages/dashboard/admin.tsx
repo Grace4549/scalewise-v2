@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   useGetAdminStats, useListApplications, useListAllBookings, useListReviews,
   useApproveApplication, useRejectApplication, useDeleteReview,
   useGetExpertBreakdown, useMarkBookingPaid, useAdminUpdateBookingStatus,
   useListAdminMessages, useSendAdminMessage, useMarkExpertPaid, useMarkRefundPaid,
-  useListLaunchNotifications,
+  useListLaunchNotifications, useListAdminReceipts, useCreateExpertPayout,
+  getGetExpertPayoutReceiptQueryOptions,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -17,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { ReceiptModal } from "@/components/receipt-viewer";
 
 const C = {
   blue: "#6395EE",
@@ -537,6 +540,11 @@ export default function AdminDashboard() {
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#88CFA8", opacity: activeTab === "waitlist" ? 0 : 1 }} />
               Waitlist
             </span>
+          </TabsTrigger>
+          <TabsTrigger value="receipts"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "receipts" ? { backgroundColor: C.blue, color: "white" } : { color: C.blue }}>
+            <span className="flex items-center gap-2">🧾 Receipts</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1391,6 +1399,136 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+        {/* ── RECEIPTS TAB ── */}
+        <TabsContent value="receipts">
+          <AdminReceiptsTab />
+        </TabsContent>
+    </div>
+  );
+}
+
+function AdminReceiptsTab() {
+  const { data: adminReceipts, isLoading } = useListAdminReceipts();
+  const payoutReceipts = (adminReceipts?.payoutReceipts ?? []) as Array<{
+    id: number; receiptNumber: string; date: string; expertName: string; batchId: number;
+    totalAmount: number; sessionAmount: number; cancellationAmount: number; vatAmount: number;
+    periodStart: string; periodEnd: string; expertId: number;
+  }>;
+  const refundReceipts = (adminReceipts?.refundReceipts ?? []) as Array<{
+    receiptNumber: string; date: string; clientName: string; expertName: string;
+    refundAmount: number; bookingId: number;
+  }>;
+  const [selectedBatchId, setSelectedBatchId] = useState<number | null>(null);
+  const { data: receiptData } = useQuery({
+    ...getGetExpertPayoutReceiptQueryOptions(selectedBatchId ?? 0),
+    enabled: selectedBatchId !== null,
+  });
+  const createPayout = useCreateExpertPayout();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [payoutNotes, setPayoutNotes] = useState("");
+  const [payoutExpertId, setPayoutExpertId] = useState<number | null>(null);
+
+  async function handleCreatePayout(expertId: number) {
+    try {
+      await createPayout.mutateAsync({ id: expertId, data: { notes: payoutNotes || undefined } });
+      toast({ title: "Payout recorded", description: "Expert payout batch created successfully." });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/receipts"] });
+      setPayoutExpertId(null);
+      setPayoutNotes("");
+    } catch {
+      toast({ title: "Failed", description: "Could not create payout.", variant: "destructive" });
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-muted/30">
+          <h2 className="text-xl font-semibold">🧾 All Payout Receipts</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">All expert payout batches processed through ScaleWise</p>
+        </div>
+        {isLoading ? (
+          <div className="p-8"><Skeleton className="h-48 w-full" /></div>
+        ) : !payoutReceipts.length ? (
+          <div className="p-12 text-center text-muted-foreground">
+            <div className="text-4xl mb-3">🧾</div>
+            <p className="font-medium">No payout receipts yet</p>
+            <p className="text-sm mt-1">Use the Expert Payouts tab to process expert payouts. Receipts will appear here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-xs uppercase tracking-wide bg-muted/40 text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-left">Receipt #</th>
+                  <th className="px-4 py-3 text-left">Expert</th>
+                  <th className="px-4 py-3 text-left">Period</th>
+                  <th className="px-4 py-3 text-left">Paid On</th>
+                  <th className="px-4 py-3 text-right">Sessions</th>
+                  <th className="px-4 py-3 text-right">Cancellations</th>
+                  <th className="px-4 py-3 text-right">VAT (16%)</th>
+                  <th className="px-4 py-3 text-right font-bold">Total</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {payoutReceipts.map((r) => (
+                  <tr key={r.batchId} className="hover:bg-muted/10">
+                    <td className="px-4 py-3 font-mono text-xs" style={{ color: C.blue }}>{r.receiptNumber}</td>
+                    <td className="px-4 py-3 font-medium">{r.expertName}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {new Date(r.periodStart).toLocaleDateString("en-KE")} — {new Date(r.periodEnd).toLocaleDateString("en-KE")}
+                    </td>
+                    <td className="px-4 py-3 text-xs">{new Date(r.date).toLocaleString("en-KE")}</td>
+                    <td className="px-4 py-3 text-right">KES {r.sessionAmount.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right" style={{ color: "#b45309" }}>
+                      {r.cancellationAmount > 0 ? `KES ${r.cancellationAmount.toLocaleString()}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-orange-600">KES {r.vatAmount.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-bold" style={{ color: C.blue }}>
+                      KES {r.totalAmount.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Button size="sm" variant="outline" className="text-xs h-7"
+                        style={{ borderColor: C.blue + "60", color: C.blue }}
+                        onClick={() => setSelectedBatchId(r.batchId)}>
+                        View Receipt
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {payoutExpertId !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl border shadow-2xl max-w-md w-full p-6">
+            <h3 className="font-bold text-lg mb-3">Create Expert Payout</h3>
+            <p className="text-sm text-muted-foreground mb-4">This will mark all unpaid completed sessions as paid and generate a payout receipt.</p>
+            <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+            <textarea value={payoutNotes} onChange={(e) => setPayoutNotes(e.target.value)}
+              placeholder="e.g. M-Pesa transfer ref: QWE123..."
+              className="w-full rounded-xl border px-3 py-2 text-sm resize-none h-20 bg-background mb-4" />
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => { setPayoutExpertId(null); setPayoutNotes(""); }}>Cancel</Button>
+              <Button style={{ backgroundColor: C.blue, color: "white" }}
+                onClick={() => handleCreatePayout(payoutExpertId)}
+                disabled={createPayout.isPending}>
+                {createPayout.isPending ? "Processing…" : "Confirm Payout"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedBatchId !== null && receiptData && (
+        <ReceiptModal data={receiptData} onClose={() => setSelectedBatchId(null)} />
       )}
     </div>
   );

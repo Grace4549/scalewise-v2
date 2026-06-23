@@ -1020,6 +1020,131 @@ export const GetExpertBreakdownResponse = zod.array(GetExpertBreakdownResponseIt
 
 
 /**
+ * @summary List all receipts for the current client (booking payments + refunds)
+ */
+export const ListClientReceiptsResponseItem = zod.object({
+  "type": zod.enum(['booking', 'refund']),
+  "receiptNumber": zod.string(),
+  "date": zod.coerce.date(),
+  "description": zod.string(),
+  "amount": zod.number(),
+  "status": zod.string(),
+  "bookingId": zod.number(),
+  "scheduledTime": zod.coerce.date()
+})
+export const ListClientReceiptsResponse = zod.array(ListClientReceiptsResponseItem)
+
+
+/**
+ * @summary Get booking payment receipt for a specific booking
+ */
+export const GetClientBookingReceiptParams = zod.object({
+  "bookingId": zod.coerce.number()
+})
+
+export const GetClientBookingReceiptResponse = zod.object({
+  "receiptType": zod.string(),
+  "receiptNumber": zod.string(),
+  "issuedAt": zod.coerce.date(),
+  "company": zod.record(zod.string(), zod.unknown()),
+  "client": zod.record(zod.string(), zod.unknown()),
+  "booking": zod.record(zod.string(), zod.unknown())
+})
+
+
+/**
+ * @summary Get refund receipt for a specific booking (only available after refund is paid)
+ */
+export const GetClientRefundReceiptParams = zod.object({
+  "bookingId": zod.coerce.number()
+})
+
+export const GetClientRefundReceiptResponse = zod.object({
+  "receiptType": zod.string(),
+  "receiptNumber": zod.string(),
+  "issuedAt": zod.coerce.date(),
+  "company": zod.record(zod.string(), zod.unknown()),
+  "client": zod.record(zod.string(), zod.unknown()),
+  "booking": zod.record(zod.string(), zod.unknown())
+})
+
+
+/**
+ * @summary List all payout batch receipts for the current expert
+ */
+export const ListExpertReceiptsResponseItem = zod.object({
+  "id": zod.number(),
+  "receiptNumber": zod.string(),
+  "paidAt": zod.coerce.date(),
+  "periodStart": zod.coerce.date(),
+  "periodEnd": zod.coerce.date(),
+  "totalAmount": zod.number(),
+  "sessionAmount": zod.number(),
+  "cancellationAmount": zod.number(),
+  "vatAmount": zod.number()
+})
+export const ListExpertReceiptsResponse = zod.array(ListExpertReceiptsResponseItem)
+
+
+/**
+ * @summary Get detailed expert payout receipt for a batch
+ */
+export const GetExpertPayoutReceiptParams = zod.object({
+  "batchId": zod.coerce.number()
+})
+
+export const GetExpertPayoutReceiptResponse = zod.object({
+  "receiptType": zod.string(),
+  "receiptNumber": zod.string(),
+  "issuedAt": zod.coerce.date(),
+  "company": zod.record(zod.string(), zod.unknown()),
+  "expert": zod.record(zod.string(), zod.unknown()),
+  "period": zod.record(zod.string(), zod.unknown()),
+  "paidAt": zod.coerce.date(),
+  "sessionLines": zod.array(zod.record(zod.string(), zod.unknown())),
+  "cancellationLines": zod.array(zod.record(zod.string(), zod.unknown())),
+  "sessionAmount": zod.number(),
+  "cancellationAmount": zod.number(),
+  "subtotal": zod.number(),
+  "vatRate": zod.number(),
+  "vatAmount": zod.number(),
+  "totalAmount": zod.number()
+})
+
+
+/**
+ * @summary List all receipts (payout batches + refunds) for admin
+ */
+export const ListAdminReceiptsResponse = zod.object({
+  "payoutReceipts": zod.array(zod.record(zod.string(), zod.unknown())),
+  "refundReceipts": zod.array(zod.record(zod.string(), zod.unknown()))
+})
+
+
+/**
+ * @summary Create a payout batch for an expert (admin only) — marks session bookings paid and generates receipt
+ */
+export const CreateExpertPayoutParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateExpertPayoutBody = zod.object({
+  "periodStart": zod.coerce.date().optional().describe('If omitted, defaults to the earliest unpaid session date'),
+  "periodEnd": zod.coerce.date().optional().describe('If omitted, defaults to now'),
+  "notes": zod.string().optional()
+})
+
+export const CreateExpertPayoutResponse = zod.object({
+  "batchId": zod.number(),
+  "receiptNumber": zod.string(),
+  "totalAmount": zod.number(),
+  "sessionAmount": zod.number(),
+  "cancellationAmount": zod.number(),
+  "vatAmount": zod.number()
+})
+
+
+/**
  * @summary Mark all pending payout bookings for an expert as paid (admin only)
  */
 export const MarkExpertPaidParams = zod.object({

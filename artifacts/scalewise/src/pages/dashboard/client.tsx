@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   useListMyBookings, useGetInbox, useListMessages, useSendMessage,
   useUpdateBookingStatus, useRescheduleBooking,
   useListNotifications, useMarkNotificationSeen,
+  useListClientReceipts,
+  getGetClientBookingReceiptQueryOptions, getGetClientRefundReceiptQueryOptions,
   getListMessagesQueryKey, getGetInboxQueryKey,
   getListMyBookingsQueryKey, getListNotificationsQueryKey,
 } from "@workspace/api-client-react";
+import { ReceiptModal } from "@/components/receipt-viewer";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -78,6 +82,92 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
           Send
         </Button>
       </div>
+    </div>
+  );
+}
+
+function ClientReceiptsTab() {
+  const { data: receipts, isLoading } = useListClientReceipts();
+  const [selectedReceipt, setSelectedReceipt] = useState<{ type: "booking" | "refund"; bookingId: number } | null>(null);
+  const { data: bookingReceiptData } = useQuery({
+    ...getGetClientBookingReceiptQueryOptions(selectedReceipt?.bookingId ?? 0),
+    enabled: selectedReceipt?.type === "booking",
+  });
+  const { data: refundReceiptData } = useQuery({
+    ...getGetClientRefundReceiptQueryOptions(selectedReceipt?.bookingId ?? 0),
+    enabled: selectedReceipt?.type === "refund",
+  });
+  const activeReceiptData = selectedReceipt?.type === "booking" ? bookingReceiptData : refundReceiptData;
+
+  return (
+    <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+      <div className="p-6 border-b bg-muted/30">
+        <h2 className="text-xl font-semibold">🧾 My Receipts</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Payment confirmations and refund receipts for all your bookings</p>
+      </div>
+      {isLoading ? (
+        <div className="p-8"><Skeleton className="h-48 w-full" /></div>
+      ) : !receipts?.length ? (
+        <div className="p-12 text-center text-muted-foreground">
+          <div className="text-4xl mb-3">🧾</div>
+          <p className="font-medium">No receipts yet</p>
+          <p className="text-sm mt-1">Receipts appear here once you make a booking payment or receive a refund.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase tracking-wide bg-muted/40 text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 text-left">Type</th>
+                <th className="px-4 py-3 text-left">Receipt #</th>
+                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">Scheduled For</th>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {receipts.map((r) => (
+                <tr key={`${r.type}-${r.bookingId}`} className="hover:bg-muted/10">
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      r.type === "booking"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-green-100 text-green-800"
+                    }`}>
+                      {r.type === "booking" ? "Payment" : "Refund"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs" style={{ color: C.blue }}>{r.receiptNumber}</td>
+                  <td className="px-4 py-3 text-sm max-w-[220px] truncate">{r.description}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {new Date(r.scheduledTime).toLocaleString("en-KE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {new Date(r.date).toLocaleString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold">
+                    <span style={{ color: r.type === "refund" ? "#15803d" : C.blue }}>
+                      KES {r.amount.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button size="sm" variant="outline" className="text-xs h-7"
+                      style={{ borderColor: C.blue + "60", color: C.blue }}
+                      onClick={() => setSelectedReceipt({ type: r.type as "booking" | "refund", bookingId: r.bookingId })}>
+                      View Receipt
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {selectedReceipt && activeReceiptData && (
+        <ReceiptModal data={activeReceiptData} onClose={() => setSelectedReceipt(null)} />
+      )}
     </div>
   );
 }
@@ -231,6 +321,7 @@ export default function ClientDashboard() {
                 style={{ backgroundColor: C.mint + "40", color: "#0f7a6a" }}>{threads!.length}</span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="receipts" className="rounded-lg font-medium px-5">🧾 Receipts</TabsTrigger>
         </TabsList>
 
         {/* ── BOOKINGS TAB ── */}
@@ -454,6 +545,11 @@ export default function ClientDashboard() {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        {/* ── RECEIPTS TAB ── */}
+        <TabsContent value="receipts">
+          <ClientReceiptsTab />
         </TabsContent>
       </Tabs>
 

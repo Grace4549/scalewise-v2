@@ -615,6 +615,121 @@ export interface AvailabilitySlotInput {
   startTime: string;
 }
 
+export type ClientReceiptSummaryType = typeof ClientReceiptSummaryType[keyof typeof ClientReceiptSummaryType];
+
+
+export const ClientReceiptSummaryType = {
+  booking: 'booking',
+  refund: 'refund',
+} as const;
+
+export interface ClientReceiptSummary {
+  type: ClientReceiptSummaryType;
+  receiptNumber: string;
+  date: string;
+  description: string;
+  amount: number;
+  status: string;
+  bookingId: number;
+  scheduledTime: string;
+}
+
+export type ClientBookingReceiptCompany = { [key: string]: unknown };
+
+export type ClientBookingReceiptClient = { [key: string]: unknown };
+
+export type ClientBookingReceiptBooking = { [key: string]: unknown };
+
+export interface ClientBookingReceipt {
+  receiptType: string;
+  receiptNumber: string;
+  issuedAt: string;
+  company: ClientBookingReceiptCompany;
+  client: ClientBookingReceiptClient;
+  booking: ClientBookingReceiptBooking;
+}
+
+export type ClientRefundReceiptCompany = { [key: string]: unknown };
+
+export type ClientRefundReceiptClient = { [key: string]: unknown };
+
+export type ClientRefundReceiptBooking = { [key: string]: unknown };
+
+export interface ClientRefundReceipt {
+  receiptType: string;
+  receiptNumber: string;
+  issuedAt: string;
+  company: ClientRefundReceiptCompany;
+  client: ClientRefundReceiptClient;
+  booking: ClientRefundReceiptBooking;
+}
+
+export interface ExpertReceiptSummary {
+  id: number;
+  receiptNumber: string;
+  paidAt: string;
+  periodStart: string;
+  periodEnd: string;
+  totalAmount: number;
+  sessionAmount: number;
+  cancellationAmount: number;
+  vatAmount: number;
+}
+
+export type ExpertPayoutReceiptCompany = { [key: string]: unknown };
+
+export type ExpertPayoutReceiptExpert = { [key: string]: unknown };
+
+export type ExpertPayoutReceiptPeriod = { [key: string]: unknown };
+
+export type ExpertPayoutReceiptSessionLinesItem = { [key: string]: unknown };
+
+export type ExpertPayoutReceiptCancellationLinesItem = { [key: string]: unknown };
+
+export interface ExpertPayoutReceipt {
+  receiptType: string;
+  receiptNumber: string;
+  issuedAt: string;
+  company: ExpertPayoutReceiptCompany;
+  expert: ExpertPayoutReceiptExpert;
+  period: ExpertPayoutReceiptPeriod;
+  paidAt: string;
+  sessionLines: ExpertPayoutReceiptSessionLinesItem[];
+  cancellationLines: ExpertPayoutReceiptCancellationLinesItem[];
+  sessionAmount: number;
+  cancellationAmount: number;
+  subtotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+}
+
+export type AdminReceiptsListPayoutReceiptsItem = { [key: string]: unknown };
+
+export type AdminReceiptsListRefundReceiptsItem = { [key: string]: unknown };
+
+export interface AdminReceiptsList {
+  payoutReceipts: AdminReceiptsListPayoutReceiptsItem[];
+  refundReceipts: AdminReceiptsListRefundReceiptsItem[];
+}
+
+export interface CreatePayoutInput {
+  /** If omitted, defaults to the earliest unpaid session date */
+  periodStart?: string;
+  /** If omitted, defaults to now */
+  periodEnd?: string;
+  notes?: string;
+}
+
+export interface CreatePayoutResult {
+  batchId: number;
+  receiptNumber: string;
+  totalAmount: number;
+  sessionAmount: number;
+  cancellationAmount: number;
+  vatAmount: number;
+}
+
 export type ExpertDashboardCancelledWithEarningsItem = { [key: string]: unknown };
 
 export interface ExpertDashboard {

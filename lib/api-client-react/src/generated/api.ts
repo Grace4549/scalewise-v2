@@ -22,6 +22,7 @@ import type {
 import type {
   AdminBooking,
   AdminExpertBreakdown,
+  AdminReceiptsList,
   AdminStats,
   AuthResponse,
   AvailabilitySlot,
@@ -30,13 +31,20 @@ import type {
   BookingInput,
   BookingReschedule,
   BookingStatusUpdate,
+  ClientBookingReceipt,
+  ClientReceiptSummary,
+  ClientRefundReceipt,
+  CreatePayoutInput,
+  CreatePayoutResult,
   ExpertApplication,
   ExpertApplicationInput,
   ExpertCancelInput,
   ExpertDashboard,
   ExpertList,
+  ExpertPayoutReceipt,
   ExpertProfile,
   ExpertProfileUpdate,
+  ExpertReceiptSummary,
   ExpertSettings,
   ExpertSettingsInput,
   GetExpertBreakdownParams,
@@ -3367,6 +3375,540 @@ export function useGetExpertBreakdown<TData = Awaited<ReturnType<typeof getExper
 
 
 
+
+export const getListClientReceiptsUrl = () => {
+
+
+
+
+  return `/api/client/receipts`
+}
+
+/**
+ * @summary List all receipts for the current client (booking payments + refunds)
+ */
+export const listClientReceipts = async ( options?: RequestInit): Promise<ClientReceiptSummary[]> => {
+
+  return customFetch<ClientReceiptSummary[]>(getListClientReceiptsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListClientReceiptsQueryKey = () => {
+    return [
+    `/api/client/receipts`
+    ] as const;
+    }
+
+
+export const getListClientReceiptsQueryOptions = <TData = Awaited<ReturnType<typeof listClientReceipts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listClientReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListClientReceiptsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClientReceipts>>> = ({ signal }) => listClientReceipts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listClientReceipts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListClientReceiptsQueryResult = NonNullable<Awaited<ReturnType<typeof listClientReceipts>>>
+export type ListClientReceiptsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all receipts for the current client (booking payments + refunds)
+ */
+
+export function useListClientReceipts<TData = Awaited<ReturnType<typeof listClientReceipts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listClientReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListClientReceiptsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetClientBookingReceiptUrl = (bookingId: number,) => {
+
+
+
+
+  return `/api/client/receipts/booking/${bookingId}`
+}
+
+/**
+ * @summary Get booking payment receipt for a specific booking
+ */
+export const getClientBookingReceipt = async (bookingId: number, options?: RequestInit): Promise<ClientBookingReceipt> => {
+
+  return customFetch<ClientBookingReceipt>(getGetClientBookingReceiptUrl(bookingId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClientBookingReceiptQueryKey = (bookingId: number,) => {
+    return [
+    `/api/client/receipts/booking/${bookingId}`
+    ] as const;
+    }
+
+
+export const getGetClientBookingReceiptQueryOptions = <TData = Awaited<ReturnType<typeof getClientBookingReceipt>>, TError = ErrorType<unknown>>(bookingId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientBookingReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClientBookingReceiptQueryKey(bookingId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClientBookingReceipt>>> = ({ signal }) => getClientBookingReceipt(bookingId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(bookingId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClientBookingReceipt>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClientBookingReceiptQueryResult = NonNullable<Awaited<ReturnType<typeof getClientBookingReceipt>>>
+export type GetClientBookingReceiptQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get booking payment receipt for a specific booking
+ */
+
+export function useGetClientBookingReceipt<TData = Awaited<ReturnType<typeof getClientBookingReceipt>>, TError = ErrorType<unknown>>(
+ bookingId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientBookingReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClientBookingReceiptQueryOptions(bookingId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetClientRefundReceiptUrl = (bookingId: number,) => {
+
+
+
+
+  return `/api/client/receipts/refund/${bookingId}`
+}
+
+/**
+ * @summary Get refund receipt for a specific booking (only available after refund is paid)
+ */
+export const getClientRefundReceipt = async (bookingId: number, options?: RequestInit): Promise<ClientRefundReceipt> => {
+
+  return customFetch<ClientRefundReceipt>(getGetClientRefundReceiptUrl(bookingId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClientRefundReceiptQueryKey = (bookingId: number,) => {
+    return [
+    `/api/client/receipts/refund/${bookingId}`
+    ] as const;
+    }
+
+
+export const getGetClientRefundReceiptQueryOptions = <TData = Awaited<ReturnType<typeof getClientRefundReceipt>>, TError = ErrorType<unknown>>(bookingId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientRefundReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClientRefundReceiptQueryKey(bookingId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClientRefundReceipt>>> = ({ signal }) => getClientRefundReceipt(bookingId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(bookingId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClientRefundReceipt>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClientRefundReceiptQueryResult = NonNullable<Awaited<ReturnType<typeof getClientRefundReceipt>>>
+export type GetClientRefundReceiptQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get refund receipt for a specific booking (only available after refund is paid)
+ */
+
+export function useGetClientRefundReceipt<TData = Awaited<ReturnType<typeof getClientRefundReceipt>>, TError = ErrorType<unknown>>(
+ bookingId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientRefundReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClientRefundReceiptQueryOptions(bookingId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListExpertReceiptsUrl = () => {
+
+
+
+
+  return `/api/expert/receipts`
+}
+
+/**
+ * @summary List all payout batch receipts for the current expert
+ */
+export const listExpertReceipts = async ( options?: RequestInit): Promise<ExpertReceiptSummary[]> => {
+
+  return customFetch<ExpertReceiptSummary[]>(getListExpertReceiptsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExpertReceiptsQueryKey = () => {
+    return [
+    `/api/expert/receipts`
+    ] as const;
+    }
+
+
+export const getListExpertReceiptsQueryOptions = <TData = Awaited<ReturnType<typeof listExpertReceipts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExpertReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExpertReceiptsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExpertReceipts>>> = ({ signal }) => listExpertReceipts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExpertReceipts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListExpertReceiptsQueryResult = NonNullable<Awaited<ReturnType<typeof listExpertReceipts>>>
+export type ListExpertReceiptsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all payout batch receipts for the current expert
+ */
+
+export function useListExpertReceipts<TData = Awaited<ReturnType<typeof listExpertReceipts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExpertReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListExpertReceiptsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetExpertPayoutReceiptUrl = (batchId: number,) => {
+
+
+
+
+  return `/api/expert/receipts/payout/${batchId}`
+}
+
+/**
+ * @summary Get detailed expert payout receipt for a batch
+ */
+export const getExpertPayoutReceipt = async (batchId: number, options?: RequestInit): Promise<ExpertPayoutReceipt> => {
+
+  return customFetch<ExpertPayoutReceipt>(getGetExpertPayoutReceiptUrl(batchId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExpertPayoutReceiptQueryKey = (batchId: number,) => {
+    return [
+    `/api/expert/receipts/payout/${batchId}`
+    ] as const;
+    }
+
+
+export const getGetExpertPayoutReceiptQueryOptions = <TData = Awaited<ReturnType<typeof getExpertPayoutReceipt>>, TError = ErrorType<unknown>>(batchId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertPayoutReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExpertPayoutReceiptQueryKey(batchId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpertPayoutReceipt>>> = ({ signal }) => getExpertPayoutReceipt(batchId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(batchId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExpertPayoutReceipt>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExpertPayoutReceiptQueryResult = NonNullable<Awaited<ReturnType<typeof getExpertPayoutReceipt>>>
+export type GetExpertPayoutReceiptQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get detailed expert payout receipt for a batch
+ */
+
+export function useGetExpertPayoutReceipt<TData = Awaited<ReturnType<typeof getExpertPayoutReceipt>>, TError = ErrorType<unknown>>(
+ batchId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertPayoutReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExpertPayoutReceiptQueryOptions(batchId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListAdminReceiptsUrl = () => {
+
+
+
+
+  return `/api/admin/receipts`
+}
+
+/**
+ * @summary List all receipts (payout batches + refunds) for admin
+ */
+export const listAdminReceipts = async ( options?: RequestInit): Promise<AdminReceiptsList> => {
+
+  return customFetch<AdminReceiptsList>(getListAdminReceiptsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminReceiptsQueryKey = () => {
+    return [
+    `/api/admin/receipts`
+    ] as const;
+    }
+
+
+export const getListAdminReceiptsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminReceipts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminReceiptsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminReceipts>>> = ({ signal }) => listAdminReceipts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminReceipts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminReceiptsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminReceipts>>>
+export type ListAdminReceiptsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all receipts (payout batches + refunds) for admin
+ */
+
+export function useListAdminReceipts<TData = Awaited<ReturnType<typeof listAdminReceipts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminReceipts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminReceiptsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateExpertPayoutUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/experts/${id}/payout`
+}
+
+/**
+ * @summary Create a payout batch for an expert (admin only) — marks session bookings paid and generates receipt
+ */
+export const createExpertPayout = async (id: number,
+    createPayoutInput: CreatePayoutInput, options?: RequestInit): Promise<CreatePayoutResult> => {
+
+  return customFetch<CreatePayoutResult>(getCreateExpertPayoutUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createPayoutInput,)
+  }
+);}
+
+
+
+
+export const getCreateExpertPayoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExpertPayout>>, TError,{id: number;data: BodyType<CreatePayoutInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createExpertPayout>>, TError,{id: number;data: BodyType<CreatePayoutInput>}, TContext> => {
+
+const mutationKey = ['createExpertPayout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createExpertPayout>>, {id: number;data: BodyType<CreatePayoutInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createExpertPayout(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateExpertPayoutMutationResult = NonNullable<Awaited<ReturnType<typeof createExpertPayout>>>
+    export type CreateExpertPayoutMutationBody = BodyType<CreatePayoutInput>
+    export type CreateExpertPayoutMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a payout batch for an expert (admin only) — marks session bookings paid and generates receipt
+ */
+export const useCreateExpertPayout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExpertPayout>>, TError,{id: number;data: BodyType<CreatePayoutInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createExpertPayout>>,
+        TError,
+        {id: number;data: BodyType<CreatePayoutInput>},
+        TContext
+      > => {
+      return useMutation(getCreateExpertPayoutMutationOptions(options));
+    }
 
 export const getMarkExpertPaidUrl = (id: number,) => {
 

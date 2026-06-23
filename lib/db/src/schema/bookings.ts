@@ -26,6 +26,8 @@ export const bookingsTable = pgTable("bookings", {
   refundPercent: real("refund_percent"),
   expertCancellationEarning: real("expert_cancellation_earning"),
 
+  refundPaidAt: timestamp("refund_paid_at", { withTimezone: true }),
+
   rescheduledBy: text("rescheduled_by", { enum: ["client", "expert", "admin"] }),
   rescheduledFromTime: timestamp("rescheduled_from_time", { withTimezone: true }),
   rescheduledAt: timestamp("rescheduled_at", { withTimezone: true }),

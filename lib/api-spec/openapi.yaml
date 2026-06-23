@@ -912,6 +912,131 @@ paths:
                 items:
                   $ref: "#/components/schemas/AdminExpertBreakdown"
 
+  /client/receipts:
+    get:
+      operationId: listClientReceipts
+      tags: [bookings]
+      summary: List all receipts for the current client (booking payments + refunds)
+      responses:
+        "200":
+          description: Client receipts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientReceiptSummary"
+
+  /client/receipts/booking/{bookingId}:
+    get:
+      operationId: getClientBookingReceipt
+      tags: [bookings]
+      summary: Get booking payment receipt for a specific booking
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientBookingReceipt"
+
+  /client/receipts/refund/{bookingId}:
+    get:
+      operationId: getClientRefundReceipt
+      tags: [bookings]
+      summary: Get refund receipt for a specific booking (only available after refund is paid)
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Refund receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientRefundReceipt"
+
+  /expert/receipts:
+    get:
+      operationId: listExpertReceipts
+      tags: [experts]
+      summary: List all payout batch receipts for the current expert
+      responses:
+        "200":
+          description: Expert payout receipt list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpertReceiptSummary"
+
+  /expert/receipts/payout/{batchId}:
+    get:
+      operationId: getExpertPayoutReceipt
+      tags: [experts]
+      summary: Get detailed expert payout receipt for a batch
+      parameters:
+        - in: path
+          name: batchId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expert payout receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpertPayoutReceipt"
+
+  /admin/receipts:
+    get:
+      operationId: listAdminReceipts
+      tags: [admin]
+      summary: List all receipts (payout batches + refunds) for admin
+      responses:
+        "200":
+          description: Admin receipts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReceiptsList"
+
+  /admin/experts/{id}/payout:
+    post:
+      operationId: createExpertPayout
+      tags: [admin]
+      summary: Create a payout batch for an expert (admin only) — marks session bookings paid and generates receipt
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePayoutInput"
+      responses:
+        "200":
+          description: Payout batch created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatePayoutResult"
+
   /admin/experts/{id}/mark-paid:
     post:
       operationId: markExpertPaid
@@ -1746,6 +1871,190 @@ components:
         startTime:
           type: string
           format: date-time
+
+    ClientReceiptSummary:
+      type: object
+      required: [type, receiptNumber, date, description, amount, status, bookingId, scheduledTime]
+      properties:
+        type:
+          type: string
+          enum: [booking, refund]
+        receiptNumber:
+          type: string
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        bookingId:
+          type: integer
+        scheduledTime:
+          type: string
+          format: date-time
+
+    ClientBookingReceipt:
+      type: object
+      required: [receiptType, receiptNumber, issuedAt, company, client, booking]
+      properties:
+        receiptType:
+          type: string
+        receiptNumber:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        company:
+          type: object
+          additionalProperties: true
+        client:
+          type: object
+          additionalProperties: true
+        booking:
+          type: object
+          additionalProperties: true
+
+    ClientRefundReceipt:
+      type: object
+      required: [receiptType, receiptNumber, issuedAt, company, client, booking]
+      properties:
+        receiptType:
+          type: string
+        receiptNumber:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        company:
+          type: object
+          additionalProperties: true
+        client:
+          type: object
+          additionalProperties: true
+        booking:
+          type: object
+          additionalProperties: true
+
+    ExpertReceiptSummary:
+      type: object
+      required: [id, receiptNumber, paidAt, periodStart, periodEnd, totalAmount, sessionAmount, cancellationAmount, vatAmount]
+      properties:
+        id:
+          type: integer
+        receiptNumber:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+        totalAmount:
+          type: number
+        sessionAmount:
+          type: number
+        cancellationAmount:
+          type: number
+        vatAmount:
+          type: number
+
+    ExpertPayoutReceipt:
+      type: object
+      required: [receiptType, receiptNumber, issuedAt, company, expert, period, paidAt, sessionLines, cancellationLines, sessionAmount, cancellationAmount, subtotal, vatRate, vatAmount, totalAmount]
+      properties:
+        receiptType:
+          type: string
+        receiptNumber:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        company:
+          type: object
+          additionalProperties: true
+        expert:
+          type: object
+          additionalProperties: true
+        period:
+          type: object
+          additionalProperties: true
+        paidAt:
+          type: string
+          format: date-time
+        sessionLines:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        cancellationLines:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sessionAmount:
+          type: number
+        cancellationAmount:
+          type: number
+        subtotal:
+          type: number
+        vatRate:
+          type: number
+        vatAmount:
+          type: number
+        totalAmount:
+          type: number
+
+    AdminReceiptsList:
+      type: object
+      required: [payoutReceipts, refundReceipts]
+      properties:
+        payoutReceipts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        refundReceipts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    CreatePayoutInput:
+      type: object
+      properties:
+        periodStart:
+          type: string
+          format: date-time
+          description: If omitted, defaults to the earliest unpaid session date
+        periodEnd:
+          type: string
+          format: date-time
+          description: If omitted, defaults to now
+        notes:
+          type: string
+
+    CreatePayoutResult:
+      type: object
+      required: [batchId, receiptNumber, totalAmount, sessionAmount, cancellationAmount, vatAmount]
+      properties:
+        batchId:
+          type: integer
+        receiptNumber:
+          type: string
+        totalAmount:
+          type: number
+        sessionAmount:
+          type: number
+        cancellationAmount:
+          type: number
+        vatAmount:
+          type: number
 
     ExpertDashboard:
       type: object

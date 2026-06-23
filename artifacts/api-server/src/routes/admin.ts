@@ -308,29 +308,10 @@ router.post("/admin/bookings/:id/mark-paid", adminMiddleware(), async (req, res)
   res.json(formatAdminBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
 });
 
-router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-
-  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
-  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
-
-  if (booking.refundStatus !== "pending") {
-    res.status(400).json({ error: "No pending refund on this booking" });
-    return;
-  }
-
-  const [updated] = await db
-    .update(bookingsTable)
-    .set({ refundStatus: "paid" })
-    .where(eq(bookingsTable.id, id))
-    .returning();
-
-  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, updated.expertId));
-  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, updated.clientId));
-
-  res.json(formatAdminBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
+// mark-refund-paid is handled in receipts router (sets refundPaidAt too)
+// Kept here for backward compat — delegates to same logic
+router.post("/admin/bookings/:id/mark-refund-paid-legacy", adminMiddleware(), async (req, res): Promise<void> => {
+  res.status(410).json({ error: "Use POST /admin/bookings/:id/mark-refund-paid" });
 });
 
 router.post("/admin/experts/:id/mark-paid", adminMiddleware(), async (req, res): Promise<void> => {

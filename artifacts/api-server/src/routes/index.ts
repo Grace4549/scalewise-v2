@@ -9,6 +9,7 @@ import adminRouter from "./admin";
 import launchRouter from "./launch";
 import notificationsRouter from "./notifications";
 import availabilityRouter from "./availability";
+import receiptsRouter from "./receipts";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(adminRouter);
 router.use(launchRouter);
 router.use(notificationsRouter);
 router.use(availabilityRouter);
+router.use(receiptsRouter);
 
 export default router;

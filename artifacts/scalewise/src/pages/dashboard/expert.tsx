@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   useGetExpertDashboard, useUpdateBookingStatus,
   useExpertCancelBooking, useRequestReschedule,
@@ -7,11 +8,14 @@ import {
   useListNotifications, useMarkNotificationSeen,
   useListMyAvailability, useAddAvailabilitySlot, useDeleteAvailabilitySlot,
   useGetExpertSettings, useUpdateExpertSettings,
+  useListExpertReceipts,
+  getGetExpertPayoutReceiptQueryOptions,
   getListMessagesQueryKey, getGetInboxQueryKey,
   getListAdminMessagesQueryKey, getGetExpertDashboardQueryKey,
   getListNotificationsQueryKey, getListMyAvailabilityQueryKey,
   getGetExpertSettingsQueryKey,
 } from "@workspace/api-client-react";
+import { ReceiptModal } from "@/components/receipt-viewer";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -476,6 +480,79 @@ function AdminThreadPanel({ expertId, userId }: { expertId: number; userId: numb
   );
 }
 
+function ExpertReceiptsTab() {
+  const { data: receipts, isLoading } = useListExpertReceipts();
+  const [selectedBatchId, setSelectedBatchId] = useState<number | null>(null);
+  const { data: receiptData } = useQuery({
+    ...getGetExpertPayoutReceiptQueryOptions(selectedBatchId ?? 0),
+    enabled: selectedBatchId !== null,
+  });
+
+  return (
+    <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+      <div className="p-6 border-b bg-muted/30">
+        <h2 className="text-xl font-semibold">🧾 My Payout Receipts</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Official receipts for all your payouts from ScaleWise</p>
+      </div>
+      {isLoading ? (
+        <div className="p-8"><Skeleton className="h-48 w-full" /></div>
+      ) : !receipts?.length ? (
+        <div className="p-12 text-center text-muted-foreground">
+          <div className="text-4xl mb-3">🧾</div>
+          <p className="font-medium">No payout receipts yet</p>
+          <p className="text-sm mt-1">Receipts will appear here once ScaleWise processes your first payout.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase tracking-wide bg-muted/40 text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 text-left">Receipt #</th>
+                <th className="px-4 py-3 text-left">Period</th>
+                <th className="px-4 py-3 text-left">Paid On</th>
+                <th className="px-4 py-3 text-right">Sessions</th>
+                <th className="px-4 py-3 text-right">Cancellations</th>
+                <th className="px-4 py-3 text-right">VAT (16%)</th>
+                <th className="px-4 py-3 text-right font-bold">Total Paid</th>
+                <th className="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {receipts.map((r) => (
+                <tr key={r.id} className="hover:bg-muted/10">
+                  <td className="px-4 py-3 font-mono text-xs" style={{ color: C.blue }}>{r.receiptNumber}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {new Date(r.periodStart).toLocaleDateString("en-KE")} — {new Date(r.periodEnd).toLocaleDateString("en-KE")}
+                  </td>
+                  <td className="px-4 py-3 text-xs">{new Date(r.paidAt).toLocaleString("en-KE")}</td>
+                  <td className="px-4 py-3 text-right">KES {r.sessionAmount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right" style={{ color: "#b45309" }}>
+                    {r.cancellationAmount > 0 ? `KES ${r.cancellationAmount.toLocaleString()}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-orange-600">KES {r.vatAmount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right font-bold" style={{ color: C.blue }}>
+                    KES {r.totalAmount.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button size="sm" variant="outline" className="text-xs h-7"
+                      style={{ borderColor: C.blue + "60", color: C.blue }}
+                      onClick={() => setSelectedBatchId(r.id)}>
+                      View Receipt
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {selectedBatchId !== null && receiptData && (
+        <ReceiptModal data={receiptData} onClose={() => setSelectedBatchId(null)} />
+      )}
+    </div>
+  );
+}
+
 export default function ExpertDashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const { data: dashboard, isLoading: dashLoading } = useGetExpertDashboard();
@@ -606,6 +683,7 @@ export default function ExpertDashboard() {
                 style={{ backgroundColor: C.mint + "40", color: "#0f7a6a" }}>{inboxCount}</span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="receipts" className="rounded-lg font-medium px-5">🧾 Receipts</TabsTrigger>
         </TabsList>
 
         {/* ── SESSIONS TAB ── */}
@@ -970,6 +1048,11 @@ export default function ExpertDashboard() {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        {/* ── RECEIPTS TAB ── */}
+        <TabsContent value="receipts">
+          <ExpertReceiptsTab />
         </TabsContent>
       </Tabs>
 
