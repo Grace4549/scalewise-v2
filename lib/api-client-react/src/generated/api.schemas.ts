@@ -567,6 +567,17 @@ export interface LaunchNotification {
   createdAt: string;
 }
 
+export interface AvailabilitySlot {
+  id: number;
+  expertId: number;
+  startTime: string;
+  createdAt: string;
+}
+
+export interface AvailabilitySlotInput {
+  startTime: string;
+}
+
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];

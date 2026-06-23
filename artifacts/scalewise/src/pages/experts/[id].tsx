@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "wouter";
-import { useGetExpert, useCreateVerifiedReview, useListMyBookings } from "@workspace/api-client-react";
+import {
+  useGetExpert, useCreateVerifiedReview, useListMyBookings,
+  useGetExpertAvailability,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +21,7 @@ import { AnnouncementBanner } from "@/components/announcement-banner";
 
 const bookingSchema = z.object({
   sessionType: z.enum(["discovery", "consultancy", "growth_3mo", "growth_6mo"]),
-  scheduledTime: z.string().min(1, "Please select a date/time"),
+  scheduledTime: z.string().min(1, "Please select an available time slot"),
   notes: z.string().optional(),
 });
 
@@ -85,7 +88,7 @@ function ClientReviewForm({ expertId }: { expertId: number }) {
         <p className="text-sm text-muted-foreground mt-1">
           Only clients who have completed a session with this expert can leave a review.
         </p>
-        <Link href={`/experts`}>
+        <Link href="/experts">
           <Button variant="outline" className="mt-4">Browse Experts</Button>
         </Link>
       </div>
@@ -205,6 +208,100 @@ function GatedReviewSection({ expertId, user }: { expertId: number; user: any | 
   );
 }
 
+// ── Slot picker ──────────────────────────────────────────────────────────────
+
+type Slot = { id: number; expertId: number; startTime: string; createdAt: string };
+
+function SlotPicker({
+  slots,
+  selected,
+  onSelect,
+}: {
+  slots: Slot[];
+  selected: string;
+  onSelect: (iso: string) => void;
+}) {
+  // Group slots by calendar date label
+  const grouped = useMemo(() => {
+    const map = new Map<string, Slot[]>();
+    for (const s of slots) {
+      const d = new Date(s.startTime);
+      const key = d.toLocaleDateString("en-KE", { weekday: "short", month: "short", day: "numeric" });
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(s);
+    }
+    return map;
+  }, [slots]);
+
+  const dates = Array.from(grouped.keys());
+  const [activeDate, setActiveDate] = useState<string>(() => dates[0] ?? "");
+
+  // If no slots at all
+  if (slots.length === 0) {
+    return (
+      <div className="rounded-xl border bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+        <div className="text-2xl mb-1">📅</div>
+        <p className="font-medium">No available slots yet</p>
+        <p className="mt-0.5">This expert hasn't published their availability calendar yet.</p>
+      </div>
+    );
+  }
+
+  const daySlots = grouped.get(activeDate) ?? [];
+
+  return (
+    <div className="space-y-3">
+      {/* Date tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {dates.map((d) => (
+          <button
+            key={d}
+            type="button"
+            onClick={() => { setActiveDate(d); onSelect(""); }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+            style={activeDate === d
+              ? { backgroundColor: P_BLUE, color: "white", borderColor: P_BLUE }
+              : { borderColor: "#e5e7eb", color: "#374151" }}>
+            {d}
+          </button>
+        ))}
+      </div>
+
+      {/* Time slots for selected date */}
+      <div className="flex flex-wrap gap-2">
+        {daySlots.map((s) => {
+          const iso = s.startTime;
+          const label = new Date(s.startTime).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit", hour12: true });
+          const isSelected = selected === iso;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelect(isSelected ? "" : iso)}
+              className="px-3 py-2 rounded-lg text-sm font-semibold border transition-all"
+              style={isSelected
+                ? { backgroundColor: P_BLUE, color: "white", borderColor: P_BLUE }
+                : { borderColor: "#d1d5db", color: "#111827", backgroundColor: "white" }}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected && (
+        <p className="text-xs font-medium" style={{ color: P_BLUE }}>
+          ✓ Selected: {new Date(selected).toLocaleString("en-KE", {
+            weekday: "short", month: "short", day: "numeric",
+            hour: "2-digit", minute: "2-digit", hour12: true,
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function ExpertProfile() {
   const { id } = useParams();
   const expertId = parseInt(id!);
@@ -213,6 +310,7 @@ export default function ExpertProfile() {
   const [bookingAttempted, setBookingAttempted] = useState(false);
 
   const { data: expert, isLoading } = useGetExpert(expertId);
+  const { data: availabilitySlots = [] } = useGetExpertAvailability(expertId);
 
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -220,6 +318,7 @@ export default function ExpertProfile() {
   });
 
   const sessionType = form.watch("sessionType");
+  const selectedTime = form.watch("scheduledTime");
 
   const getPrice = (type: string) => {
     if (!expert) return null;
@@ -391,7 +490,9 @@ export default function ExpertProfile() {
               /* ── Normal booking form ── */
               <>
                 <h3 className="text-xl font-bold mb-2">Book a Session</h3>
-                <p className="text-sm text-muted-foreground mb-6">Choose your session type and preferred time.</p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Choose a session type and select one of this expert's available time slots.
+                </p>
 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -422,11 +523,16 @@ export default function ExpertProfile() {
                       </span>
                     </div>
 
+                    {/* Available slot picker */}
                     <FormField control={form.control} name="scheduledTime" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Date & Time</FormLabel>
+                        <FormLabel>Available Time Slots</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" className="bg-background" {...field} />
+                          <SlotPicker
+                            slots={availabilitySlots}
+                            selected={field.value}
+                            onSelect={(iso) => field.onChange(iso)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -449,7 +555,7 @@ export default function ExpertProfile() {
 
                     {user ? (
                       <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl"
-                        disabled={selectedPrice == null}
+                        disabled={selectedPrice == null || !selectedTime}
                         style={{ background: P_BLUE, color: "white" }}>
                         Request Booking
                       </Button>

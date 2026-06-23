@@ -270,6 +270,80 @@ paths:
               schema:
                 $ref: "#/components/schemas/PlatformStats"
 
+  /experts/{id}/availability:
+    get:
+      operationId: getExpertAvailability
+      tags: [experts]
+      summary: List available time slots for an expert (public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilitySlot"
+
+  /expert/availability:
+    get:
+      operationId: listMyAvailability
+      tags: [experts]
+      summary: List expert's own availability slots (expert only)
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: All my availability slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilitySlot"
+    post:
+      operationId: addAvailabilitySlot
+      tags: [experts]
+      summary: Add an availability slot (expert only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilitySlotInput"
+      responses:
+        "201":
+          description: Created slot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilitySlot"
+
+  /expert/availability/{id}:
+    delete:
+      operationId: deleteAvailabilitySlot
+      tags: [experts]
+      summary: Delete an availability slot (expert only)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /bookings:
     get:
       operationId: listMyBookings
@@ -1572,6 +1646,29 @@ components:
         email:
           type: string
         createdAt:
+          type: string
+          format: date-time
+
+    AvailabilitySlot:
+      type: object
+      required: [id, expertId, startTime, createdAt]
+      properties:
+        id:
+          type: integer
+        expertId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AvailabilitySlotInput:
+      type: object
+      required: [startTime]
+      properties:
+        startTime:
           type: string
           format: date-time
 

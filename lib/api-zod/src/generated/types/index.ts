@@ -12,6 +12,8 @@ export * from './adminBookingRefundStatus';
 export * from './adminExpertBreakdown';
 export * from './adminStats';
 export * from './authResponse';
+export * from './availabilitySlot';
+export * from './availabilitySlotInput';
 export * from './booking';
 export * from './bookingInput';
 export * from './bookingInputSessionType';

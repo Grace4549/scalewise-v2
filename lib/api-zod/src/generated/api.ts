@@ -252,6 +252,50 @@ export const GetPlatformStatsResponse = zod.object({
 
 
 /**
+ * @summary List available time slots for an expert (public)
+ */
+export const GetExpertAvailabilityParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetExpertAvailabilityResponseItem = zod.object({
+  "id": zod.number(),
+  "expertId": zod.number(),
+  "startTime": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+export const GetExpertAvailabilityResponse = zod.array(GetExpertAvailabilityResponseItem)
+
+
+/**
+ * @summary List expert's own availability slots (expert only)
+ */
+export const ListMyAvailabilityResponseItem = zod.object({
+  "id": zod.number(),
+  "expertId": zod.number(),
+  "startTime": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+export const ListMyAvailabilityResponse = zod.array(ListMyAvailabilityResponseItem)
+
+
+/**
+ * @summary Add an availability slot (expert only)
+ */
+export const AddAvailabilitySlotBody = zod.object({
+  "startTime": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an availability slot (expert only)
+ */
+export const DeleteAvailabilitySlotParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary List bookings for current user
  */
 export const ListMyBookingsResponseItem = zod.object({

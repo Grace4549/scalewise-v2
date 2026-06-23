@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   useGetExpertDashboard, useUpdateBookingStatus,
   useExpertCancelBooking, useRequestReschedule,
   useGetInbox, useListMessages, useSendMessage,
   useListAdminMessages, useSendAdminMessage,
   useListNotifications, useMarkNotificationSeen,
+  useListMyAvailability, useAddAvailabilitySlot, useDeleteAvailabilitySlot,
   getListMessagesQueryKey, getGetInboxQueryKey,
   getListAdminMessagesQueryKey, getGetExpertDashboardQueryKey,
-  getListNotificationsQueryKey,
+  getListNotificationsQueryKey, getListMyAvailabilityQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -20,6 +21,210 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 const C = { blue: "#6395EE", mblue: "#90B8D6", green: "#88CFA8", mint: "#85DECB" };
+
+// ── Availability Calendar ─────────────────────────────────────────────────────
+
+const HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function getMondayOfWeek(d: Date): Date {
+  const day = new Date(d);
+  const dow = day.getDay(); // 0=Sun … 6=Sat
+  const diff = dow === 0 ? -6 : 1 - dow;
+  day.setDate(day.getDate() + diff);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+function AvailabilityCalendar() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { data: slots = [], isLoading } = useListMyAvailability();
+  const addSlot = useAddAvailabilitySlot();
+  const deleteSlot = useDeleteAvailabilitySlot();
+
+  const [weekStart, setWeekStart] = useState<Date>(() => getMondayOfWeek(new Date()));
+  const [pending, setPending] = useState<string | null>(null);
+
+  const now = new Date();
+
+  // Build a set of existing slot ISO strings for fast lookup
+  const slotSet = useMemo(() => {
+    const s = new Map<string, number>();
+    for (const slot of slots) {
+      const key = new Date(slot.startTime).toISOString();
+      s.set(key, slot.id);
+    }
+    return s;
+  }, [slots]);
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  }, [weekStart]);
+
+  const prevWeek = () => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() - 7);
+    setWeekStart(d);
+  };
+
+  const nextWeek = () => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 7);
+    setWeekStart(d);
+  };
+
+  const handleToggle = useCallback(async (day: Date, hour: number) => {
+    const cellDate = new Date(day);
+    cellDate.setHours(hour, 0, 0, 0);
+    if (cellDate <= now) return; // past — ignore
+    const iso = cellDate.toISOString();
+    if (pending) return; // debounce
+
+    const existingId = slotSet.get(iso);
+    setPending(iso);
+
+    if (existingId !== undefined) {
+      deleteSlot.mutate({ id: existingId }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListMyAvailabilityQueryKey() });
+          setPending(null);
+        },
+        onError: (err: any) => {
+          toast({ title: "Failed to remove slot", description: err.message, variant: "destructive" });
+          setPending(null);
+        },
+      });
+    } else {
+      addSlot.mutate({ data: { startTime: iso } }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListMyAvailabilityQueryKey() });
+          setPending(null);
+        },
+        onError: (err: any) => {
+          toast({ title: "Failed to add slot", description: err.message, variant: "destructive" });
+          setPending(null);
+        },
+      });
+    }
+  }, [slotSet, pending, addSlot, deleteSlot, queryClient, toast, now]);
+
+  const weekLabel = `Week of ${weekStart.toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}`;
+
+  return (
+    <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-6 border-b bg-muted/30">
+        <h2 className="text-xl font-semibold mb-0.5">Availability Calendar</h2>
+        <p className="text-sm text-muted-foreground">
+          Click a cell to mark yourself available for that 1-hour slot. Click again to remove it.
+          Clients will see these slots on your profile when booking.
+        </p>
+      </div>
+
+      {/* Week navigation */}
+      <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/10">
+        <Button variant="ghost" size="sm" onClick={prevWeek} className="h-8 px-3">‹ Prev</Button>
+        <span className="text-sm font-semibold">{weekLabel}</span>
+        <Button variant="ghost" size="sm" onClick={nextWeek} className="h-8 px-3">Next ›</Button>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 px-6 py-2 border-b text-xs text-muted-foreground bg-muted/5">
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm inline-block" style={{ backgroundColor: C.green + "60", border: `1px solid ${C.green}` }} />
+          Available
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm inline-block bg-muted border" />
+          Not set
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm inline-block bg-muted/40 border border-dashed" />
+          Past (locked)
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="p-12 text-center text-muted-foreground">Loading your calendar…</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse" style={{ minWidth: 560 }}>
+            <thead>
+              <tr>
+                <th className="w-16 px-2 py-2 text-muted-foreground font-medium text-right border-b border-r bg-muted/10">Time</th>
+                {weekDays.map((day, i) => {
+                  const isToday = day.toDateString() === new Date().toDateString();
+                  return (
+                    <th key={i} className="py-2 px-1 border-b font-medium text-center"
+                      style={isToday ? { color: C.blue, backgroundColor: C.blue + "08" } : {}}>
+                      <div>{DAY_LABELS[i]}</div>
+                      <div className={`text-[11px] font-normal ${isToday ? "" : "text-muted-foreground"}`}>
+                        {day.toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {HOURS.map((hour) => (
+                <tr key={hour} className="border-b last:border-0">
+                  <td className="text-right pr-3 py-0.5 text-muted-foreground border-r bg-muted/5 font-mono text-[10px]">
+                    {String(hour).padStart(2, "0")}:00
+                  </td>
+                  {weekDays.map((day, di) => {
+                    const cellDate = new Date(day);
+                    cellDate.setHours(hour, 0, 0, 0);
+                    const iso = cellDate.toISOString();
+                    const isPast = cellDate <= now;
+                    const isAvailable = slotSet.has(iso);
+                    const isPending = pending === iso;
+
+                    return (
+                      <td key={di} className="p-0.5">
+                        <button
+                          type="button"
+                          disabled={isPast || !!pending}
+                          onClick={() => handleToggle(day, hour)}
+                          title={isPast ? "Past slot" : isAvailable ? "Click to remove slot" : "Click to add slot"}
+                          className="w-full h-7 rounded transition-all text-[10px] font-semibold"
+                          style={
+                            isPast
+                              ? { backgroundColor: "#f3f4f6", color: "#d1d5db", cursor: "not-allowed", border: "1px dashed #e5e7eb" }
+                              : isPending
+                              ? { backgroundColor: "#e5e7eb", cursor: "wait", border: "1px solid #d1d5db" }
+                              : isAvailable
+                              ? { backgroundColor: C.green + "50", color: "#1a5730", border: `1px solid ${C.green}`, cursor: "pointer" }
+                              : { backgroundColor: "white", color: "#9ca3af", border: "1px solid #e5e7eb", cursor: "pointer" }
+                          }
+                        >
+                          {isAvailable && !isPast ? "✓" : ""}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Summary */}
+      <div className="px-6 py-4 border-t bg-muted/10">
+        <p className="text-xs text-muted-foreground">
+          <strong>{slots.length}</strong> upcoming slot{slots.length !== 1 ? "s" : ""} published on your profile.
+          {" "}Slots are shown to clients for the next 60 days.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 type SelectedThread =
   | { type: "booking"; bookingId: number }
@@ -265,6 +470,7 @@ export default function ExpertDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 h-auto bg-muted/40 p-1.5 rounded-xl inline-flex gap-1 border">
           <TabsTrigger value="sessions" className="rounded-lg font-medium px-5">Sessions & Earnings</TabsTrigger>
+          <TabsTrigger value="availability" className="rounded-lg font-medium px-5">📅 Availability</TabsTrigger>
           <TabsTrigger value="notifications" className="rounded-lg font-medium px-5">
             🔔 Notifications
             {unseenCount > 0 && (
@@ -412,6 +618,11 @@ export default function ExpertDashboard() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        {/* ── AVAILABILITY TAB ── */}
+        <TabsContent value="availability">
+          <AvailabilityCalendar />
         </TabsContent>
 
         {/* ── NOTIFICATIONS TAB ── */}

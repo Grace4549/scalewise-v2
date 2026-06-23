@@ -8,6 +8,7 @@ import messagesRouter from "./messages";
 import adminRouter from "./admin";
 import launchRouter from "./launch";
 import notificationsRouter from "./notifications";
+import availabilityRouter from "./availability";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(messagesRouter);
 router.use(adminRouter);
 router.use(launchRouter);
 router.use(notificationsRouter);
+router.use(availabilityRouter);
 
 export default router;

@@ -24,6 +24,8 @@ import type {
   AdminExpertBreakdown,
   AdminStats,
   AuthResponse,
+  AvailabilitySlot,
+  AvailabilitySlotInput,
   Booking,
   BookingInput,
   BookingReschedule,
@@ -1056,6 +1058,301 @@ export function useGetPlatformStats<TData = Awaited<ReturnType<typeof getPlatfor
 
 
 
+
+export const getGetExpertAvailabilityUrl = (id: number,) => {
+
+
+
+
+  return `/api/experts/${id}/availability`
+}
+
+/**
+ * @summary List available time slots for an expert (public)
+ */
+export const getExpertAvailability = async (id: number, options?: RequestInit): Promise<AvailabilitySlot[]> => {
+
+  return customFetch<AvailabilitySlot[]>(getGetExpertAvailabilityUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExpertAvailabilityQueryKey = (id: number,) => {
+    return [
+    `/api/experts/${id}/availability`
+    ] as const;
+    }
+
+
+export const getGetExpertAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getExpertAvailability>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExpertAvailabilityQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpertAvailability>>> = ({ signal }) => getExpertAvailability(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExpertAvailability>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExpertAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getExpertAvailability>>>
+export type GetExpertAvailabilityQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List available time slots for an expert (public)
+ */
+
+export function useGetExpertAvailability<TData = Awaited<ReturnType<typeof getExpertAvailability>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExpertAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExpertAvailabilityQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListMyAvailabilityUrl = () => {
+
+
+
+
+  return `/api/expert/availability`
+}
+
+/**
+ * @summary List expert's own availability slots (expert only)
+ */
+export const listMyAvailability = async ( options?: RequestInit): Promise<AvailabilitySlot[]> => {
+
+  return customFetch<AvailabilitySlot[]>(getListMyAvailabilityUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyAvailabilityQueryKey = () => {
+    return [
+    `/api/expert/availability`
+    ] as const;
+    }
+
+
+export const getListMyAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof listMyAvailability>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyAvailabilityQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyAvailability>>> = ({ signal }) => listMyAvailability({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyAvailability>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMyAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof listMyAvailability>>>
+export type ListMyAvailabilityQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List expert's own availability slots (expert only)
+ */
+
+export function useListMyAvailability<TData = Awaited<ReturnType<typeof listMyAvailability>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMyAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMyAvailabilityQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAddAvailabilitySlotUrl = () => {
+
+
+
+
+  return `/api/expert/availability`
+}
+
+/**
+ * @summary Add an availability slot (expert only)
+ */
+export const addAvailabilitySlot = async (availabilitySlotInput: AvailabilitySlotInput, options?: RequestInit): Promise<AvailabilitySlot> => {
+
+  return customFetch<AvailabilitySlot>(getAddAvailabilitySlotUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      availabilitySlotInput,)
+  }
+);}
+
+
+
+
+export const getAddAvailabilitySlotMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAvailabilitySlot>>, TError,{data: BodyType<AvailabilitySlotInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addAvailabilitySlot>>, TError,{data: BodyType<AvailabilitySlotInput>}, TContext> => {
+
+const mutationKey = ['addAvailabilitySlot'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addAvailabilitySlot>>, {data: BodyType<AvailabilitySlotInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  addAvailabilitySlot(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddAvailabilitySlotMutationResult = NonNullable<Awaited<ReturnType<typeof addAvailabilitySlot>>>
+    export type AddAvailabilitySlotMutationBody = BodyType<AvailabilitySlotInput>
+    export type AddAvailabilitySlotMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add an availability slot (expert only)
+ */
+export const useAddAvailabilitySlot = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAvailabilitySlot>>, TError,{data: BodyType<AvailabilitySlotInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addAvailabilitySlot>>,
+        TError,
+        {data: BodyType<AvailabilitySlotInput>},
+        TContext
+      > => {
+      return useMutation(getAddAvailabilitySlotMutationOptions(options));
+    }
+
+export const getDeleteAvailabilitySlotUrl = (id: number,) => {
+
+
+
+
+  return `/api/expert/availability/${id}`
+}
+
+/**
+ * @summary Delete an availability slot (expert only)
+ */
+export const deleteAvailabilitySlot = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteAvailabilitySlotUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteAvailabilitySlotMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilitySlot>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilitySlot>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteAvailabilitySlot'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAvailabilitySlot>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAvailabilitySlot(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAvailabilitySlotMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAvailabilitySlot>>>
+
+    export type DeleteAvailabilitySlotMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an availability slot (expert only)
+ */
+export const useDeleteAvailabilitySlot = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilitySlot>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAvailabilitySlot>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteAvailabilitySlotMutationOptions(options));
+    }
 
 export const getListMyBookingsUrl = () => {
 
