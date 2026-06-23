@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import {
   useListMyBookings, useGetInbox, useListMessages, useSendMessage,
+  useUpdateBookingStatus, useRescheduleBooking,
+  useListNotifications, useMarkNotificationSeen,
   getListMessagesQueryKey, getGetInboxQueryKey,
+  getListMyBookingsQueryKey, getListNotificationsQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -79,16 +82,45 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
   );
 }
 
+const NOTIF_ICON: Record<string, string> = {
+  "48hr_reminder": "🔔",
+  "24hr_reminder": "🔔",
+  "1hr_reminder":  "🔔",
+  "expert_cancelled":         "❌",
+  "expert_reschedule_requested": "🔄",
+  "client_cancelled":   "📋",
+  "client_rescheduled": "📋",
+};
+
 export default function ClientDashboard() {
   const { user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const { data: rawBookings, isLoading: bookingsLoading } = useListMyBookings();
   const bookings = rawBookings?.filter((b) => b.status !== "pending_payment");
   const { data: threads, isLoading: threadsLoading } = useGetInbox();
+  const { data: notifications } = useListNotifications();
+
+  const cancelBooking = useUpdateBookingStatus();
+  const rescheduleBooking = useRescheduleBooking();
+  const markSeen = useMarkNotificationSeen();
+
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("bookings");
 
+  // Cancel dialog state
+  const [cancelBookingId, setCancelBookingId] = useState<number | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+
+  // Reschedule dialog state
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<number | null>(null);
+  const [newTime, setNewTime] = useState("");
+
   if (authLoading) return <div className="p-8"><Skeleton className="h-[400px]" /></div>;
   if (!user || user.role !== "client") return <Redirect to="/login" />;
+
+  const unseenCount = notifications?.filter((n) => !n.seen).length ?? 0;
 
   const getStatusStyle = (status: string) => {
     if (status === "upcoming")  return { backgroundColor: C.blue + "22", color: C.blue };
@@ -98,6 +130,63 @@ export default function ClientDashboard() {
   };
 
   const getStatusLabel = (status: string) => status.replace(/_/g, " ");
+
+  const handleMarkSeen = (id: number) => {
+    markSeen.mutate({ id }, {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() }),
+    });
+  };
+
+  const handleMarkAllSeen = () => {
+    notifications?.filter((n) => !n.seen).forEach((n) => handleMarkSeen(n.id));
+  };
+
+  const openCancelDialog = (bookingId: number, notifId?: number) => {
+    setCancelBookingId(bookingId);
+    setCancelReason("");
+    if (notifId) handleMarkSeen(notifId);
+  };
+
+  const openRescheduleDialog = (bookingId: number, notifId?: number) => {
+    setRescheduleBookingId(bookingId);
+    setNewTime("");
+    if (notifId) handleMarkSeen(notifId);
+  };
+
+  const handleConfirmCancel = () => {
+    if (cancelBookingId === null) return;
+    cancelBooking.mutate({ id: cancelBookingId, data: { status: "cancelled", reason: cancelReason || undefined } }, {
+      onSuccess: () => {
+        setCancelBookingId(null);
+        setCancelReason("");
+        queryClient.invalidateQueries({ queryKey: getListMyBookingsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
+        toast({ title: "Session cancelled. Refund will be processed per our policy." });
+      },
+      onError: (err: any) => toast({ title: "Failed to cancel", description: err.message, variant: "destructive" }),
+    });
+  };
+
+  const handleConfirmReschedule = () => {
+    if (rescheduleBookingId === null || !newTime) return;
+    rescheduleBooking.mutate({ id: rescheduleBookingId, data: { newTime, rescheduledBy: "client" } }, {
+      onSuccess: () => {
+        setRescheduleBookingId(null);
+        setNewTime("");
+        queryClient.invalidateQueries({ queryKey: getListMyBookingsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
+        toast({ title: "Session rescheduled successfully." });
+      },
+      onError: (err: any) => toast({ title: "Could not reschedule", description: err.message, variant: "destructive" }),
+    });
+  };
+
+  // Compute refund % for cancel dialog
+  const cancelBookingObj = bookings?.find((b) => b.id === cancelBookingId);
+  const hoursUntil = cancelBookingObj
+    ? (new Date(cancelBookingObj.scheduledTime).getTime() - Date.now()) / 3600000
+    : 999;
+  const estimatedRefundPct = hoursUntil > 24 ? 100 : 75;
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
@@ -126,6 +215,13 @@ export default function ClientDashboard() {
             {(bookings?.length ?? 0) > 0 && (
               <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
                 style={{ backgroundColor: C.blue + "22", color: C.blue }}>{bookings!.length}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="rounded-lg font-medium px-5">
+            🔔 Notifications
+            {unseenCount > 0 && (
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                style={{ backgroundColor: "#fef3c7", color: "#b45309" }}>{unseenCount}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="inbox" className="rounded-lg font-medium px-5">
@@ -176,6 +272,19 @@ export default function ClientDashboard() {
                       <Link href={`/experts/${booking.expertId}`}>
                         <Button variant="secondary" size="sm">View Profile</Button>
                       </Link>
+                      {(booking.status === "upcoming" || booking.status === "pending_payment") && (
+                        <>
+                          <Button variant="outline" size="sm"
+                            onClick={() => openCancelDialog(booking.id)}
+                            className="border-red-200 text-red-600 hover:bg-red-50">
+                            Cancel
+                          </Button>
+                          <Button variant="outline" size="sm"
+                            onClick={() => openRescheduleDialog(booking.id)}>
+                            Reschedule
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -186,6 +295,101 @@ export default function ClientDashboard() {
                 <h3 className="text-xl font-semibold mb-2">No bookings yet</h3>
                 <p className="text-muted-foreground mb-6">You haven't booked any expert sessions yet.</p>
                 <Link href="/experts"><Button>Browse Experts</Button></Link>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ── NOTIFICATIONS TAB ── */}
+        <TabsContent value="notifications">
+          <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+            <div className="p-6 border-b bg-muted/30 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Notifications</h2>
+                {unseenCount > 0 && (
+                  <p className="text-sm text-muted-foreground mt-0.5">{unseenCount} unread</p>
+                )}
+              </div>
+              {unseenCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={handleMarkAllSeen} className="text-xs">
+                  Mark all as read
+                </Button>
+              )}
+            </div>
+            {!notifications?.length ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <div className="text-4xl mb-3">🔔</div>
+                <p className="font-medium">No notifications yet.</p>
+                <p className="text-sm mt-1">Session reminders and booking updates will appear here.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notifications.map((notif) => {
+                  const p = notif.payload as any;
+                  const isReminder = ["48hr_reminder", "24hr_reminder", "1hr_reminder"].includes(notif.notificationType);
+                  const isExpertCancelled = notif.notificationType === "expert_cancelled";
+                  const isRescheduleReq = notif.notificationType === "expert_reschedule_requested";
+                  return (
+                    <div key={notif.id} className={`p-5 transition-colors ${!notif.seen ? "bg-blue-50/40" : "hover:bg-muted/10"}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-base">{NOTIF_ICON[notif.notificationType] ?? "📋"}</span>
+                            <span className={`font-semibold text-sm ${!notif.seen ? "" : "text-muted-foreground"}`}>
+                              {p.title}
+                            </span>
+                            {!notif.seen && (
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: C.blue }} />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground ml-6 leading-relaxed">{p.body}</p>
+                          {p.sessionStart && (
+                            <p className="text-xs text-muted-foreground ml-6 mt-0.5">
+                              📅 {new Date(p.sessionStart).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}
+                            </p>
+                          )}
+                          {isExpertCancelled && p.refundAmount > 0 && (
+                            <div className="ml-6 mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                              style={{ backgroundColor: C.green + "30", color: "#1a5730" }}>
+                              ✓ Full refund of KES {p.refundAmount?.toLocaleString()} will be processed
+                            </div>
+                          )}
+                          {/* Action buttons */}
+                          {(isReminder || isRescheduleReq) && (() => {
+                            const activeBooking = bookings?.find((b) => b.id === notif.bookingId && (b.status === "upcoming" || b.status === "pending_payment"));
+                            if (!activeBooking) return null;
+                            return (
+                              <div className="ml-6 mt-3 flex gap-2 flex-wrap">
+                                {isReminder && (
+                                  <Button size="sm" variant="outline"
+                                    className="border-red-200 text-red-600 hover:bg-red-50 text-xs h-8"
+                                    onClick={() => openCancelDialog(notif.bookingId, notif.id)}>
+                                    Cancel Session
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="outline"
+                                  className="text-xs h-8"
+                                  style={{ borderColor: C.blue + "60", color: C.blue }}
+                                  onClick={() => openRescheduleDialog(notif.bookingId, notif.id)}>
+                                  {isRescheduleReq ? "Choose New Time" : "Reschedule"}
+                                </Button>
+                              </div>
+                            );
+                          })()}
+                          <p className="text-[10px] text-muted-foreground ml-6 mt-2">
+                            {new Date(notif.createdAt).toLocaleString("en-KE")}
+                          </p>
+                        </div>
+                        {!notif.seen && (
+                          <Button size="sm" variant="ghost" className="text-xs shrink-0 h-7"
+                            onClick={() => handleMarkSeen(notif.id)}>
+                            Mark read
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -252,6 +456,102 @@ export default function ClientDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* ── CANCEL DIALOG ── */}
+      {cancelBookingId !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl border shadow-2xl max-w-md w-full p-6">
+            <h3 className="font-bold text-lg mb-1">Cancel Your Session?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {cancelBookingObj
+                ? `${cancelBookingObj.sessionType.replace(/_/g, " ")} with ${cancelBookingObj.expertName}`
+                : ""}
+            </p>
+
+            {/* Refund policy summary */}
+            <div className="rounded-xl border p-4 mb-4 text-sm space-y-2"
+              style={{ backgroundColor: "#fffbeb", borderColor: "#fde68a" }}>
+              <p className="font-semibold" style={{ color: "#92400e" }}>Cancellation & Refund Policy</p>
+              <p style={{ color: "#78350f" }}>• Cancel <strong>&gt; 24 hours</strong> before: <span className="font-semibold text-green-700">Full refund</span></p>
+              <p style={{ color: "#78350f" }}>• Cancel <strong>&lt; 24 hours</strong> before: <span className="font-semibold text-amber-700">75% refund</span> — OR reschedule (not both)</p>
+              <p style={{ color: "#78350f" }}>• No-show (missed session): <span className="font-semibold text-red-600">No refund</span></p>
+              <Link href="/terms" className="text-xs hover:underline" style={{ color: C.blue }}>
+                View full Cancellation & Refund Policy →
+              </Link>
+            </div>
+
+            {cancelBookingObj && (
+              <div className="text-sm text-muted-foreground mb-4 px-1">
+                Based on your session time, you would receive an estimated{" "}
+                <strong className={estimatedRefundPct === 100 ? "text-green-700" : "text-amber-700"}>
+                  {estimatedRefundPct}% refund
+                </strong>{" "}
+                if you cancel now.
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="text-sm font-medium mb-1 block">Reason for cancelling (optional)</label>
+              <Input value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g. Schedule conflict, emergency, etc." />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="destructive" disabled={cancelBooking.isPending}
+                onClick={handleConfirmCancel}>
+                {cancelBooking.isPending ? "Cancelling…" : "Confirm Cancellation"}
+              </Button>
+              <Button variant="outline"
+                onClick={() => { setCancelBookingId(null); openRescheduleDialog(cancelBookingId); }}>
+                Reschedule Instead
+              </Button>
+              <Button variant="ghost" onClick={() => setCancelBookingId(null)}>
+                Keep My Session
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── RESCHEDULE DIALOG ── */}
+      {rescheduleBookingId !== null && (() => {
+        const rb = bookings?.find((b) => b.id === rescheduleBookingId);
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-2xl border shadow-2xl max-w-md w-full p-6">
+              <h3 className="font-bold text-lg mb-1">Reschedule Your Session</h3>
+              {rb && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  {rb.sessionType.replace(/_/g, " ")} with {rb.expertName} — currently{" "}
+                  {new Date(rb.scheduledTime).toLocaleString()}
+                </p>
+              )}
+              <div className="mb-4">
+                <label className="text-sm font-medium mb-1 block">New date & time</label>
+                <input type="datetime-local" value={newTime} onChange={(e) => setNewTime(e.target.value)}
+                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                  style={{ focusRingColor: C.blue } as any}
+                  min={new Date().toISOString().slice(0, 16)} />
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Note: the expert must be available at the new time. If there's a conflict you'll see an error.
+                Reschedules and cancellations are mutually exclusive — choosing to reschedule forfeits a refund.
+              </p>
+              <div className="flex gap-2">
+                <Button disabled={!newTime || rescheduleBooking.isPending}
+                  style={{ backgroundColor: C.blue, color: "white" }}
+                  className="hover:opacity-90"
+                  onClick={handleConfirmReschedule}>
+                  {rescheduleBooking.isPending ? "Rescheduling…" : "Confirm Reschedule"}
+                </Button>
+                <Button variant="ghost" onClick={() => setRescheduleBookingId(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

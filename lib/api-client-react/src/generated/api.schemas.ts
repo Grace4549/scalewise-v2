@@ -538,6 +538,25 @@ export interface AdminStats {
   recentBookings: AdminBooking[];
 }
 
+export type NotificationPayload = { [key: string]: unknown };
+
+export interface Notification {
+  id: number;
+  bookingId: number;
+  notificationType: string;
+  payload: NotificationPayload;
+  seen: boolean;
+  createdAt: string;
+}
+
+export interface ExpertCancelInput {
+  reason?: string;
+}
+
+export interface RescheduleRequestInput {
+  reason?: string;
+}
+
 export interface LaunchSubscribeInput {
   email: string;
 }
@@ -574,6 +593,10 @@ export type GetSearchSuggestionsParams = {
  * @maxLength 100
  */
 q: string;
+};
+
+export type RequestReschedule200 = {
+  ok: boolean;
 };
 
 export type ListReviewsParams = {

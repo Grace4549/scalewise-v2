@@ -377,6 +377,94 @@ paths:
               schema:
                 $ref: "#/components/schemas/Booking"
 
+  /bookings/{id}/expert-cancel:
+    post:
+      operationId: expertCancelBooking
+      tags: [bookings]
+      summary: Expert cancels a booking (always triggers full refund to client)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpertCancelInput"
+      responses:
+        "200":
+          description: Cancelled booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/request-reschedule:
+    post:
+      operationId: requestReschedule
+      tags: [bookings]
+      summary: Expert requests client to reschedule (no cancellation, no refund)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RescheduleRequestInput"
+      responses:
+        "200":
+          description: Reschedule request sent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for the authenticated user (newest first)
+      responses:
+        "200":
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/seen:
+    patch:
+      operationId: markNotificationSeen
+      tags: [notifications]
+      summary: Mark a notification as seen
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
   /reviews:
     get:
       operationId: listReviews
@@ -1435,6 +1523,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminBooking"
+
+    Notification:
+      type: object
+      required: [id, bookingId, notificationType, payload, seen, createdAt]
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        notificationType:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        seen:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ExpertCancelInput:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    RescheduleRequestInput:
+      type: object
+      properties:
+        reason:
+          type: string
 
     LaunchSubscribeInput:
       type: object

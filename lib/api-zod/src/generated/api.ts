@@ -415,6 +415,93 @@ export const UpdateBookingStatusResponse = zod.object({
 
 
 /**
+ * @summary Expert cancels a booking (always triggers full refund to client)
+ */
+export const ExpertCancelBookingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ExpertCancelBookingBody = zod.object({
+  "reason": zod.string().optional()
+})
+
+export const ExpertCancelBookingResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "expertIndustry": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary Expert requests client to reschedule (no cancellation, no refund)
+ */
+export const RequestRescheduleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RequestRescheduleBody = zod.object({
+  "reason": zod.string().optional()
+})
+
+export const RequestRescheduleResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary List notifications for the authenticated user (newest first)
+ */
+export const ListNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "bookingId": zod.number(),
+  "notificationType": zod.string(),
+  "payload": zod.record(zod.string(), zod.unknown()),
+  "seen": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem)
+
+
+/**
+ * @summary Mark a notification as seen
+ */
+export const MarkNotificationSeenParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkNotificationSeenResponse = zod.object({
+  "id": zod.number(),
+  "bookingId": zod.number(),
+  "notificationType": zod.string(),
+  "payload": zod.record(zod.string(), zod.unknown()),
+  "seen": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List all public reviews
  */
 export const ListReviewsQueryParams = zod.object({

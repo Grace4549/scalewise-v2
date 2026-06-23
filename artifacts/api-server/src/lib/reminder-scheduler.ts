@@ -4,19 +4,26 @@
  * Checks every minute for upcoming confirmed bookings that have reminder
  * triggers due (48 hr, 24 hr, 1 hr before session start).
  *
- * Each triggered reminder is written to the `reminder_log` table with
- * `sent = false`.  Once email (or SMS) integration is connected, find every
- * place marked  ── EMAIL SEND HOOK ──  below and replace the log line with
- * your actual dispatch call (e.g. sendgrid.send(...), resend.emails.send(...)).
+ * Each triggered reminder is written to:
+ *   1. reminder_log — tracks the email to be dispatched (sent=false until sent)
+ *   2. notification_log — creates a visible in-app notification for both the
+ *      client and the expert, including action hints (Cancel / Reschedule)
  *
- * The UNIQUE constraint on (booking_id, reminder_type) guarantees idempotency:
- * even if the scheduler fires twice in the same window, only one row is ever
- * written per reminder.
+ * Once email integration is connected, find every place marked
+ * ── EMAIL SEND HOOK ── below and replace the log line with your actual
+ * dispatch call (e.g. resend.emails.send(...)).
+ *
+ * The UNIQUE constraint on reminder_log(booking_id, reminder_type) guarantees
+ * idempotency: even if the scheduler fires twice in the same window, only one
+ * row is ever written per reminder — and therefore only one notification_log
+ * row is created per client/expert per reminder type.
  */
 
 import { db, bookingsTable, usersTable, expertsTable, reminderLogTable } from "@workspace/db";
-import { eq, and, gte, lt, lte } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import { logger } from "./logger";
+import { createNotification } from "./notify";
+import type { NotificationType } from "@workspace/db";
 
 // How far in advance each reminder fires (in milliseconds).
 const REMINDER_OFFSETS_MS: Record<"48hr" | "24hr" | "1hr", number> = {
@@ -30,15 +37,16 @@ const REMINDER_OFFSETS_MS: Record<"48hr" | "24hr" | "1hr", number> = {
 const LOOK_BACK_MS = 2 * 60 * 1000; // 2 minutes
 
 // Tolerance window: how far into the future we still consider a reminder due.
-// Keeps the window tight so we don't fire too early.
 const LOOK_AHEAD_MS = 60 * 1000; // 1 minute
 
 interface ReminderPayload {
   bookingId: number;
   reminderType: "48hr" | "24hr" | "1hr";
   scheduledFor: Date;
+  clientId: number;
   clientName: string;
   clientEmail: string;
+  expertUserId: number;
   expertName: string;
   expertEmail: string;
   sessionType: string;
@@ -64,7 +72,8 @@ function fmtDate(d: Date): string {
 }
 
 /**
- * Sends the reminder — currently only logs to stdout.
+ * Sends the reminder — creates in-app notifications for both parties and
+ * logs the emails that would be sent once email integration is connected.
  *
  * ── EMAIL SEND HOOK ──────────────────────────────────────────────────────────
  * Replace the logger.info calls below with your email dispatch.  Example with
@@ -78,7 +87,7 @@ function fmtDate(d: Date): string {
  *     from: "ScaleWise <noreply@scalewise.co.ke>",
  *     to: payload.clientEmail,
  *     subject: `Reminder: Your ${payload.sessionType} session is in ${label}`,
- *     html: buildClientReminderHtml(payload),   // ← build your template
+ *     html: buildClientReminderHtml(payload),
  *   });
  *
  *   // Expert reminder
@@ -86,7 +95,7 @@ function fmtDate(d: Date): string {
  *     from: "ScaleWise <noreply@scalewise.co.ke>",
  *     to: payload.expertEmail,
  *     subject: `Upcoming session with ${payload.clientName} in ${label}`,
- *     html: buildExpertReminderHtml(payload),   // ← build your template
+ *     html: buildExpertReminderHtml(payload),
  *   });
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -94,6 +103,64 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
   const label = payload.reminderType === "48hr" ? "48 hours"
               : payload.reminderType === "24hr" ? "24 hours"
               : "1 hour";
+
+  const notificationType: NotificationType =
+    payload.reminderType === "48hr" ? "48hr_reminder" :
+    payload.reminderType === "24hr" ? "24hr_reminder" : "1hr_reminder";
+
+  const sessionLabel = payload.sessionType.replace(/_/g, " ");
+  const sessionStartIso = payload.sessionStart.toISOString();
+
+  // ── In-app notification: CLIENT ───────────────────────────────────────────
+  // This creates a visible notification in the Client Dashboard.
+  // The payload includes action hints so the frontend can show
+  // "Cancel" and "Reschedule" buttons on the notification card.
+  await createNotification({
+    bookingId: payload.bookingId,
+    recipientUserId: payload.clientId,
+    notificationType,
+    recipientEmail: payload.clientEmail,
+    recipientName: payload.clientName,
+    payload: {
+      title: `Session Reminder: ${label} to go`,
+      body: `Your ${sessionLabel} session with ${payload.expertName} starts in ${label}.${
+        payload.meetLink ? ` Join: ${payload.meetLink}` : ""
+      }`,
+      sessionStart: sessionStartIso,
+      sessionType: payload.sessionType,
+      meetLink: payload.meetLink,
+      otherPartyName: payload.expertName,
+      // Actions shown on the notification card in the Client Dashboard.
+      // "Cancel" shows the refund policy summary first.
+      // "Reschedule" opens the reschedule picker.
+      actions: ["cancel", "reschedule"],
+    },
+  });
+
+  // ── In-app notification: EXPERT ───────────────────────────────────────────
+  // Visible notification in the Expert Dashboard.
+  // Actions include "Cancel session" (→ full refund to client) and
+  // "Request to Reschedule" (→ notifies client, booking stays intact).
+  await createNotification({
+    bookingId: payload.bookingId,
+    recipientUserId: payload.expertUserId,
+    notificationType,
+    recipientEmail: payload.expertEmail,
+    recipientName: payload.expertName,
+    payload: {
+      title: `Session Reminder: ${label} to go`,
+      body: `You have a ${sessionLabel} session with ${payload.clientName} in ${label}.${
+        payload.meetLink ? ` Join: ${payload.meetLink}` : ""
+      }`,
+      sessionStart: sessionStartIso,
+      sessionType: payload.sessionType,
+      meetLink: payload.meetLink,
+      otherPartyName: payload.clientName,
+      // "cancel" → full refund to client per policy.
+      // "request_reschedule" → sends notification to client to pick new time.
+      actions: ["cancel", "request_reschedule"],
+    },
+  });
 
   // ── EMAIL SEND HOOK (client) ──────────────────────────────────────────────
   // TODO: replace this log with an actual email call to payload.clientEmail
@@ -109,6 +176,7 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
         sessionStart: fmtDate(payload.sessionStart),
         durationMinutes: payload.durationMinutes,
         meetLink: payload.meetLink ?? "(not assigned yet)",
+        actions: "Cancel | Reschedule",
       },
     },
     `[REMINDER] ${label} notice → client ${payload.clientEmail} — booking #${payload.bookingId}`
@@ -129,6 +197,7 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
         sessionStart: fmtDate(payload.sessionStart),
         durationMinutes: payload.durationMinutes,
         meetLink: payload.meetLink ?? "(not assigned yet)",
+        actions: "Cancel Session | Request to Reschedule",
       },
     },
     `[REMINDER] ${label} notice → expert ${payload.expertEmail} — booking #${payload.bookingId}`
@@ -137,16 +206,10 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
 
 /**
  * Core tick — runs once per scheduler interval.
- * Finds every upcoming booking that has an unsent reminder whose trigger time
- * falls within the current look-back / look-ahead window, inserts a log row,
- * and calls dispatchReminder.
  */
 async function runReminderTick(): Promise<void> {
   const now = new Date();
 
-  // Fetch all confirmed (upcoming) bookings that are still in the future.
-  // We only care about bookings whose session start is within the next 48 h + 1 min
-  // so the query stays lightweight as the database grows.
   const lookaheadCutoff = new Date(now.getTime() + REMINDER_OFFSETS_MS["48hr"] + 60_000);
 
   const bookings = await db
@@ -158,12 +221,11 @@ async function runReminderTick(): Promise<void> {
       meetLink: bookingsTable.meetLink,
       clientId: bookingsTable.clientId,
       expertId: bookingsTable.expertId,
-      // client identity
       clientName: usersTable.name,
       clientEmail: usersTable.email,
-      // expert identity
       expertName: expertsTable.name,
       expertEmail: expertsTable.email,
+      expertUserId: expertsTable.userId,
     })
     .from(bookingsTable)
     .innerJoin(usersTable, eq(bookingsTable.clientId, usersTable.id))
@@ -177,6 +239,8 @@ async function runReminderTick(): Promise<void> {
     );
 
   for (const booking of bookings) {
+    if (!booking.expertUserId) continue; // skip if expert has no linked user account
+
     const sessionStart = new Date(booking.scheduledTime);
 
     for (const [type, offsetMs] of Object.entries(REMINDER_OFFSETS_MS) as [
@@ -187,12 +251,11 @@ async function runReminderTick(): Promise<void> {
       const windowStart = new Date(triggerTime.getTime() - LOOK_BACK_MS);
       const windowEnd   = new Date(triggerTime.getTime() + LOOK_AHEAD_MS);
 
-      // Is `now` within the send window for this reminder type?
       if (now < windowStart || now > windowEnd) continue;
 
-      // Attempt an idempotent insert.  The UNIQUE(booking_id, reminder_type)
-      // constraint means a second insert for the same booking/type will fail —
-      // we catch that and skip gracefully.
+      // Idempotent insert: UNIQUE(booking_id, reminder_type) prevents duplicates.
+      // A successful insert means this is a new reminder — create notifications.
+      // A 23505 duplicate-key error means it was already processed — skip.
       try {
         await db.insert(reminderLogTable).values({
           bookingId: booking.id,
@@ -201,7 +264,6 @@ async function runReminderTick(): Promise<void> {
           sent: false,
         });
       } catch (insertErr: any) {
-        // Duplicate key → already logged (or already being sent). Skip.
         if (insertErr?.code === "23505") continue;
         logger.error({ err: insertErr, bookingId: booking.id, type }, "reminder_log insert failed");
         continue;
@@ -211,8 +273,10 @@ async function runReminderTick(): Promise<void> {
         bookingId: booking.id,
         reminderType: type,
         scheduledFor: triggerTime,
+        clientId: booking.clientId,
         clientName: booking.clientName,
         clientEmail: booking.clientEmail,
+        expertUserId: booking.expertUserId,
         expertName: booking.expertName,
         expertEmail: booking.expertEmail,
         sessionType: booking.sessionType,
@@ -224,7 +288,6 @@ async function runReminderTick(): Promise<void> {
       try {
         await dispatchReminder(payload);
 
-        // Mark the log row sent = true once dispatch succeeds.
         // ── EMAIL SEND HOOK ────────────────────────────────────────────────
         // Move this update INSIDE your email send call so `sent` only flips
         // to true after the provider confirms delivery.
@@ -243,7 +306,6 @@ async function runReminderTick(): Promise<void> {
           { err: dispatchErr, bookingId: booking.id, type },
           "reminder dispatch failed — row remains sent=false for retry"
         );
-        // Row stays sent=false → will be retried on the next tick within the window.
       }
     }
   }
@@ -251,15 +313,12 @@ async function runReminderTick(): Promise<void> {
 
 /**
  * Starts the reminder scheduler.  Call once at server startup.
- * Returns a handle so tests (or graceful shutdown) can stop the interval.
  */
 export function startReminderScheduler(): ReturnType<typeof setInterval> {
-  const INTERVAL_MS = 60 * 1000; // poll every 60 seconds
+  const INTERVAL_MS = 60 * 1000;
 
   logger.info("Reminder scheduler started (interval: 60 s)");
 
-  // Run immediately on startup to catch any reminders missed during downtime,
-  // then continue on the regular interval.
   runReminderTick().catch((err) =>
     logger.error({ err }, "reminder tick failed on startup")
   );

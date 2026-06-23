@@ -4,6 +4,7 @@ import { eq, sql, and, not, inArray, lt } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { generateMeetLink } from "../lib/auth";
 import { CreateBookingBody, UpdateBookingStatusBody } from "@workspace/api-zod";
+import { createNotification } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -304,6 +305,29 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
+  // Notify the other party when a cancellation happens
+  if (newStatus === "cancelled" && effectiveCancelledBy === "client" && expert.userId) {
+    const sessionLabel = booking.sessionType.replace(/_/g, " ");
+    const refPct = (updateFields.refundPercent as number | null) ?? 0;
+    const refAmt = (updateFields.refundAmount as number | null) ?? 0;
+    await createNotification({
+      bookingId: booking.id,
+      recipientUserId: expert.userId,
+      notificationType: "client_cancelled",
+      recipientEmail: expert.email,
+      recipientName: expert.name,
+      payload: {
+        title: "Client Cancelled Their Session",
+        body: `${client.name} has cancelled their ${sessionLabel} session${(updateFields.cancellationReason as string | null) ? ` — reason: "${String(updateFields.cancellationReason)}"` : ""}. Client refund: ${refPct}%${refAmt ? ` (KES ${refAmt.toLocaleString()})` : ""}.`,
+        sessionStart: booking.scheduledTime.toISOString(),
+        sessionType: booking.sessionType,
+        otherPartyName: client.name,
+        refundPercent: refPct,
+        refundAmount: refAmt,
+      },
+    });
+  }
+
   res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
 });
 
@@ -374,7 +398,137 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
 
+  // Notify the other party when a client reschedules
+  if (actor === "client" && expert.userId) {
+    const newTimeStr = newStart.toLocaleString("en-KE", { timeZone: "Africa/Nairobi" });
+    await createNotification({
+      bookingId: booking.id,
+      recipientUserId: expert.userId,
+      notificationType: "client_rescheduled",
+      recipientEmail: expert.email,
+      recipientName: expert.name,
+      payload: {
+        title: "Client Rescheduled Their Session",
+        body: `${client.name} has rescheduled their ${booking.sessionType.replace(/_/g, " ")} session to ${newTimeStr}.`,
+        sessionStart: newStart.toISOString(),
+        sessionType: booking.sessionType,
+        otherPartyName: client.name,
+      },
+    });
+  }
+
   res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
+});
+
+// ── EXPERT CANCEL ─────────────────────────────────────────────────────────────
+// Expert cancels their own booking. Per policy, expert cancellation always
+// results in a 100% refund to the client.
+router.post("/bookings/:id/expert-cancel", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (TERMINAL_STATUSES.has(booking.status)) {
+    res.status(409).json({ error: "Cannot cancel a booking that is already completed, cancelled, or no-show" });
+    return;
+  }
+
+  const { reason } = req.body as { reason?: string };
+
+  // Expert cancellation always = 100% refund to client (refundPercent: 100)
+  const refund = booking.amount && booking.status === "upcoming"
+    ? calcRefund(booking.amount, "expert", booking.scheduledTime)
+    : { refundPercent: 0, refundAmount: 0, expertCancellationEarning: 0 };
+
+  const [updated] = await db
+    .update(bookingsTable)
+    .set({
+      status: "cancelled",
+      cancelledBy: "expert",
+      cancellationReason: reason ?? null,
+      refundStatus: booking.status === "upcoming" && booking.amount ? "pending" : "none",
+      refundPercent: refund.refundPercent,
+      refundAmount: refund.refundAmount,
+      expertCancellationEarning: refund.expertCancellationEarning,
+    })
+    .where(eq(bookingsTable.id, id))
+    .returning();
+
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+
+  // ── EMAIL SEND HOOK ── Notify client of expert cancellation (full refund)
+  await createNotification({
+    bookingId: booking.id,
+    recipientUserId: booking.clientId,
+    notificationType: "expert_cancelled",
+    recipientEmail: client.email,
+    recipientName: client.name,
+    payload: {
+      title: "Your Session Was Cancelled by the Expert",
+      body: `${expert.name} has cancelled your ${booking.sessionType.replace(/_/g, " ")} session${reason ? ` — reason: "${reason}"` : ""}. You will receive a full refund of KES ${(refund.refundAmount || booking.amount || 0).toLocaleString()} as per our cancellation policy.`,
+      sessionStart: booking.scheduledTime.toISOString(),
+      sessionType: booking.sessionType,
+      otherPartyName: expert.name,
+      refundAmount: refund.refundAmount,
+      refundPercent: refund.refundPercent,
+    },
+  });
+
+  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
+});
+
+// ── EXPERT REQUEST RESCHEDULE ─────────────────────────────────────────────────
+// Expert requests the client to pick a new time. The booking is NOT cancelled
+// and NO refund is issued. A notification is sent to the client directing them
+// to their Client Dashboard to select a new slot.
+router.post("/bookings/:id/request-reschedule", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (TERMINAL_STATUSES.has(booking.status)) {
+    res.status(409).json({ error: "Cannot request reschedule for a completed, cancelled, or no-show booking" });
+    return;
+  }
+
+  const { reason } = req.body as { reason?: string };
+
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+
+  // ── EMAIL SEND HOOK ── Notify client that expert requested to reschedule
+  await createNotification({
+    bookingId: booking.id,
+    recipientUserId: booking.clientId,
+    notificationType: "expert_reschedule_requested",
+    recipientEmail: client.email,
+    recipientName: client.name,
+    payload: {
+      title: "Expert Requested to Reschedule",
+      body: `${expert.name} has requested to reschedule your ${booking.sessionType.replace(/_/g, " ")} session${reason ? ` — reason: "${reason}"` : ""}. Please visit your Client Dashboard to select a new available time slot.`,
+      sessionStart: booking.scheduledTime.toISOString(),
+      sessionType: booking.sessionType,
+      otherPartyName: expert.name,
+      actions: ["reschedule"],
+    },
+  });
+
+  res.json({ ok: true });
 });
 
 export default router;

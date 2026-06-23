@@ -30,6 +30,7 @@ import type {
   BookingStatusUpdate,
   ExpertApplication,
   ExpertApplicationInput,
+  ExpertCancelInput,
   ExpertDashboard,
   ExpertList,
   ExpertProfile,
@@ -49,8 +50,11 @@ import type {
   MarkExpertPaidResult,
   Message,
   MessageInput,
+  Notification,
   PlatformStats,
   RegisterInput,
+  RequestReschedule200,
+  RescheduleRequestInput,
   Review,
   ReviewInput,
   User,
@@ -1420,6 +1424,297 @@ export const useUpdateBookingStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateBookingStatusMutationOptions(options));
+    }
+
+export const getExpertCancelBookingUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/expert-cancel`
+}
+
+/**
+ * @summary Expert cancels a booking (always triggers full refund to client)
+ */
+export const expertCancelBooking = async (id: number,
+    expertCancelInput?: ExpertCancelInput, options?: RequestInit): Promise<Booking> => {
+
+  return customFetch<Booking>(getExpertCancelBookingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      expertCancelInput,)
+  }
+);}
+
+
+
+
+export const getExpertCancelBookingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof expertCancelBooking>>, TError,{id: number;data?: BodyType<ExpertCancelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof expertCancelBooking>>, TError,{id: number;data?: BodyType<ExpertCancelInput>}, TContext> => {
+
+const mutationKey = ['expertCancelBooking'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof expertCancelBooking>>, {id: number;data?: BodyType<ExpertCancelInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  expertCancelBooking(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExpertCancelBookingMutationResult = NonNullable<Awaited<ReturnType<typeof expertCancelBooking>>>
+    export type ExpertCancelBookingMutationBody = BodyType<ExpertCancelInput> | undefined
+    export type ExpertCancelBookingMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Expert cancels a booking (always triggers full refund to client)
+ */
+export const useExpertCancelBooking = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof expertCancelBooking>>, TError,{id: number;data?: BodyType<ExpertCancelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof expertCancelBooking>>,
+        TError,
+        {id: number;data?: BodyType<ExpertCancelInput>},
+        TContext
+      > => {
+      return useMutation(getExpertCancelBookingMutationOptions(options));
+    }
+
+export const getRequestRescheduleUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/request-reschedule`
+}
+
+/**
+ * @summary Expert requests client to reschedule (no cancellation, no refund)
+ */
+export const requestReschedule = async (id: number,
+    rescheduleRequestInput?: RescheduleRequestInput, options?: RequestInit): Promise<RequestReschedule200> => {
+
+  return customFetch<RequestReschedule200>(getRequestRescheduleUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      rescheduleRequestInput,)
+  }
+);}
+
+
+
+
+export const getRequestRescheduleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestReschedule>>, TError,{id: number;data?: BodyType<RescheduleRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestReschedule>>, TError,{id: number;data?: BodyType<RescheduleRequestInput>}, TContext> => {
+
+const mutationKey = ['requestReschedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestReschedule>>, {id: number;data?: BodyType<RescheduleRequestInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  requestReschedule(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestRescheduleMutationResult = NonNullable<Awaited<ReturnType<typeof requestReschedule>>>
+    export type RequestRescheduleMutationBody = BodyType<RescheduleRequestInput> | undefined
+    export type RequestRescheduleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Expert requests client to reschedule (no cancellation, no refund)
+ */
+export const useRequestReschedule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestReschedule>>, TError,{id: number;data?: BodyType<RescheduleRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestReschedule>>,
+        TError,
+        {id: number;data?: BodyType<RescheduleRequestInput>},
+        TContext
+      > => {
+      return useMutation(getRequestRescheduleMutationOptions(options));
+    }
+
+export const getListNotificationsUrl = () => {
+
+
+
+
+  return `/api/notifications`
+}
+
+/**
+ * @summary List notifications for the authenticated user (newest first)
+ */
+export const listNotifications = async ( options?: RequestInit): Promise<Notification[]> => {
+
+  return customFetch<Notification[]>(getListNotificationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListNotificationsQueryKey = () => {
+    return [
+    `/api/notifications`
+    ] as const;
+    }
+
+
+export const getListNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListNotificationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotifications>>> = ({ signal }) => listNotifications({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listNotifications>>>
+export type ListNotificationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List notifications for the authenticated user (newest first)
+ */
+
+export function useListNotifications<TData = Awaited<ReturnType<typeof listNotifications>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListNotificationsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getMarkNotificationSeenUrl = (id: number,) => {
+
+
+
+
+  return `/api/notifications/${id}/seen`
+}
+
+/**
+ * @summary Mark a notification as seen
+ */
+export const markNotificationSeen = async (id: number, options?: RequestInit): Promise<Notification> => {
+
+  return customFetch<Notification>(getMarkNotificationSeenUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getMarkNotificationSeenMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationSeen>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markNotificationSeen>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markNotificationSeen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markNotificationSeen>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markNotificationSeen(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkNotificationSeenMutationResult = NonNullable<Awaited<ReturnType<typeof markNotificationSeen>>>
+
+    export type MarkNotificationSeenMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a notification as seen
+ */
+export const useMarkNotificationSeen = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationSeen>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markNotificationSeen>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkNotificationSeenMutationOptions(options));
     }
 
 export const getListReviewsUrl = (params?: ListReviewsParams,) => {
