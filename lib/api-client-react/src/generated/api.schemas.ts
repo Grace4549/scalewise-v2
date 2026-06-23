@@ -428,6 +428,10 @@ export interface AdminExpertBreakdown {
   totalRevenue: number;
   totalCommission: number;
   expertEarnings: number;
+  cancellationEarnings: number;
+  expertTotal: number;
+  sessionPendingPayout: number;
+  cancellationPendingPayout: number;
   pendingPayout: number;
   paidPayout: number;
 }
@@ -529,6 +533,13 @@ export interface AdminStats {
   upcomingBookings: number;
   completedBookings: number;
   cancelledBookings: number;
+  grossVolume: number;
+  pendingRefundAmount: number;
+  paidRefundAmount: number;
+  cancellationPlatformRevenue: number;
+  cancellationExpertEarnings: number;
+  sessionPendingPayout: number;
+  sessionPaidPayout: number;
   totalRevenue: number;
   totalCommission: number;
   pendingPayout: number;
@@ -604,12 +615,16 @@ export interface AvailabilitySlotInput {
   startTime: string;
 }
 
+export type ExpertDashboardCancelledWithEarningsItem = { [key: string]: unknown };
+
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];
   completedBookings: Booking[];
+  cancelledWithEarnings: ExpertDashboardCancelledWithEarningsItem[];
   totalEarnings: number;
   commissionPaid: number;
+  cancellationEarnings: number;
   netEarnings: number;
   pendingPayout: number;
 }

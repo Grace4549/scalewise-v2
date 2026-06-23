@@ -7,13 +7,16 @@
  */
 import type { Booking } from './booking';
 import type { Expert } from './expert';
+import type { ExpertDashboardCancelledWithEarningsItem } from './expertDashboardCancelledWithEarningsItem';
 
 export interface ExpertDashboard {
   expert: Expert;
   upcomingBookings: Booking[];
   completedBookings: Booking[];
+  cancelledWithEarnings: ExpertDashboardCancelledWithEarningsItem[];
   totalEarnings: number;
   commissionPaid: number;
+  cancellationEarnings: number;
   netEarnings: number;
   pendingPayout: number;
 }

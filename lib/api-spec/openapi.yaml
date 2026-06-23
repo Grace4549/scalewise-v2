@@ -1431,7 +1431,7 @@ components:
 
     AdminExpertBreakdown:
       type: object
-      required: [expertId, expertName, industry, totalBookings, completedBookings, totalRevenue, totalCommission, expertEarnings, pendingPayout, paidPayout, rating]
+      required: [expertId, expertName, industry, totalBookings, completedBookings, totalRevenue, totalCommission, expertEarnings, cancellationEarnings, expertTotal, sessionPendingPayout, cancellationPendingPayout, pendingPayout, paidPayout, rating]
       properties:
         expertId:
           type: integer
@@ -1450,6 +1450,14 @@ components:
         totalCommission:
           type: number
         expertEarnings:
+          type: number
+        cancellationEarnings:
+          type: number
+        expertTotal:
+          type: number
+        sessionPendingPayout:
+          type: number
+        cancellationPendingPayout:
           type: number
         pendingPayout:
           type: number
@@ -1597,7 +1605,7 @@ components:
 
     AdminStats:
       type: object
-      required: [totalExperts, pendingRegistration, pendingApplications, totalBookings, pendingPaymentBookings, upcomingBookings, completedBookings, cancelledBookings, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
+      required: [totalExperts, pendingRegistration, pendingApplications, totalBookings, pendingPaymentBookings, upcomingBookings, completedBookings, cancelledBookings, grossVolume, pendingRefundAmount, paidRefundAmount, cancellationPlatformRevenue, cancellationExpertEarnings, sessionPendingPayout, sessionPaidPayout, totalRevenue, totalCommission, pendingPayout, paidPayout, recentBookings]
       properties:
         totalExperts:
           type: integer
@@ -1615,6 +1623,20 @@ components:
           type: integer
         cancelledBookings:
           type: integer
+        grossVolume:
+          type: number
+        pendingRefundAmount:
+          type: number
+        paidRefundAmount:
+          type: number
+        cancellationPlatformRevenue:
+          type: number
+        cancellationExpertEarnings:
+          type: number
+        sessionPendingPayout:
+          type: number
+        sessionPaidPayout:
+          type: number
         totalRevenue:
           type: number
         totalCommission:
@@ -1727,7 +1749,7 @@ components:
 
     ExpertDashboard:
       type: object
-      required: [expert, upcomingBookings, completedBookings, totalEarnings, commissionPaid, netEarnings, pendingPayout]
+      required: [expert, upcomingBookings, completedBookings, cancelledWithEarnings, totalEarnings, commissionPaid, cancellationEarnings, netEarnings, pendingPayout]
       properties:
         expert:
           $ref: "#/components/schemas/Expert"
@@ -1739,9 +1761,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Booking"
+        cancelledWithEarnings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
         totalEarnings:
           type: number
         commissionPaid:
+          type: number
+        cancellationEarnings:
           type: number
         netEarnings:
           type: number

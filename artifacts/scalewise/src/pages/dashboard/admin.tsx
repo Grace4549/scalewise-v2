@@ -441,19 +441,23 @@ export default function AdminDashboard() {
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
           <StatCard label="Cancelled" value={stats.cancelledBookings} accent="#ef4444"
             onClick={() => navigateTo("bookings", { bookingStatus: "cancelled" })} />
-          <StatCard label="Pending Refund" value={stats.pendingRefunds ?? 0} accent="#f59e0b"
-            sub="Awaiting client refund"
+          <StatCard label="Pending Refund" value={`KES ${(stats.pendingRefundAmount ?? 0).toLocaleString()}`} accent="#f59e0b"
+            sub={`${stats.pendingRefunds ?? 0} booking${(stats.pendingRefunds ?? 0) !== 1 ? "s" : ""} — awaiting payout`}
             onClick={() => navigateTo("refunds")} />
-          <StatCard label="Refund Done" value={stats.paidRefunds ?? 0} accent={C.green}
-            sub="Refunds processed"
+          <StatCard label="Refund Done" value={`KES ${(stats.paidRefundAmount ?? 0).toLocaleString()}`} accent={C.green}
+            sub={`${stats.paidRefunds ?? 0} refund${(stats.paidRefunds ?? 0) !== 1 ? "s" : ""} already sent`}
             onClick={() => navigateTo("refunds")} />
-          <StatCard label="Gross Volume" value={`KES ${stats.totalRevenue.toLocaleString()}`} accent={C.mint} sub="Total collected from clients"
+          <StatCard label="Gross Volume" value={`KES ${(stats.grossVolume ?? stats.totalRevenue).toLocaleString()}`} accent={C.mint}
+            sub={`Net: KES ${stats.totalRevenue.toLocaleString()} after refunds`}
+            onClick={() => navigateTo("bookings", { bookingStatus: "" })} />
+          <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue}
+            sub={`Sessions + KES ${(stats.cancellationPlatformRevenue ?? 0).toLocaleString()} cancel cut`}
             onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
-          <StatCard label="Platform Revenue" value={`KES ${stats.totalCommission.toLocaleString()}`} accent={C.blue} sub="Your commission cut"
-            onClick={() => navigateTo("bookings", { bookingStatus: "completed" })} />
-          <StatCard label="Pending Payout" value={`KES ${stats.pendingPayout.toLocaleString()}`} accent={C.mint} sub="Owed to experts via M-Pesa"
+          <StatCard label="Pending Payout" value={`KES ${stats.pendingPayout.toLocaleString()}`} accent={C.mint}
+            sub={`KES ${(stats.sessionPendingPayout ?? 0).toLocaleString()} sessions · KES ${(stats.cancellationExpertEarnings ?? 0).toLocaleString()} cancels`}
             onClick={() => navigateTo("payouts")} />
           <StatCard label="Paid Out" value={`KES ${stats.paidPayout.toLocaleString()}`} accent={C.green}
+            sub="Expert session payouts sent"
             onClick={() => navigateTo("payouts")} />
           <StatCard label="Total Bookings" value={stats.totalBookings} accent={C.mblue}
             onClick={() => navigateTo("bookings", { bookingStatus: "" })} />
@@ -919,8 +923,10 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3">Industry</th>
                       <th className="px-4 py-3">Rating</th>
                       <th className="px-4 py-3">Sessions</th>
-                      <th className="px-4 py-3">Total Revenue</th>
+                      <th className="px-4 py-3">Session Revenue</th>
                       <th className="px-4 py-3" style={{ color: C.blue }}>Commission</th>
+                      <th className="px-4 py-3">Session Net</th>
+                      <th className="px-4 py-3" style={{ color: "#b45309" }}>Cancel Earnings</th>
                       <th className="px-4 py-3">Expert Total</th>
                       <th className="px-4 py-3" style={{ color: "#b45309" }}>Pending Payout</th>
                       <th className="px-4 py-3" style={{ color: C.green }}>Paid Out</th>
@@ -946,7 +952,13 @@ export default function AdminDashboard() {
                             <td className="px-4 py-3 font-medium" style={{ color: C.blue }}>
                               KES {e.totalCommission.toFixed(0)}
                             </td>
-                            <td className="px-4 py-3">KES {e.expertEarnings.toFixed(0)}</td>
+                            <td className="px-4 py-3 text-muted-foreground">KES {e.expertEarnings.toFixed(0)}</td>
+                            <td className="px-4 py-3 font-medium" style={{ color: "#b45309" }}>
+                              {(e.cancellationEarnings ?? 0) > 0
+                                ? `KES ${(e.cancellationEarnings ?? 0).toFixed(0)}`
+                                : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="px-4 py-3 font-semibold">KES {(e.expertTotal ?? e.expertEarnings).toFixed(0)}</td>
                             <td className="px-4 py-3">
                               {e.pendingPayout > 0 ? (
                                 <span className="font-semibold" style={{ color: "#b45309" }}>
@@ -962,14 +974,22 @@ export default function AdminDashboard() {
                           </tr>
                           {expandedExperts.has(e.expertId) && (
                             <tr key={`exp-${e.expertId}`}>
-                              <td colSpan={10} className="px-0 py-0">
+                              <td colSpan={12} className="px-0 py-0">
                                 <div className="px-6 py-5" style={{ backgroundColor: C.mint + "0E" }}>
-                                  <div className="text-sm font-semibold mb-4" style={{ color: C.blue }}>
-                                    {e.expertName} — Pending Payouts
-                                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold"
-                                      style={{ backgroundColor: C.mint + "33", color: "#0f5248" }}>
-                                      {pendingBookings.length} booking{pendingBookings.length !== 1 ? "s" : ""}
-                                    </span>
+                                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                                    <div className="text-sm font-semibold" style={{ color: C.blue }}>
+                                      {e.expertName} — Pending Payouts
+                                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                        style={{ backgroundColor: C.mint + "33", color: "#0f5248" }}>
+                                        {pendingBookings.length} booking{pendingBookings.length !== 1 ? "s" : ""}
+                                      </span>
+                                    </div>
+                                    {(e.cancellationEarnings ?? 0) > 0 && (
+                                      <span className="text-xs px-3 py-1 rounded-full font-semibold"
+                                        style={{ backgroundColor: "#f59e0b22", color: "#b45309" }}>
+                                        + KES {(e.cancellationEarnings ?? 0).toFixed(0)} cancellation earnings owed
+                                      </span>
+                                    )}
                                   </div>
 
                                   {pendingBookings.length === 0 ? (

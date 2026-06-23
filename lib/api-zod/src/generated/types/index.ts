@@ -32,6 +32,7 @@ export * from './expertApplicationInput';
 export * from './expertApplicationStatus';
 export * from './expertCancelInput';
 export * from './expertDashboard';
+export * from './expertDashboardCancelledWithEarningsItem';
 export * from './expertList';
 export * from './expertProfile';
 export * from './expertProfileUpdate';

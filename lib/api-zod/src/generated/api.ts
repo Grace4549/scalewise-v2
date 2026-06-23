@@ -946,6 +946,13 @@ export const GetAdminStatsResponse = zod.object({
   "upcomingBookings": zod.number(),
   "completedBookings": zod.number(),
   "cancelledBookings": zod.number(),
+  "grossVolume": zod.number(),
+  "pendingRefundAmount": zod.number(),
+  "paidRefundAmount": zod.number(),
+  "cancellationPlatformRevenue": zod.number(),
+  "cancellationExpertEarnings": zod.number(),
+  "sessionPendingPayout": zod.number(),
+  "sessionPaidPayout": zod.number(),
   "totalRevenue": zod.number(),
   "totalCommission": zod.number(),
   "pendingPayout": zod.number(),
@@ -1002,6 +1009,10 @@ export const GetExpertBreakdownResponseItem = zod.object({
   "totalRevenue": zod.number(),
   "totalCommission": zod.number(),
   "expertEarnings": zod.number(),
+  "cancellationEarnings": zod.number(),
+  "expertTotal": zod.number(),
+  "sessionPendingPayout": zod.number(),
+  "cancellationPendingPayout": zod.number(),
   "pendingPayout": zod.number(),
   "paidPayout": zod.number()
 })
@@ -1100,8 +1111,10 @@ export const GetExpertDashboardResponse = zod.object({
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish()
 })),
+  "cancelledWithEarnings": zod.array(zod.record(zod.string(), zod.unknown())),
   "totalEarnings": zod.number(),
   "commissionPaid": zod.number(),
+  "cancellationEarnings": zod.number(),
   "netEarnings": zod.number(),
   "pendingPayout": zod.number()
 })

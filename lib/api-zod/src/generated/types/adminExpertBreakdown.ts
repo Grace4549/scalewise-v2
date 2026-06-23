@@ -16,6 +16,10 @@ export interface AdminExpertBreakdown {
   totalRevenue: number;
   totalCommission: number;
   expertEarnings: number;
+  cancellationEarnings: number;
+  expertTotal: number;
+  sessionPendingPayout: number;
+  cancellationPendingPayout: number;
   pendingPayout: number;
   paidPayout: number;
 }

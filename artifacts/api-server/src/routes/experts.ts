@@ -235,17 +235,24 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
 
   const upcomingBookings = allBookings.filter((b) => b.status === "upcoming");
   const completedBookings = allBookings.filter((b) => b.status === "completed");
-
+  const cancelledWithEarnings = allBookings.filter(
+    (b) => (b.status === "cancelled" || b.status === "no-show") && (b.expertCancellationEarning ?? 0) > 0
+  );
 
   const totalEarnings = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
   const commissionPaid = completedBookings.reduce((sum, b) => {
     return sum + (b.amount ?? 0) * getCommissionRate(b.sessionType);
   }, 0);
-  const netEarnings = totalEarnings - commissionPaid;
+  const cancellationEarnings = cancelledWithEarnings.reduce(
+    (sum, b) => sum + (b.expertCancellationEarning ?? 0), 0
+  );
+  const netEarnings = totalEarnings - commissionPaid + cancellationEarnings;
 
-  const pendingPayout = completedBookings
+  const sessionPendingPayout = completedBookings
     .filter((b) => b.payoutStatus === "pending")
     .reduce((sum, b) => sum + (b.amount ?? 0) * (1 - getCommissionRate(b.sessionType)), 0);
+
+  const pendingPayout = sessionPendingPayout + cancellationEarnings;
 
   const clientIds = [...new Set(allBookings.map((b) => b.clientId))];
   const clients = clientIds.length > 0
@@ -277,8 +284,16 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     expert: formatExpert(expert),
     upcomingBookings: upcomingBookings.map(formatBookingWithClient),
     completedBookings: completedBookings.map(formatBookingWithClient),
+    cancelledWithEarnings: cancelledWithEarnings.map((b) => ({
+      ...formatBookingWithClient(b),
+      expertCancellationEarning: b.expertCancellationEarning ?? null,
+      refundAmount: b.refundAmount ?? null,
+      refundPercent: b.refundPercent ?? null,
+      cancelledBy: b.cancelledBy ?? null,
+    })),
     totalEarnings,
     commissionPaid,
+    cancellationEarnings,
     netEarnings,
     pendingPayout,
   });

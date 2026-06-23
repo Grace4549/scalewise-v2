@@ -76,7 +76,7 @@ function calcRefund(
     return {
       refundPercent: 50,
       refundAmount: amount * 0.5,
-      expertCancellationEarning: amount * 0.35,
+      expertCancellationEarning: amount * 0.30,
     };
   }
   if (cancelledBy === "expert" || cancelledBy === "admin") {
@@ -89,7 +89,7 @@ function calcRefund(
   return {
     refundPercent: 75,
     refundAmount: amount * 0.75,
-    expertCancellationEarning: amount * 0.20,
+    expertCancellationEarning: amount * 0.15,
   };
 }
 

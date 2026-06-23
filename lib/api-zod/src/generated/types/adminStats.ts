@@ -16,6 +16,13 @@ export interface AdminStats {
   upcomingBookings: number;
   completedBookings: number;
   cancelledBookings: number;
+  grossVolume: number;
+  pendingRefundAmount: number;
+  paidRefundAmount: number;
+  cancellationPlatformRevenue: number;
+  cancellationExpertEarnings: number;
+  sessionPendingPayout: number;
+  sessionPaidPayout: number;
   totalRevenue: number;
   totalCommission: number;
   pendingPayout: number;

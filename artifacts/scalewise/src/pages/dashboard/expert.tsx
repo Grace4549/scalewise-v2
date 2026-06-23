@@ -611,9 +611,9 @@ export default function ExpertDashboard() {
         {/* ── SESSIONS TAB ── */}
         <TabsContent value="sessions" className="space-y-8">
           {/* Earnings Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-card p-5 rounded-2xl border shadow-sm">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Total Revenue</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Session Revenue</div>
               <div className="text-2xl font-bold">KES {dashboard.totalEarnings.toLocaleString()}</div>
               <div className="text-xs text-muted-foreground mt-1">{dashboard.completedBookings.length} completed sessions</div>
             </div>
@@ -622,9 +622,17 @@ export default function ExpertDashboard() {
               <div className="text-2xl font-bold text-destructive">KES {dashboard.commissionPaid.toLocaleString()}</div>
               <div className="text-xs text-muted-foreground mt-1">Discovery/Consultancy 20% · Growth 15%</div>
             </div>
+            {(dashboard.cancellationEarnings ?? 0) > 0 && (
+              <div className="p-5 rounded-2xl border shadow-sm" style={{ backgroundColor: "#f59e0b15", borderColor: "#f59e0b50" }}>
+                <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#b45309" }}>Cancellation Earnings</div>
+                <div className="text-2xl font-bold" style={{ color: "#b45309" }}>KES {(dashboard.cancellationEarnings ?? 0).toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground mt-1">Earned when clients cancel</div>
+              </div>
+            )}
             <div className="p-5 rounded-2xl border shadow-sm" style={{ backgroundColor: C.green + "20", borderColor: C.green + "50" }}>
               <div className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#1a5730" }}>Net Earnings</div>
               <div className="text-2xl font-bold" style={{ color: "#1a5730" }}>KES {dashboard.netEarnings.toLocaleString()}</div>
+              <div className="text-xs mt-1" style={{ color: "#1a5730" }}>Sessions + cancellation earnings</div>
             </div>
             <div className={`p-5 rounded-2xl border shadow-sm ${dashboard.pendingPayout > 0 ? "bg-yellow-50 border-yellow-200" : "bg-card"}`}>
               <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${dashboard.pendingPayout > 0 ? "text-yellow-700" : "text-muted-foreground"}`}>
@@ -739,6 +747,54 @@ export default function ExpertDashboard() {
               </div>
             )}
           </div>
+
+          {/* Cancellation Earnings */}
+          {(dashboard.cancelledWithEarnings ?? []).length > 0 && (
+            <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
+              <div className="p-6 border-b" style={{ backgroundColor: "#f59e0b10" }}>
+                <h2 className="text-xl font-semibold" style={{ color: "#b45309" }}>
+                  Cancellation Earnings ({(dashboard.cancelledWithEarnings ?? []).length})
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Bookings cancelled by clients — you keep a portion per our policy. ScaleWise will send these via M-Pesa.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-muted/30 text-muted-foreground text-xs uppercase tracking-wide">
+                    <tr>
+                      <th className="px-6 py-3">Client</th>
+                      <th className="px-6 py-3">Session Type</th>
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3">Session Amount</th>
+                      <th className="px-6 py-3">Client Refund</th>
+                      <th className="px-6 py-3">Your Earnings</th>
+                      <th className="px-6 py-3">Cancelled By</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {(dashboard.cancelledWithEarnings ?? []).map((b: any) => (
+                      <tr key={b.id} className="hover:bg-muted/10">
+                        <td className="px-6 py-3 font-medium">{b.clientName ?? "—"}</td>
+                        <td className="px-6 py-3 capitalize">{b.sessionType.replace(/_/g, " ")}</td>
+                        <td className="px-6 py-3">{new Date(b.scheduledTime).toLocaleDateString()}</td>
+                        <td className="px-6 py-3">{b.amount ? `KES ${b.amount.toLocaleString()}` : "—"}</td>
+                        <td className="px-6 py-3 text-muted-foreground">
+                          {b.refundAmount != null ? `KES ${b.refundAmount.toFixed(0)} (${b.refundPercent}%)` : "—"}
+                        </td>
+                        <td className="px-6 py-3 font-semibold" style={{ color: "#b45309" }}>
+                          KES {b.expertCancellationEarning?.toFixed(0) ?? "—"}
+                        </td>
+                        <td className="px-6 py-3 capitalize text-muted-foreground">
+                          {b.cancelledBy ?? "no-show"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* ── AVAILABILITY TAB ── */}

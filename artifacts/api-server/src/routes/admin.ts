@@ -34,7 +34,7 @@ function calcRefundAdmin(
   wasNoShow = false
 ): { refundPercent: number; refundAmount: number; expertCancellationEarning: number } {
   if (wasNoShow) {
-    return { refundPercent: 50, refundAmount: amount * 0.5, expertCancellationEarning: amount * 0.35 };
+    return { refundPercent: 50, refundAmount: amount * 0.5, expertCancellationEarning: amount * 0.30 };
   }
   if (cancelledBy === "expert" || cancelledBy === "admin") {
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
@@ -43,7 +43,7 @@ function calcRefundAdmin(
   if (hoursUntil > 24) {
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
   }
-  return { refundPercent: 75, refundAmount: amount * 0.75, expertCancellationEarning: amount * 0.20 };
+  return { refundPercent: 75, refundAmount: amount * 0.75, expertCancellationEarning: amount * 0.15 };
 }
 
 function formatAdminBooking(
@@ -373,6 +373,9 @@ router.get("/admin/experts/breakdown", adminMiddleware(), async (req, res): Prom
   const breakdown = experts.map((expert) => {
     const expertBookings = allBookings.filter((b) => b.expertId === expert.id);
     const completedBookings = expertBookings.filter((b) => b.status === "completed");
+    const cancellationBookings = expertBookings.filter(
+      (b) => (b.status === "cancelled" || b.status === "no-show") && (b.expertCancellationEarning ?? 0) > 0
+    );
 
     const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
     const totalCommission = completedBookings.reduce((sum, b) => {
@@ -381,7 +384,12 @@ router.get("/admin/experts/breakdown", adminMiddleware(), async (req, res): Prom
     }, 0);
     const expertEarnings = totalRevenue - totalCommission;
 
-    const pendingPayout = completedBookings
+    const cancellationEarnings = cancellationBookings.reduce(
+      (sum, b) => sum + (b.expertCancellationEarning ?? 0), 0
+    );
+    const expertTotal = expertEarnings + cancellationEarnings;
+
+    const sessionPendingPayout = completedBookings
       .filter((b) => b.payoutStatus === "pending")
       .reduce((sum, b) => {
         const rate = COMMISSION_RATES[b.sessionType] ?? 0.20;
@@ -395,6 +403,8 @@ router.get("/admin/experts/breakdown", adminMiddleware(), async (req, res): Prom
         return sum + (b.amount ?? 0) * (1 - rate);
       }, 0);
 
+    const pendingPayout = sessionPendingPayout + cancellationEarnings;
+
     return {
       expertId: expert.id,
       expertName: expert.name,
@@ -405,6 +415,10 @@ router.get("/admin/experts/breakdown", adminMiddleware(), async (req, res): Prom
       totalRevenue,
       totalCommission,
       expertEarnings,
+      cancellationEarnings,
+      expertTotal,
+      sessionPendingPayout,
+      cancellationPendingPayout: cancellationEarnings,
       pendingPayout,
       paidPayout,
     };
@@ -456,26 +470,65 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
 
   const allBookings = await db.select().from(bookingsTable);
   const completedBookings = allBookings.filter((b) => b.status === "completed");
+  const cancellationBookings = allBookings.filter(
+    (b) => (b.status === "cancelled" || b.status === "no-show") && (b.expertCancellationEarning ?? 0) > 0
+  );
 
-  const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0);
-  const totalCommission = completedBookings.reduce((sum, b) => {
+  // Gross volume = all money collected from clients (non-pending_payment bookings with an amount)
+  const grossVolume = allBookings
+    .filter((b) => b.status !== "pending_payment" && b.amount != null)
+    .reduce((sum, b) => sum + (b.amount ?? 0), 0);
+
+  // Refund amounts in KES
+  const pendingRefundAmount = allBookings
+    .filter((b) => b.refundStatus === "pending" && b.refundAmount != null)
+    .reduce((sum, b) => sum + (b.refundAmount ?? 0), 0);
+  const paidRefundAmount = allBookings
+    .filter((b) => b.refundStatus === "paid" && b.refundAmount != null)
+    .reduce((sum, b) => sum + (b.refundAmount ?? 0), 0);
+
+  // Net revenue = gross minus what has already been refunded to clients
+  const totalRevenue = grossVolume - paidRefundAmount;
+
+  // Platform revenue from completed sessions (commission)
+  const sessionPlatformRevenue = completedBookings.reduce((sum, b) => {
     const rate = COMMISSION_RATES[b.sessionType] ?? 0.20;
     return sum + (b.amount ?? 0) * rate;
   }, 0);
 
-  const pendingPayout = completedBookings
+  // Platform revenue from cancellations (amount - refund - expert earning)
+  const cancellationPlatformRevenue = allBookings
+    .filter((b) => (b.status === "cancelled" || b.status === "no-show") && b.amount != null && b.refundAmount != null)
+    .reduce((sum, b) => {
+      const kept = (b.amount ?? 0) - (b.refundAmount ?? 0) - (b.expertCancellationEarning ?? 0);
+      return sum + Math.max(0, kept);
+    }, 0);
+
+  const totalCommission = sessionPlatformRevenue + cancellationPlatformRevenue;
+
+  // Expert cancellation earnings (owed to experts from client cancellations and no-shows)
+  const cancellationExpertEarnings = cancellationBookings.reduce(
+    (sum, b) => sum + (b.expertCancellationEarning ?? 0), 0
+  );
+
+  // Expert payout from completed sessions
+  const sessionPendingPayout = completedBookings
     .filter((b) => b.payoutStatus === "pending")
     .reduce((sum, b) => {
       const rate = COMMISSION_RATES[b.sessionType] ?? 0.20;
       return sum + (b.amount ?? 0) * (1 - rate);
     }, 0);
 
-  const paidPayout = completedBookings
+  const sessionPaidPayout = completedBookings
     .filter((b) => b.payoutStatus === "paid")
     .reduce((sum, b) => {
       const rate = COMMISSION_RATES[b.sessionType] ?? 0.20;
       return sum + (b.amount ?? 0) * (1 - rate);
     }, 0);
+
+  // Total pending payout includes session pending + all cancellation expert earnings (treated as owed)
+  const pendingPayout = sessionPendingPayout + cancellationExpertEarnings;
+  const paidPayout = sessionPaidPayout;
 
   const recentBookings = await db
     .select()
@@ -515,6 +568,13 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     upcomingBookings: upcomingCount?.count ?? 0,
     completedBookings: completedCount?.count ?? 0,
     cancelledBookings: cancelledCount?.count ?? 0,
+    grossVolume,
+    pendingRefundAmount,
+    paidRefundAmount,
+    cancellationPlatformRevenue,
+    cancellationExpertEarnings,
+    sessionPendingPayout,
+    sessionPaidPayout,
     totalRevenue,
     totalCommission,
     pendingPayout,
