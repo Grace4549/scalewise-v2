@@ -474,7 +474,7 @@ export default function ClientDashboard() {
               <p className="font-semibold" style={{ color: "#92400e" }}>Cancellation & Refund Policy</p>
               <p style={{ color: "#78350f" }}>• Cancel <strong>&gt; 24 hours</strong> before: <span className="font-semibold text-green-700">Full refund</span></p>
               <p style={{ color: "#78350f" }}>• Cancel <strong>&lt; 24 hours</strong> before: <span className="font-semibold text-amber-700">75% refund</span> — OR reschedule (not both)</p>
-              <p style={{ color: "#78350f" }}>• No-show (missed session): <span className="font-semibold text-red-600">No refund</span></p>
+              <p style={{ color: "#78350f" }}>• No-show (missed session): <span className="font-semibold text-amber-700">50% refund</span></p>
               <Link href="/terms" className="text-xs hover:underline" style={{ color: C.blue }}>
                 View full Cancellation & Refund Policy →
               </Link>
