@@ -232,6 +232,14 @@ router.post("/messages/:bookingId", requireAuth, async (req, res): Promise<void>
     if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
   }
 
+  // Messaging is only available for confirmed (upcoming) bookings.
+  // Blocking on pending_payment prevents unpaid placeholder bookings from
+  // being used as a free spam channel to reach experts.
+  if (booking.status === "pending_payment") {
+    res.status(403).json({ error: "Messaging is only available once a booking has been confirmed and payment received." });
+    return;
+  }
+
   const [message] = await db
     .insert(messagesTable)
     .values({

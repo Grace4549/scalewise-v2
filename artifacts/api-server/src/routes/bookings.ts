@@ -70,8 +70,13 @@ function calcRefund(
   amount: number,
   cancelledBy: "client" | "expert" | "admin",
   scheduledTime: Date,
-  wasNoShow = false
+  wasNoShow = false,
+  effectiveScheduledTime?: Date
 ): { refundPercent: number; refundAmount: number; expertCancellationEarning: number } {
+  // effectiveScheduledTime is used to pin refund liability to the original booking
+  // time when a client rescheduled — prevents gaming the refund by rescheduling
+  // an imminent session to the future before cancelling.
+  const refundAnchorTime = effectiveScheduledTime ?? scheduledTime;
   if (wasNoShow) {
     return {
       refundPercent: 50,
@@ -82,7 +87,7 @@ function calcRefund(
   if (cancelledBy === "expert" || cancelledBy === "admin") {
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
   }
-  const hoursUntil = (scheduledTime.getTime() - Date.now()) / 3600000;
+  const hoursUntil = (refundAnchorTime.getTime() - Date.now()) / 3600000;
   if (hoursUntil > 24) {
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
   }
@@ -137,6 +142,11 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  if (!expert.acceptingBookings) {
+    res.status(422).json({ error: "This expert is not currently accepting bookings" });
+    return;
+  }
+
   if (expert.userId === req.userId) {
     res.status(403).json({ error: "Experts cannot book their own profile" });
     return;
@@ -158,7 +168,7 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
     .where(
       and(
         eq(bookingsTable.expertId, expertId),
-        not(inArray(bookingsTable.status, ["cancelled", "no-show", "completed"])),
+        not(inArray(bookingsTable.status, ["cancelled", "no-show", "completed", "pending_payment"])),
         lt(bookingsTable.scheduledTime, newEnd),
         sql`${bookingsTable.scheduledTime} + (${bookingsTable.durationMinutes} * interval '1 minute') > ${newStart}`
       )
@@ -271,7 +281,14 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
     updateFields.cancellationReason = (parsed.data as { reason?: string }).reason ?? null;
 
     if (booking.status === "upcoming" && booking.amount) {
-      const ref = calcRefund(booking.amount, effectiveCancelledBy, booking.scheduledTime);
+      // When a client previously rescheduled the booking, pin the refund
+      // liability to the original (pre-reschedule) time so that moving an
+      // imminent session to the future does not circumvent late-cancel penalties.
+      const effectiveTime =
+        effectiveCancelledBy === "client" && booking.rescheduledBy === "client" && booking.rescheduledFromTime
+          ? new Date(Math.min(booking.scheduledTime.getTime(), booking.rescheduledFromTime.getTime()))
+          : booking.scheduledTime;
+      const ref = calcRefund(booking.amount, effectiveCancelledBy, booking.scheduledTime, false, effectiveTime);
       updateFields.refundStatus = "pending";
       updateFields.refundPercent = ref.refundPercent;
       updateFields.refundAmount = ref.refundAmount;
@@ -357,11 +374,18 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
   } else {
     if (booking.clientId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
     actor = "client";
+    // Clients may not reschedule a booking that starts within 24 hours — the
+    // same window used by the late-cancellation refund policy. This prevents
+    // the exploit of rescheduling an imminent session to the future to obtain
+    // a full refund instead of the intended 75% late-cancellation refund.
+    const hoursUntilSession = (booking.scheduledTime.getTime() - Date.now()) / 3600000;
+    if (hoursUntilSession < 24) {
+      res.status(422).json({ error: "Bookings that start within 24 hours cannot be rescheduled. Please contact the expert directly." });
+      return;
+    }
   }
-
-  if (rescheduledBy && ["client", "expert", "admin"].includes(rescheduledBy)) {
-    actor = rescheduledBy as "client" | "expert" | "admin";
-  }
+  // actor is always derived server-side from the authenticated session — never
+  // trust a client-supplied rescheduledBy value in the request body.
 
   const newStart = new Date(newTime);
   const newEnd = new Date(newStart.getTime() + booking.durationMinutes * 60_000);
