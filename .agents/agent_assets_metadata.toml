@@ -17,13 +17,13 @@ title = "generated_image"
 id = "n927iDgYJr9tM8wELbiEU"
 uri = "file://artifacts/scalewise/public/photos/expert-cta.png"
 type = "image"
-title = "generated_image"
+title = "african-expert-mentor"
 
 [[generated]]
 id = "1l4UD_rjZ8UQaCuwiS4uX"
 uri = "file://artifacts/scalewise/public/photos/consultation-session.png"
 type = "image"
-title = "generated_image"
+title = "african-video-consultation"
 
 [[generated]]
 id = "LLHIzdvcl19TgB2vb4ttE"
@@ -35,10 +35,22 @@ title = "generated_image"
 id = "PAE-LfNynKjp5Y1cbkB_t"
 uri = "file://artifacts/scalewise/public/photos/about-hero.png"
 type = "image"
-title = "generated_image"
+title = "african-consultation-meeting"
 
 [[generated]]
 id = "nbKVYHPf5399M44XOg3zW"
 uri = "file://artifacts/scalewise/public/photos/contact-hero.png"
 type = "image"
-title = "generated_image"
+title = "african-support-agent"
+
+[[generated]]
+id = "2job61ynk7oqzdUhNiKGH"
+uri = "file://artifacts/scalewise/public/photos/about-before.png"
+type = "image"
+title = "african-stressed-business-owner"
+
+[[generated]]
+id = "NJl_Uo5wgN6l-QkVAxaWN"
+uri = "file://artifacts/scalewise/public/photos/about-after.png"
+type = "image"
+title = "african-confident-business-owner"

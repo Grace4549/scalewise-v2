@@ -70,7 +70,7 @@ function BeforeAfterImage({ wide = false }: { wide?: boolean }) {
         }}
       >
         <img
-          src="/photos/about-before.jpg"
+          src="/photos/about-before.png"
           alt="Business owner overwhelmed, alone with paperwork"
           className="w-full h-full object-cover object-center"
           style={{
@@ -108,7 +108,7 @@ function BeforeAfterImage({ wide = false }: { wide?: boolean }) {
         }}
       >
         <img
-          src="/photos/about-after.jpg"
+          src="/photos/about-after.png"
           alt="Business owner confident, engaged on a video call"
           className="w-full h-full object-cover object-center"
           style={{
