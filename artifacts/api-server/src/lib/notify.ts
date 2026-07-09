@@ -64,7 +64,10 @@ export async function createNotification(
         seen: false,
         sent: false,
       })
+      .onConflictDoNothing()
       .returning({ id: notificationLogTable.id });
+
+    if (!row) return null;
 
     // ── EMAIL SEND HOOK ───────────────────────────────────────────────────────
     // TODO: Replace this log with a real email dispatch to params.recipientEmail.

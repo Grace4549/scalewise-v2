@@ -14,6 +14,7 @@ import FAQ from "@/pages/faq";
 import Contact from "@/pages/contact";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
+import RefundPolicy from "@/pages/refund-policy";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import ForgotPassword from "@/pages/auth/forgot-password";
@@ -86,6 +87,7 @@ function Router() {
           <Route path="/contact" component={Contact} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />
+          <Route path="/refund-policy" component={RefundPolicy} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/forgot-password" component={ForgotPassword} />

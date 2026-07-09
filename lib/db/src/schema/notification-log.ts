@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { bookingsTable } from "./bookings";
 import { usersTable } from "./users";
 
@@ -10,6 +10,7 @@ export const NOTIFICATION_TYPES = [
   "client_rescheduled",
   "expert_cancelled",
   "expert_reschedule_requested",
+  "client_no_show",
 ] as const;
 
 export type NotificationType = typeof NOTIFICATION_TYPES[number];
@@ -28,6 +29,9 @@ export const notificationLogTable = pgTable("notification_log", {
   sent: boolean("sent").notNull().default(false),
   sentAt: timestamp("sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  uniqPerBookingRecipientType: uniqueIndex("notification_log_booking_recipient_type_uidx")
+    .on(table.bookingId, table.recipientUserId, table.notificationType),
+}));
 
 export type NotificationLog = typeof notificationLogTable.$inferSelect;

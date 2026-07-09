@@ -80,7 +80,7 @@ export function AnnouncementBanner({ inline }: { inline?: boolean } = {}) {
       style={{ backgroundColor: "#88CFA8", color: "#0f3d25" }}
     >
       <p className="font-medium leading-tight flex-1 min-w-[200px]" style={{ color: "#0f3d25" }}>
-        🚧 ScaleWise is still being built. If something looks unfinished, that's because it is — we're working on it.
+        Welcome to ScaleWise. We are currently finalizing our premium platform, so you may notice a few features still under construction. Please leave your email address below, and we will gladly notify you the moment we officially launch.
       </p>
 
       <div className="flex items-center gap-2 flex-shrink-0">

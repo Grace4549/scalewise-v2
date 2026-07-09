@@ -11,7 +11,7 @@ export default function Privacy() {
       <ul>
         <li><strong>Personal Data:</strong> Personally identifiable information, such as your name, shipping address, email address, and telephone number, and demographic information that you voluntarily give to us when you register with the Site.</li>
         <li><strong>Professional Data:</strong> Business names, industry details, and challenges shared during sessions.</li>
-        <li><strong>Financial Data:</strong> Financial information, such as data related to your payment method (e.g., valid credit card number, card brand, expiration date) that we may collect when you purchase, order, return, exchange, or request information about our services.</li>
+        <li><strong>Financial Data:</strong> Financial information related to your M-Pesa payment, such as your M-Pesa number and transaction reference, collected when you complete a booking or payment on the platform.</li>
       </ul>
 
       <h2>2. Use of Your Information</h2>

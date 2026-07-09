@@ -31,6 +31,7 @@ export const bookingsTable = pgTable("bookings", {
   rescheduledBy: text("rescheduled_by", { enum: ["client", "expert", "admin"] }),
   rescheduledFromTime: timestamp("rescheduled_from_time", { withTimezone: true }),
   rescheduledAt: timestamp("rescheduled_at", { withTimezone: true }),
+  rescheduleCount: integer("reschedule_count").notNull().default(0),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({ id: true, createdAt: true, status: true, meetLink: true });

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   useGetExpertDashboard, useUpdateBookingStatus,
   useExpertCancelBooking, useRequestReschedule,
@@ -562,6 +562,24 @@ export default function ExpertDashboard() {
   const updateStatus = useUpdateBookingStatus();
   const expertCancel = useExpertCancelBooking();
   const requestReschedule = useRequestReschedule();
+  const markNoShow = useMutation({
+    mutationFn: async (bookingId: number) => {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/bookings/${bookingId}/mark-no-show`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Failed to mark as no-show");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getGetExpertDashboardQueryKey() });
+      toast({ title: "Session marked as no-show. Client will be notified and refunded per policy." });
+    },
+    onError: (err: Error) => toast({ title: "Failed to mark as no-show", description: err.message, variant: "destructive" }),
+  });
   const markSeen = useMarkNotificationSeen();
 
   const { toast } = useToast();
@@ -757,10 +775,28 @@ export default function ExpertDashboard() {
                       <Button size="sm" className="hover:opacity-90"
                         style={{ backgroundColor: C.green, color: "#1a5730" }}
                         onClick={() => handleStatusUpdate(booking.id, "completed")}>Mark Completed</Button>
-                      {new Date() >= new Date(booking.scheduledTime) && (
-                        <Button size="sm" variant="ghost"
-                          onClick={() => handleStatusUpdate(booking.id, "no-show")}>No-show</Button>
-                      )}
+                      {(() => {
+                        const minutesSinceStart = (Date.now() - new Date(booking.scheduledTime).getTime()) / 60_000;
+                        const minutesRemaining = Math.ceil(15 - minutesSinceStart);
+                        if (minutesSinceStart >= 15) {
+                          return (
+                            <Button size="sm" variant="ghost" className="text-orange-600 hover:bg-orange-50"
+                              disabled={markNoShow.isPending}
+                              onClick={() => markNoShow.mutate(booking.id)}>
+                              Mark No-Show
+                            </Button>
+                          );
+                        }
+                        if (minutesSinceStart > 0 && minutesSinceStart < 15) {
+                          return (
+                            <Button size="sm" variant="ghost" disabled className="opacity-50 text-orange-600"
+                              title={`Available in ${minutesRemaining} min`}>
+                              No-Show (in {minutesRemaining}m)
+                            </Button>
+                          );
+                        }
+                        return null;
+                      })()}
                       <Button size="sm" variant="outline"
                         className="border-amber-200 text-amber-700 hover:bg-amber-50"
                         onClick={() => { setRescheduleReqBookingId(booking.id); setRescheduleReason(""); }}>
@@ -831,10 +867,10 @@ export default function ExpertDashboard() {
             <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
               <div className="p-6 border-b" style={{ backgroundColor: "#f59e0b10" }}>
                 <h2 className="text-xl font-semibold" style={{ color: "#b45309" }}>
-                  Cancellation Earnings ({(dashboard.cancelledWithEarnings ?? []).length})
+                  Client Compensation Earnings ({(dashboard.cancelledWithEarnings ?? []).length})
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Bookings cancelled by clients — you keep a portion per our policy. ScaleWise will send these via M-Pesa.
+                  Sessions cancelled by clients or marked as no-show — you keep a portion per our policy. ScaleWise will send these via M-Pesa.
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -846,28 +882,33 @@ export default function ExpertDashboard() {
                       <th className="px-6 py-3">Date</th>
                       <th className="px-6 py-3">Session Amount</th>
                       <th className="px-6 py-3">Client Refund</th>
-                      <th className="px-6 py-3">Your Earnings</th>
-                      <th className="px-6 py-3">Cancelled By</th>
+                      <th className="px-6 py-3">Your Compensation</th>
+                      <th className="px-6 py-3">Reason</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {(dashboard.cancelledWithEarnings ?? []).map((b: any) => (
-                      <tr key={b.id} className="hover:bg-muted/10">
-                        <td className="px-6 py-3 font-medium">{b.clientName ?? "—"}</td>
-                        <td className="px-6 py-3 capitalize">{b.sessionType.replace(/_/g, " ")}</td>
-                        <td className="px-6 py-3">{new Date(b.scheduledTime).toLocaleDateString()}</td>
-                        <td className="px-6 py-3">{b.amount ? `KES ${b.amount.toLocaleString()}` : "—"}</td>
-                        <td className="px-6 py-3 text-muted-foreground">
-                          {b.refundAmount != null ? `KES ${b.refundAmount.toFixed(0)} (${b.refundPercent}%)` : "—"}
-                        </td>
-                        <td className="px-6 py-3 font-semibold" style={{ color: "#b45309" }}>
-                          KES {b.expertCancellationEarning?.toFixed(0) ?? "—"}
-                        </td>
-                        <td className="px-6 py-3 capitalize text-muted-foreground">
-                          {b.cancelledBy ?? "no-show"}
-                        </td>
-                      </tr>
-                    ))}
+                    {(dashboard.cancelledWithEarnings ?? []).map((b: any) => {
+                      const isNoShow = b.status === "no-show" || b.cancelledBy === "no-show";
+                      return (
+                        <tr key={b.id} className="hover:bg-muted/10">
+                          <td className="px-6 py-3 font-medium">{b.clientName ?? "—"}</td>
+                          <td className="px-6 py-3 capitalize">{b.sessionType.replace(/_/g, " ")}</td>
+                          <td className="px-6 py-3">{new Date(b.scheduledTime).toLocaleDateString()}</td>
+                          <td className="px-6 py-3">{b.amount ? `KES ${b.amount.toLocaleString()}` : "—"}</td>
+                          <td className="px-6 py-3 text-muted-foreground">
+                            {b.refundAmount != null ? `KES ${b.refundAmount.toFixed(0)} (${b.refundPercent}%)` : "—"}
+                          </td>
+                          <td className="px-6 py-3 font-semibold" style={{ color: "#b45309" }}>
+                            KES {b.expertCancellationEarning?.toFixed(0) ?? "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 ${isNoShow ? "bg-orange-100 text-orange-700" : "bg-amber-100 text-amber-700"}`}>
+                              {isNoShow ? "No-Show Compensation" : "Cancellation Compensation"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -230,6 +230,7 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
               <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/refund-policy" className="hover:text-foreground transition-colors">Cancellation &amp; Refund Policy</Link></li>
             </ul>
 
             <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mblue }}>Support</h4>

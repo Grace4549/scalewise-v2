@@ -1,0 +1,30 @@
+Implement the following as real, working backend logic connected to the database. Every rule must be enforced server-side, not just in the frontend UI, to prevent any possibility of manipulation.
+1. Payment — M-Pesa only:
+Remove all references to Airtel Money, card payments, Visa, Mastercard, or any other payment method from every page, component, email template, confirmation message, and database field across the entire platform. ScaleWise currently accepts M-Pesa only. Update all copy, UI elements, and backend payment handling to reflect this exclusively. Every instance of "M-Pesa, Airtel Money, and card" or similar must be changed to "M-Pesa" only.
+2. No booking without payment:
+A booking record must only be created in the database once an M-Pesa payment has been successfully confirmed. If payment has not completed, no booking record, session record, or notification should be generated anywhere in the system, not in the client dashboard, not in the expert dashboard, and not in the admin dashboard. Remove any existing behavior that creates an "awaiting payment" booking entry.
+3. Refund calculation logic:
+Implement the following exact refund outcomes for every cancellation scenario, calculated automatically server-side based on who cancels and when, relative to the session start time:
+
+Client cancels more than 24 hours before session start: client receives 100% refund, expert receives nothing, platform keeps nothing
+Client cancels less than 24 hours before session start: client receives 75% refund, expert receives 20% of the session fee as cancellation compensation, platform keeps 5%
+Client no-show (client does not join within 15 minutes of session start with no prior contact): client receives 50% refund, expert receives 35% of the session fee as no-show compensation, platform keeps 15%
+Expert cancels for any reason including cancelling a rescheduled session: client receives 100% refund automatically, expert receives nothing, platform keeps nothing
+
+Important: The client's refund UI and confirmation emails must only show the client's refund amount. Do not show clients what the expert receives or what the platform keeps under any circumstances. The full breakdown is visible only in the Admin Dashboard refund management section and the Expert Dashboard earnings section (where experts see only their own share, not the client's or platform's).
+4. Reschedule lockout:
+Prevent clients from rescheduling any booking whose session start time is less than 24 hours away. If attempted, show this message: "Rescheduling is no longer available for this session as it starts within 24 hours. You may cancel instead, subject to our Cancellation and Refund Policy."
+5. Reschedule limit:
+Allow a maximum of 3 reschedules per booking. Track the reschedule count for every booking in the database. Once a booking reaches 3 reschedules, disable the reschedule option and show this message: "This booking has reached the maximum number of reschedules. Only cancellation is now available."
+6. Refund anchor rule:
+When calculating a client's refund tier after a cancellation, always use whichever session time came first, the original booking time or the most recent rescheduled time, not the most recent rescheduled time alone. Store both the original session time and all rescheduled times in the database so this calculation is always accurate.
+7. No-show detection and marking:
+Since real-time Google Meet join detection requires additional integration, implement an interim solution: give the expert a Mark as No-Show button in their Expert Dashboard that becomes available exactly 15 minutes after the session start time, and disappears once the session is marked as completed. When clicked, apply the no-show refund split automatically, add the expert's 35% share to their earnings as No-Show Compensation, notify the client via email (logged for now, sent once email integration is active) and a visible notification in the Client Dashboard, and update the booking status to No-Show in the Admin Dashboard.
+8. Expert cancellation compensation display:
+When a client cancels less than 24 hours before a session or is a no-show, automatically add the expert's share to their pending earnings balance in the Expert Dashboard, clearly labeled as Cancellation Compensation or No-Show Compensation so it is distinguishable from regular session earnings.
+9. Refund timeline:
+The system should not promise or display a specific refund timeline to clients, since refunds are processed manually. Instead, show this message on all refund confirmations: "Your refund will be processed within 72 business hours. If you do not receive it within that time, please contact us through the Contact page."
+10. Admin Dashboard refund management:
+Display every pending refund case with the exact refund amount owed to the client (calculated automatically from the rules above), the scenario type (late cancel, no-show, expert cancel, early cancel), and the client's M-Pesa number or payment reference. Show the Process Refund button and the Refund Done button. Once Refund Done is clicked, update the booking status, the client's booking history, and all relevant balances automatically.
+11. Create a dedicated Cancellation and Refund Policy page:
+Add a new page at the route /refund-policy containing the full written policy provided separately. Link to this page from the FAQ answer about session cancellations, from the booking confirmation flow, from the cancellation and reschedule UI whenever a client or expert initiates either action, and from the footer. The page must be publicly accessible without login.

@@ -78,23 +78,27 @@ function calcRefund(
   // an imminent session to the future before cancelling.
   const refundAnchorTime = effectiveScheduledTime ?? scheduledTime;
   if (wasNoShow) {
+    // Client no-show: 50% refund, expert receives 35%, platform keeps 15%
     return {
       refundPercent: 50,
       refundAmount: amount * 0.5,
-      expertCancellationEarning: amount * 0.30,
+      expertCancellationEarning: amount * 0.35,
     };
   }
   if (cancelledBy === "expert" || cancelledBy === "admin") {
+    // Expert cancels: 100% refund to client, expert receives nothing
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
   }
   const hoursUntil = (refundAnchorTime.getTime() - Date.now()) / 3600000;
   if (hoursUntil > 24) {
+    // Client cancels >24h before: 100% refund, expert receives nothing
     return { refundPercent: 100, refundAmount: amount, expertCancellationEarning: 0 };
   }
+  // Client cancels <24h before: 75% refund, expert receives 20%, platform keeps 5%
   return {
     refundPercent: 75,
     refundAmount: amount * 0.75,
-    expertCancellationEarning: amount * 0.15,
+    expertCancellationEarning: amount * 0.20,
   };
 }
 
@@ -179,6 +183,8 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const meetLink = generateMeetLink();
+
   const [booking] = await db
     .insert(bookingsTable)
     .values({
@@ -188,13 +194,33 @@ router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
       scheduledTime: newStart,
       durationMinutes,
       notes: notes ?? null,
-      meetLink: null,
+      meetLink,
       amount,
-      status: "pending_payment",
+      status: "upcoming",
     })
     .returning();
 
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
+
+  // Notify the expert of the new booking
+  if (expert.userId) {
+    await createNotification({
+      bookingId: booking.id,
+      recipientUserId: expert.userId,
+      notificationType: "client_rescheduled",
+      recipientEmail: expert.email,
+      recipientName: expert.name,
+      payload: {
+        title: "New Booking Confirmed",
+        body: `${client.name} has booked a ${sessionType.replace(/_/g, " ")} session with you on ${newStart.toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}.`,
+        sessionStart: newStart.toISOString(),
+        sessionType,
+        otherPartyName: client.name,
+        meetLink,
+      },
+    });
+  }
+
   res.status(201).json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }, false));
 });
 
@@ -374,13 +400,20 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
   } else {
     if (booking.clientId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
     actor = "client";
+
+    // Clients may reschedule at most 3 times per booking.
+    if ((booking.rescheduleCount ?? 0) >= 3) {
+      res.status(422).json({ error: "This booking has reached the maximum number of reschedules. Only cancellation is now available." });
+      return;
+    }
+
     // Clients may not reschedule a booking that starts within 24 hours — the
     // same window used by the late-cancellation refund policy. This prevents
     // the exploit of rescheduling an imminent session to the future to obtain
     // a full refund instead of the intended 75% late-cancellation refund.
     const hoursUntilSession = (booking.scheduledTime.getTime() - Date.now()) / 3600000;
     if (hoursUntilSession < 24) {
-      res.status(422).json({ error: "Bookings that start within 24 hours cannot be rescheduled. Please contact the expert directly." });
+      res.status(422).json({ error: "Rescheduling is no longer available for this session as it starts within 24 hours. You may cancel instead, subject to our Cancellation and Refund Policy." });
       return;
     }
   }
@@ -408,13 +441,23 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
     return;
   }
 
+  // Preserve the earliest known session time for refund anchor purposes.
+  // If the booking was already rescheduled, keep whichever time is earlier
+  // (original or the previously stored rescheduledFromTime) so multiple
+  // reschedules cannot progressively erase the refund liability anchor.
+  const earliestKnownTime =
+    booking.rescheduledFromTime
+      ? new Date(Math.min(booking.scheduledTime.getTime(), booking.rescheduledFromTime.getTime()))
+      : booking.scheduledTime;
+
   const [updated] = await db
     .update(bookingsTable)
     .set({
       scheduledTime: newStart,
       rescheduledBy: actor,
-      rescheduledFromTime: booking.scheduledTime,
+      rescheduledFromTime: earliestKnownTime,
       rescheduledAt: new Date(),
+      rescheduleCount: (booking.rescheduleCount ?? 0) + 1,
     })
     .where(eq(bookingsTable.id, id))
     .returning();
@@ -440,6 +483,78 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
       },
     });
   }
+
+  res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
+});
+
+// ── EXPERT MARK AS NO-SHOW ────────────────────────────────────────────────────
+// Expert can mark a booking as no-show if the client has not joined within
+// 15 minutes of the session start time. Only available after the 15-minute
+// window has elapsed and before the booking is completed/cancelled.
+router.post("/bookings/:id/mark-no-show", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (booking.status !== "upcoming") {
+    res.status(409).json({ error: "Only upcoming bookings can be marked as no-show" });
+    return;
+  }
+
+  // Must be at least 15 minutes after session start
+  const minutesSinceStart = (Date.now() - booking.scheduledTime.getTime()) / 60_000;
+  if (minutesSinceStart < 15) {
+    const minutesRemaining = Math.ceil(15 - minutesSinceStart);
+    res.status(422).json({ error: `You can mark this as a no-show in ${minutesRemaining} minute${minutesRemaining === 1 ? "" : "s"}.` });
+    return;
+  }
+
+  if (!booking.amount) {
+    res.status(422).json({ error: "Booking has no amount recorded" });
+    return;
+  }
+
+  const ref = calcRefund(booking.amount, "client", booking.scheduledTime, true);
+
+  const [updated] = await db
+    .update(bookingsTable)
+    .set({
+      status: "no-show",
+      refundStatus: "pending",
+      refundPercent: ref.refundPercent,
+      refundAmount: ref.refundAmount,
+      expertCancellationEarning: ref.expertCancellationEarning,
+    })
+    .where(eq(bookingsTable.id, id))
+    .returning();
+
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+
+  // Notify the client
+  await createNotification({
+    bookingId: booking.id,
+    recipientUserId: booking.clientId,
+    notificationType: "client_no_show",
+    recipientEmail: client.email,
+    recipientName: client.name,
+    payload: {
+      title: "Session Marked as No-Show",
+      body: `Your ${booking.sessionType.replace(/_/g, " ")} session with ${expert.name} has been marked as a no-show. You will receive a refund of KES ${ref.refundAmount.toLocaleString()} (${ref.refundPercent}%). Your refund will be processed within 72 business hours.`,
+      sessionStart: booking.scheduledTime.toISOString(),
+      sessionType: booking.sessionType,
+      otherPartyName: expert.name,
+      refundAmount: ref.refundAmount,
+      refundPercent: ref.refundPercent,
+    },
+  });
 
   res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
 });
