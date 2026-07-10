@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@workspace/db";
 import { and, eq, ilike, or, sql, inArray, isNotNull } from "drizzle-orm";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { publicWriteLimiter, searchSuggestionsLimiter } from "../lib/limiters";
 import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
 

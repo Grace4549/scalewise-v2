@@ -5,11 +5,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Messages() {
   const { bookingId: bookingIdStr } = useParams();
   const bookingId = parseInt(bookingIdStr!);
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
   
   const { data: booking, isLoading: bookingLoading } = useGetBooking(bookingId);
   const { data: messages, isLoading: messagesLoading, refetch } = useListMessages(bookingId);
@@ -39,7 +41,19 @@ export default function Messages() {
       onSuccess: () => {
         setText("");
         refetch();
-      }
+      },
+      onError: (err: any) => {
+        const body = err?.body ?? err?.response?.data ?? {};
+        if (body?.error === "EMAIL_NOT_VERIFIED") {
+          toast({
+            title: "Email not verified",
+            description: "Please verify your email address before sending messages.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Failed to send message", description: err?.message ?? "Please try again.", variant: "destructive" });
+        }
+      },
     });
   };
 

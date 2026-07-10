@@ -91,11 +91,11 @@ paths:
               $ref: "#/components/schemas/RegisterInput"
       responses:
         "201":
-          description: Registered
+          description: Account created — verification email sent
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                $ref: "#/components/schemas/RegisterPending"
         "400":
           description: Bad request
 
@@ -143,6 +143,44 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           description: Not authenticated
+
+  /auth/verify-email:
+    post:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Verify email address using token from verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailInput"
+      responses:
+        "200":
+          description: Email verified — user is now logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid token
+        "410":
+          description: Token expired
+
+  /auth/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [auth]
+      summary: Resend the email verification link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationInput"
+      responses:
+        "200":
+          description: Verification email queued
 
   /experts:
     get:
@@ -1140,7 +1178,7 @@ components:
 
     User:
       type: object
-      required: [id, email, name, role, createdAt]
+      required: [id, email, name, role, emailVerified, createdAt]
       properties:
         id:
           type: integer
@@ -1151,6 +1189,8 @@ components:
         role:
           type: string
           enum: [client, expert, admin]
+        emailVerified:
+          type: boolean
         avatarUrl:
           type: ["string", "null"]
         bio:
@@ -1191,6 +1231,31 @@ components:
       properties:
         user:
           $ref: "#/components/schemas/User"
+
+    RegisterPending:
+      type: object
+      required: [pending, email]
+      properties:
+        pending:
+          type: boolean
+        email:
+          type: string
+          description: The email address where the verification link was sent
+
+    VerifyEmailInput:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: The raw verification token from the email link
+
+    ResendVerificationInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
 
     Expert:
       type: object

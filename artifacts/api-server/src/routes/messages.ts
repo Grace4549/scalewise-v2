@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, messagesTable, bookingsTable, usersTable, expertsTable } from "@workspace/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { SendMessageBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -216,7 +216,7 @@ router.get("/messages/:bookingId", requireAuth, async (req, res): Promise<void> 
   res.json(messages.map((m) => formatMessage(m, senderMap)));
 });
 
-router.post("/messages/:bookingId", requireAuth, async (req, res): Promise<void> => {
+router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
   const bookingId = parseInt(raw, 10);
   if (isNaN(bookingId)) { res.status(400).json({ error: "Invalid bookingId" }); return; }

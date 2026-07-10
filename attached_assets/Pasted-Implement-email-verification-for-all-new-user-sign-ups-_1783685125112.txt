@@ -1,0 +1,23 @@
+Implement email verification for all new user sign-ups, for both clients and experts, with the following exact behavior:
+
+1. Sign-up flow with verification: When a new user completes the sign-up form (name, email, password, and role selection), create their account in the database immediately but mark it as unverified with a field called email_verified set to false. Do not send the user to their dashboard yet. Instead, show a confirmation screen saying: "Almost there. We have sent a verification link to your email address. Please check your inbox and click the link to activate your account. The link expires in 24 hours."
+
+2. Verification email: Immediately after sign-up, send a verification email to the user's email address containing a unique, secure, time-limited verification link. The link should expire after 24 hours. The email should be friendly and on-brand, with this content:
+
+Subject: "Confirm your ScaleWise account"
+
+Body: "Hi [Name], welcome to ScaleWise. You are one step away from accessing the platform. Click the button below to verify your email address and activate your account. [Verify My Account — button linking to the verification URL] This link expires in 24 hours. If you did not create a ScaleWise account, you can safely ignore this email."
+
+Since email sending is not yet integrated, log this verification email in the notification_log table with the recipient email, the verification link, and a sent status of false, exactly as we have done for other email notifications. Clearly comment the code to show where the email sending call should be added once email integration is active.
+
+3. Verification link behavior: When a user clicks their verification link, check that it is valid and has not expired. If valid, set email_verified to true on their account, log them in automatically, and redirect them to their appropriate dashboard (client or expert). Show a success message: "Your email has been verified. Welcome to ScaleWise." If the link has expired, show a message: "This verification link has expired. Click below to request a new one." with a Resend Verification Email button that generates and logs a fresh link.
+
+4. Restrictions for unverified accounts: Unverified users may browse the platform and view expert profiles, but must not be able to book a session, send messages, submit a review, or submit an expert application. If an unverified user attempts any of these actions, show this message: "Please verify your email address first. Check your inbox for the verification link we sent when you signed up, or click below to resend it." with a Resend Verification Email button.
+
+5. Expert verification flow: For users who sign up as experts, email verification is the first step. After verifying their email, they are directed to complete and submit their expert application form. The application then enters the admin approval queue as already built. They only appear publicly on the platform once both email verification, admin approval are complete and expert has submitted the link provided by the admin after approval.
+
+6. Resend verification email: Add a Resend Verification Email option accessible from the login page for users who cannot find their original verification email. This generates a new unique link, invalidates the previous one, logs it in the notification_log, and shows a confirmation message: "A new verification link has been sent to your email address."
+
+7. Login behavior for unverified accounts: If a user who has not yet verified their email attempts to log in, do not show them their dashboard. Instead show this message: "Your email address has not been verified yet. Please check your inbox for the verification link, or click below to resend it." with a Resend Verification Email button. This prevents unverified accounts from accessing any platform functionality through the login route.
+
+Implement all verification logic server-side with secure token generation (use a cryptographically random token stored in the database alongside the expiry time, not a predictable or guessable value). Do not rely on frontend-only checks for any of the access restrictions above.

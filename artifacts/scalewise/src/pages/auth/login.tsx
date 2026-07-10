@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLogin } from "@workspace/api-client-react";
+import { useLogin, useResendVerification } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,44 +11,109 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { MailOpen, Loader2 } from "lucide-react";
 
-const P = { blue: "#6395EE", mgreen: "#88CFA8" };
+const P = { blue: "#6395EE", mgreen: "#88CFA8", mint: "#85DECB" };
 
 const loginSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(1, "Password is required"),
 });
 
-export default function Login() {
-  const login        = useLogin();
-  const { refetch }  = useAuth();
-  const [, setLocation] = useLocation();
-  const { toast }    = useToast();
-  const queryClient  = useQueryClient();
+function UnverifiedEmailBanner({ email }: { email: string }) {
+  const resendMutation = useResendVerification();
+  const [resent, setResent] = useState(false);
 
-  const params      = new URLSearchParams(window.location.search);
-  const isExpert    = params.get("role") === "expert";
+  const handleResend = () => {
+    resendMutation.mutate(
+      { data: { email } },
+      { onSuccess: () => setResent(true) }
+    );
+  };
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center p-4">
+      <div className="w-full max-w-md p-8 rounded-3xl bg-card border shadow-lg text-center space-y-5">
+        <MailOpen className="mx-auto w-14 h-14" style={{ color: P.blue }} />
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold"
+          style={{ background: P.blue + "18", color: P.blue }}
+        >
+          Email Not Verified
+        </div>
+        <h1 className="text-2xl font-bold">Please verify your email</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Your account email <strong>{email}</strong> has not been verified yet.
+          Check your inbox for the verification link we sent when you registered.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Can't find it? Check your spam folder, or request a new link below.
+        </p>
+
+        {resent ? (
+          <p className="text-sm font-medium" style={{ color: P.mgreen }}>
+            ✓ Verification email re-sent — check your inbox!
+          </p>
+        ) : (
+          <Button
+            className="w-full"
+            style={{ background: P.blue }}
+            disabled={resendMutation.isPending}
+            onClick={handleResend}
+          >
+            {resendMutation.isPending ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+            ) : (
+              "Resend Verification Email"
+            )}
+          </Button>
+        )}
+
+        <Button variant="outline" className="w-full" asChild>
+          <Link href="/login">← Back to Login</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default function Login() {
+  const login           = useLogin();
+  const { refetch }     = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast }       = useToast();
+  const queryClient     = useQueryClient();
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+
+  const params   = new URLSearchParams(window.location.search);
+  const isExpert = params.get("role") === "expert";
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver:      zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
+  if (unverifiedEmail) {
+    return <UnverifiedEmailBanner email={unverifiedEmail} />;
+  }
+
   const onSubmit = (data: z.infer<typeof loginSchema>) => {
     login.mutate({ data }, {
       onSuccess: (res) => {
         const role = (res as any)?.user?.role;
-        // Clear the entire cache before setting the new identity so no
-        // previously-cached authenticated data (bookings, inbox, dashboard)
-        // leaks to the newly-signed-in account.
         queryClient.clear();
         queryClient.setQueryData(getGetMeQueryKey(), (res as any)?.user ?? null);
         refetch();
-        if (role === "admin")  setLocation("/admin");
-        else if (role === "expert") setLocation("/expert/dashboard");
-        else setLocation("/");
+        if (role === "admin")        setLocation("/admin");
+        else if (role === "expert")  setLocation("/expert/dashboard");
+        else                         setLocation("/");
       },
       onError: (err: any) => {
+        const body = err?.body ?? err?.response?.data ?? {};
+        if (body?.error === "EMAIL_NOT_VERIFIED" && body?.email) {
+          setUnverifiedEmail(body.email);
+          return;
+        }
         toast({
           title:       "Login failed",
           description: err?.message || "Invalid credentials",

@@ -1,17 +1,16 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRegister } from "@workspace/api-client-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link } from "wouter";
-import { useQueryClient } from "@tanstack/react-query";
-import { getGetMeQueryKey } from "@workspace/api-client-react";
+import { useRegister, useResendVerification } from "@workspace/api-client-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { MailOpen, Loader2 } from "lucide-react";
 
-const P = { blue: "#6395EE", mgreen: "#88CFA8" };
+const P = { blue: "#6395EE", mgreen: "#88CFA8", mint: "#85DECB" };
 
 const registerSchema = z.object({
   name:     z.string().min(2, "Name is required"),
@@ -22,12 +21,75 @@ const registerSchema = z.object({
 
 type RegisterData = z.infer<typeof registerSchema>;
 
+function CheckInboxScreen({ email, role }: { email: string; role: "client" | "expert" }) {
+  const resendMutation = useResendVerification();
+  const [resent, setResent] = useState(false);
+
+  const handleResend = () => {
+    resendMutation.mutate(
+      { data: { email } },
+      { onSuccess: () => setResent(true) }
+    );
+  };
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center p-4">
+      <div className="w-full max-w-md p-8 rounded-3xl bg-card border shadow-lg text-center space-y-5">
+        <MailOpen className="mx-auto w-14 h-14" style={{ color: role === "expert" ? P.mgreen : P.blue }} />
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold"
+          style={
+            role === "expert"
+              ? { background: P.mgreen + "18", color: P.mgreen }
+              : { background: P.blue + "18", color: P.blue }
+          }
+        >
+          Check Your Inbox
+        </div>
+        <h1 className="text-2xl font-bold">One more step — verify your email</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          We sent a verification link to <strong>{email}</strong>.
+          Click the link in the email to activate your account.
+          {role === "expert" && " You'll then have full access to your expert dashboard."}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          The link expires in 24 hours. Check your spam folder if you don't see it.
+        </p>
+
+        {resent ? (
+          <p className="text-sm font-medium" style={{ color: P.mgreen }}>
+            ✓ New verification email sent!
+          </p>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={resendMutation.isPending}
+            onClick={handleResend}
+          >
+            {resendMutation.isPending ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+            ) : (
+              "Resend verification email"
+            )}
+          </Button>
+        )}
+
+        <p className="text-sm text-muted-foreground">
+          Already verified?{" "}
+          <Link href="/login" className="font-semibold underline" style={{ color: role === "expert" ? P.mgreen : P.blue }}>
+            Log in →
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function Register() {
   const registerMutation = useRegister();
-  const { refetch }      = useAuth();
-  const [, setLocation]  = useLocation();
   const { toast }        = useToast();
-  const queryClient      = useQueryClient();
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const params      = new URLSearchParams(window.location.search);
   const roleParam   = params.get("role");
@@ -41,22 +103,17 @@ export default function Register() {
     defaultValues: { name: "", email: emailParam, password: "", role },
   });
 
+  if (pendingEmail) {
+    return <CheckInboxScreen email={pendingEmail} role={role} />;
+  }
+
   const onSubmit = (data: RegisterData) => {
     const payload: any = { ...data };
     if (role === "expert" && tokenParam) payload.inviteToken = tokenParam;
     registerMutation.mutate({ data: payload }, {
       onSuccess: (res) => {
-        // Clear the entire cache before setting the new identity so no
-        // previously-cached authenticated data (bookings, inbox, dashboard)
-        // leaks to the newly-registered account.
-        queryClient.clear();
-        queryClient.setQueryData(getGetMeQueryKey(), (res as any).user ?? null);
-        refetch();
-        if (data.role === "expert") {
-          setLocation("/expert/dashboard");
-        } else {
-          setLocation("/");
-        }
+        const pending = res as any;
+        setPendingEmail(pending?.email ?? data.email);
       },
       onError: (err: any) => {
         toast({
@@ -114,7 +171,7 @@ export default function Register() {
                   disabled={registerMutation.isPending}
                   style={{ background: P.mgreen, color: "#083d2e" }}
                 >
-                  {registerMutation.isPending ? "Verifying…" : "Create My Account"}
+                  {registerMutation.isPending ? "Creating account…" : "Create My Account"}
                 </Button>
               </form>
             </Form>

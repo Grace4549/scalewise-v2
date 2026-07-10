@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, bookingsTable, expertsTable, usersTable } from "@workspace/db";
 import { eq, sql, and, not, inArray, lt } from "drizzle-orm";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { generateMeetLink } from "../lib/auth";
 import { CreateBookingBody, UpdateBookingStatusBody } from "@workspace/api-zod";
 import { createNotification } from "../lib/notify";
@@ -134,7 +134,7 @@ function getDurationForSession(sessionType: string): number {
   return sessionType === "discovery" ? 30 : 60;
 }
 
-router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
+router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Promise<void> => {
   const parsed = CreateBookingBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 

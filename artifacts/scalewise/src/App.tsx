@@ -17,6 +17,7 @@ import Terms from "@/pages/terms";
 import RefundPolicy from "@/pages/refund-policy";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
+import VerifyEmail from "@/pages/auth/verify-email";
 import ForgotPassword from "@/pages/auth/forgot-password";
 import ResetPassword from "@/pages/auth/reset-password";
 import ApplyExpert from "@/pages/apply-expert";
@@ -90,6 +91,7 @@ function Router() {
           <Route path="/refund-policy" component={RefundPolicy} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
+          <Route path="/verify-email" component={VerifyEmail} />
           <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/apply-expert" component={ApplyExpert} />

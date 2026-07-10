@@ -30,7 +30,7 @@ export function generateMeetLink(): string {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const session = req.session as { userId?: number; sessionVersion?: number };
+  const session = req.session as { userId?: number; sessionVersion?: number; emailVerified?: boolean };
   const userId = session.userId;
   if (!userId) {
     res.status(401).json({ error: "Not authenticated" });
@@ -48,6 +48,23 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
   req.userRole = user.role;
+  req.userEmailVerified = user.emailVerified;
+  // Cache in session for fast access on subsequent requests
+  if (session.emailVerified === undefined) {
+    session.emailVerified = user.emailVerified;
+  }
+  next();
+}
+
+/**
+ * Requires the authenticated user to have a verified email address.
+ * Must be used after requireAuth (relies on req.userEmailVerified set by requireAuth).
+ */
+export async function requireEmailVerified(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!req.userEmailVerified) {
+    res.status(403).json({ error: "EMAIL_NOT_VERIFIED" });
+    return;
+  }
   next();
 }
 

@@ -65,6 +65,7 @@ export const LoginResponse = zod.object({
   "email": zod.string(),
   "name": zod.string(),
   "role": zod.enum(['client', 'expert', 'admin']),
+  "emailVerified": zod.boolean(),
   "avatarUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "createdAt": zod.string()
@@ -80,9 +81,39 @@ export const GetMeResponse = zod.object({
   "email": zod.string(),
   "name": zod.string(),
   "role": zod.enum(['client', 'expert', 'admin']),
+  "emailVerified": zod.boolean(),
   "avatarUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
   "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Verify email address using token from verification email
+ */
+export const VerifyEmailBody = zod.object({
+  "token": zod.string().describe('The raw verification token from the email link')
+})
+
+export const VerifyEmailResponse = zod.object({
+  "user": zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['client', 'expert', 'admin']),
+  "emailVerified": zod.boolean(),
+  "avatarUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+})
+
+
+/**
+ * @summary Resend the email verification link
+ */
+export const ResendVerificationBody = zod.object({
+  "email": zod.string()
 })
 
 

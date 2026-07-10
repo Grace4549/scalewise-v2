@@ -23,6 +23,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  emailVerified: boolean;
   /** @nullable */
   avatarUrl?: string | null;
   /** @nullable */
@@ -55,6 +56,21 @@ export interface LoginInput {
 
 export interface AuthResponse {
   user: User;
+}
+
+export interface RegisterPending {
+  pending: boolean;
+  /** The email address where the verification link was sent */
+  email: string;
+}
+
+export interface VerifyEmailInput {
+  /** The raw verification token from the email link */
+  token: string;
+}
+
+export interface ResendVerificationInput {
+  email: string;
 }
 
 export type ExpertStatus = typeof ExpertStatus[keyof typeof ExpertStatus];
