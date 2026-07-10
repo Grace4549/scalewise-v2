@@ -17,6 +17,20 @@ const P = {
   mint:   "#85DECB",
 };
 
+// Normalise a URL entered by the user — prepend https:// if no protocol is present
+function normaliseUrl(val: string): string {
+  const trimmed = val.trim();
+  if (!trimmed) return trimmed;
+  if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
+  return trimmed;
+}
+
+const urlFieldSchema = z
+  .string()
+  .transform(normaliseUrl)
+  .pipe(z.string().url("Enter a valid URL (e.g. linkedin.com/in/yourname)").or(z.literal("")))
+  .optional();
+
 const applySchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Valid email is required"),
@@ -26,15 +40,15 @@ const applySchema = z.object({
   headline: z.string().min(10, "Headline is required (min 10 chars)"),
   bio: z.string().min(50, "Bio must be at least 50 characters"),
   skills: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
-  linkedinUrl: z.string().url("Enter a valid LinkedIn URL").optional().or(z.literal("")),
-  socialMediaUrl: z.string().url("Enter a valid social media URL").optional().or(z.literal("")),
+  linkedinUrl: urlFieldSchema,
+  socialMediaUrl: urlFieldSchema,
   discoveryPrice: z.coerce.number().optional(),
   consultancyPrice: z.coerce.number().optional(),
   growthPrice3mo: z.coerce.number().optional(),
   growthPrice6mo: z.coerce.number().optional(),
 }).refine(
   (d) => (d.linkedinUrl && d.linkedinUrl.length > 0) || (d.socialMediaUrl && d.socialMediaUrl.length > 0),
-  { message: "Please provide at least one social media or LinkedIn link for verification.", path: ["linkedinUrl"] }
+  { message: "Please provide at least one link (LinkedIn or social media) so we can verify your background.", path: ["_urlRequired"] }
 );
 
 export default function ApplyExpert() {
@@ -212,20 +226,31 @@ export default function ApplyExpert() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-semibold border-b pb-2 mb-1">Online Presence</h2>
-                <p className="text-sm text-muted-foreground mt-2">These links help us verify your professional background. Please provide at least one.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  These links help us verify your professional background.{" "}
+                  <span className="font-semibold text-foreground">Please provide at least one.</span>
+                  {" "}You can enter the URL with or without <code>https://</code>.
+                </p>
               </div>
+              {/* Cross-field URL error shown prominently */}
+              {(form.formState.errors as any)._urlRequired && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 flex items-start gap-2">
+                  <span className="mt-0.5">⚠️</span>
+                  <span>{(form.formState.errors as any)._urlRequired.message}</span>
+                </div>
+              )}
               <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="linkedinUrl" render={({ field }) => (
                   <FormItem>
                     <FormLabel>LinkedIn Profile</FormLabel>
-                    <FormControl><Input {...field} placeholder="https://linkedin.com/in/yourname" /></FormControl>
+                    <FormControl><Input {...field} placeholder="linkedin.com/in/yourname" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="socialMediaUrl" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Social Media Page <span className="text-muted-foreground font-normal">(Facebook, Instagram or TikTok)</span></FormLabel>
-                    <FormControl><Input {...field} placeholder="https://instagram.com/yourbusiness" /></FormControl>
+                    <FormControl><Input {...field} placeholder="instagram.com/yourbusiness" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -267,6 +292,12 @@ export default function ApplyExpert() {
                 )} />
               </div>
             </div>
+
+            {Object.keys(form.formState.errors).length > 0 && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                ⚠️ Please fix the highlighted errors above before submitting.
+              </div>
+            )}
 
             <Button type="submit" size="lg" className="w-full text-lg" disabled={applyAsExpert.isPending}
               style={{ background: P.blue }}>
