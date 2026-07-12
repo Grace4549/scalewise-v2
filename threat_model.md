@@ -28,7 +28,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 ## Scan Anchors
 
 - **Production entry points:** `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/api-server/src/routes/*.ts`, `artifacts/scalewise/src/App.tsx`.
-- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers and expert-account registration in `artifacts/api-server/src/routes/auth.ts`, expert application and public profile handlers in `artifacts/api-server/src/routes/experts.ts`, booking creation and lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, and route handlers for `messages`, `reviews`, and `admin`.
+- **Highest-risk code areas:** session/auth logic in `artifacts/api-server/src/lib/auth.ts`, API middleware in `artifacts/api-server/src/app.ts`, password-reset handlers and expert-account registration in `artifacts/api-server/src/routes/auth.ts`, expert application and public profile handlers in `artifacts/api-server/src/routes/experts.ts`, booking creation and lifecycle transitions in `artifacts/api-server/src/routes/bookings.ts`, transactional email rendering in `artifacts/api-server/src/lib/email.ts`, public availability exposure in `artifacts/api-server/src/routes/availability.ts`, and route handlers for `messages`, `reviews`, and `admin`.
 - **Public surfaces:** `/api/auth/login`, `/api/auth/register`, `/api/experts*`, `/api/reviews*`, `/api/healthz`, and the public frontend pages.
 - **Public write/abuse-sensitive surfaces:** `/api/auth/forgot-password`, `/api/experts/apply`, `POST /api/reviews`, `POST /api/launch/subscribe`, and public search/listing endpoints under `/api/experts*`.
 - **Authenticated surfaces:** `/api/auth/me`, `/api/bookings*`, `/api/messages*`, `/api/reviews/verified`, `/api/expert/*`, `/api/admin/*`.
@@ -60,6 +60,8 @@ Booking rescheduling and cancellation are part of the same money-flow boundary. 
 The platform stores personal data, private messages, meet links, booking notes, and admin-only financial information. API responses must be scoped to the requesting user’s role and relationship to the resource. Public endpoints must not leak internal identifiers, hidden business data, or admin/expert-only financial details beyond what the product intentionally publishes.
 
 Frontend cache isolation is also part of this category: dashboards, inboxes, booking objects, and admin views must not be reusable across account switches inside the same SPA tab.
+
+Expert visibility boundaries are part of the same category. Public availability data for experts must obey the same visibility and booking-state rules as public expert profiles; hidden or non-bookable experts must not continue exposing future schedule data through separate availability endpoints.
 
 ### Denial of Service
 
