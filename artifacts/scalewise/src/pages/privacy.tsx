@@ -30,7 +30,7 @@ export default function Privacy() {
 
       <h2>4. Contact Us</h2>
       <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
-      <p><a href="mailto:hello@scalewise.co.ke">hello@scalewise.co.ke</a></p>
+      <p><a href="mailto:hello@scalewise.co.ke?subject=Privacy%20Enquiry%20-%20ScaleWise">hello@scalewise.co.ke</a></p>
     </div>
   );
 }

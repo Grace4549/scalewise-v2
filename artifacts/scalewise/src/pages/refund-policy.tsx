@@ -19,29 +19,17 @@ function Section({ title, color, children }: { title: string; color: string; chi
   );
 }
 
-function PolicyCard({ scenario, client, expert, platform, note }: {
+function PolicyCard({ scenario, client, note }: {
   scenario: string;
   client: string;
-  expert: string;
-  platform: string;
   note?: string;
 }) {
   return (
     <div className="rounded-2xl border p-5 mb-4" style={{ borderColor: P.blue + "20" }}>
       <p className="font-semibold text-sm mb-3 text-foreground">{scenario}</p>
-      <div className="grid grid-cols-3 gap-3 text-center text-sm">
-        <div className="rounded-xl py-3 px-2" style={{ background: P.mgreen + "15" }}>
-          <div className="text-xs text-muted-foreground mb-1">Client receives</div>
-          <div className="font-bold text-base" style={{ color: P.mgreen }}>{client}</div>
-        </div>
-        <div className="rounded-xl py-3 px-2" style={{ background: P.blue + "10" }}>
-          <div className="text-xs text-muted-foreground mb-1">Expert receives</div>
-          <div className="font-bold text-base" style={{ color: P.blue }}>{expert}</div>
-        </div>
-        <div className="rounded-xl py-3 px-2" style={{ background: P.mblue + "15" }}>
-          <div className="text-xs text-muted-foreground mb-1">Platform keeps</div>
-          <div className="font-bold text-base" style={{ color: P.mblue }}>{platform}</div>
-        </div>
+      <div className="rounded-xl py-3 px-4 flex items-center gap-4" style={{ background: P.mgreen + "18" }}>
+        <div className="text-xs text-muted-foreground shrink-0">You receive</div>
+        <div className="font-bold text-lg" style={{ color: P.mgreen }}>{client}</div>
       </div>
       {note && <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{note}</p>}
     </div>
@@ -85,32 +73,24 @@ export default function RefundPolicy() {
           <PolicyCard
             scenario="Client cancels more than 24 hours before session start"
             client="100% refund"
-            expert="Nothing"
-            platform="Nothing"
             note="Full refund, no questions asked. Cancel at least 24 hours in advance to receive your full payment back."
           />
 
           <PolicyCard
             scenario="Client cancels less than 24 hours before session start"
             client="75% refund"
-            expert="20% compensation"
-            platform="5%"
-            note="The expert reserved the time for you and prepared for your session. 20% of the session fee is paid to them as compensation for the reserved slot."
+            note="The expert reserved the time for you and prepared for your session. Cancelling within 24 hours forfeits 25% of the session fee."
           />
 
           <PolicyCard
             scenario="Client no-show (does not join within 15 minutes, no prior contact)"
             client="50% refund"
-            expert="35% compensation"
-            platform="15%"
             note="A no-show is recorded when you do not join within 15 minutes of the scheduled start time and have not contacted your expert or our team in advance. If you know you will be late, message your expert through the platform inbox before the session starts."
           />
 
           <PolicyCard
             scenario="Expert cancels for any reason"
             client="100% refund"
-            expert="Nothing"
-            platform="Nothing"
             note="If your expert cancels for any reason — including cancelling a rescheduled session — you receive a full 100% refund automatically. No questions asked."
           />
         </Section>

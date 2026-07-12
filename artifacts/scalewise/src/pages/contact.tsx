@@ -16,7 +16,7 @@ const CONTACT_OPTIONS = [
     title: "Email Us",
     desc: "For general enquiries, billing, or account support.",
     action: "hello@scalewise.co.ke",
-    href: "mailto:hello@scalewise.co.ke",
+    href: "mailto:hello@scalewise.co.ke?subject=Enquiry%20-%20ScaleWise",
     cta: "Send an Email",
   },
   {
@@ -129,7 +129,7 @@ export default function Contact() {
               <p className="text-muted-foreground mb-6">
                 Our team reads every message and will get back to you as soon as possible.
               </p>
-              <a href="mailto:hello@scalewise.co.ke" className="block">
+              <a href="mailto:hello@scalewise.co.ke?subject=Enquiry%20-%20ScaleWise" className="block">
                 <Button size="lg" className="rounded-xl px-8 h-13 text-lg w-full" style={{ background: P.blue }}>
                   Send Us an Email
                 </Button>

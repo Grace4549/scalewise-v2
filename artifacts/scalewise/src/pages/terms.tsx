@@ -31,7 +31,7 @@ export default function Terms() {
 
       <h2>7. Contact Information</h2>
       <p>If you have any questions about these Terms, please contact us at:</p>
-      <p><a href="mailto:hello@scalewise.co.ke">hello@scalewise.co.ke</a></p>
+      <p><a href="mailto:hello@scalewise.co.ke?subject=Terms%20Enquiry%20-%20ScaleWise">hello@scalewise.co.ke</a></p>
     </div>
   );
 }
