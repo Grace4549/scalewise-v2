@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { db, launchNotificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { sendLaunchSubscriptionEmail } from "../lib/email";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -24,6 +26,12 @@ router.post("/launch/subscribe", async (req, res): Promise<void> => {
     .insert(launchNotificationsTable)
     .values({ email: normalized })
     .returning();
+
+  // Send welcome email (fire and forget)
+  sendLaunchSubscriptionEmail({ to: normalized }).catch((err) =>
+    logger.error({ err, email: normalized }, "sendLaunchSubscriptionEmail failed")
+  );
+
   res.status(201).json(row);
 });
 

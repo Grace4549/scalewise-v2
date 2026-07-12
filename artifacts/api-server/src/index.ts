@@ -3,6 +3,14 @@ import { logger } from "./lib/logger";
 import { startReminderScheduler } from "./lib/reminder-scheduler";
 import { startAvailabilityReminderScheduler } from "./lib/availability-reminder-scheduler";
 
+if (!process.env.RESEND_API_KEY) {
+  logger.error(
+    "RESEND_API_KEY environment variable is required but was not set. " +
+    "Set it in Replit Secrets and restart the server."
+  );
+  process.exit(1);
+}
+
 const rawPort = process.env["PORT"];
 
 if (!rawPort) {

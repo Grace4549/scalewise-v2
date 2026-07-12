@@ -1,0 +1,38 @@
+Integrate Resend as the email service provider for ScaleWise and make all related email configuration changes across the entire platform. Implement everything below exactly as described.
+1. Install and configure Resend:
+Install the Resend Node.js SDK using npm. Import and initialize it in the backend using the API key stored in the environment variable RESEND_API_KEY. Never hardcode the API key anywhere in the codebase. All automated emails must be sent from noreply@scalewise.co.ke with the display name "ScaleWise." All automated emails must include a Reply-To header set to hello@scalewise.co.ke so that when a recipient clicks Reply, their email app automatically directs the reply to hello@scalewise.co.ke instead of the noreply address.
+2. Activate all logged email notifications:
+Connect the Resend SDK to every place in the codebase where an email was previously logged in the notification_log table with sent status false. This includes every email we have built logic for:
+
+Email verification emails on sign-up
+Booking confirmation emails to clients (session date, time, Google Meet link, expert name)
+Booking notification emails to experts (session details, reminder to acknowledge)
+Session reminder emails to both client and expert at 48 hours, 24 hours, and 1 hour before session start, each including cancel and reschedule options with a link to the Cancellation and Refund Policy page
+Expert cancellation notification to client (confirming full refund)
+Client cancellation notification to expert (with their cancellation compensation amount)
+Reschedule request notification emails in both directions
+No-show notification to client (showing their refund amount only, never the expert or platform share)
+Expert weekly availability reminder emails on Friday, Saturday, and Sunday before the upcoming week, stopping as soon as availability is submitted for that week
+Refund processed confirmation to client (showing their refund amount only)
+Expert payout notification when admin marks payout as done
+Welcome email to newly approved experts
+Rejection email to declined expert applicants
+Launch notification email to everyone who submitted their email through the Under Construction banner
+
+3. Update notification_log on send:
+When each email is successfully sent via Resend, update the corresponding record in the notification_log table by setting sent to true and logging the sent_at timestamp. If sending fails, log the error and retry up to 3 times before marking the record as failed with a failed_at timestamp and the error message, so failed emails are visible and actionable in the admin dashboard.
+4. Email templates:
+All emails must be cleanly formatted HTML emails. Use our brand colors: cornflower blue #6395EE for headings and buttons, muted green #88CFA8 for accents, white #FFFFFF for background, and dark text for body copy. Include the ScaleWise name as a styled text logo at the top of every email. Structure every email with a clear subject line, a greeting using the recipient's first name, the main email body, a call to action button where relevant, and a footer containing: "Need help? Contact us at hello@scalewise.co.ke" in small muted text, followed by "ScaleWise | Unsubscribe" where the unsubscribe link removes the user from non-transactional emails only such as marketing and reminders, but never from transactional emails such as booking confirmations, refund notifications, and account verification emails.
+5. Replace all instances of support@scalewise.co.ke:
+Search the entire codebase including all frontend pages, backend logic, email templates, footer components, contact sections, FAQ answers, Help Center content, policy pages, and any hardcoded strings, and replace every instance of support@scalewise.co.ke with hello@scalewise.co.ke. This is the only support and contact email address ScaleWise uses.
+6. Set noreply@scalewise.co.ke as the sending address for all automated emails:
+All automated platform emails must be sent FROM noreply@scalewise.co.ke with the display name "ScaleWise." Update the Resend configuration to use this as the default from address for all transactional emails.
+7. Set Reply-To header on all automated emails:
+On every automated email sent from noreply@scalewise.co.ke, add a Reply-To header set to hello@scalewise.co.ke. This means when a recipient clicks Reply in their email app, their reply is automatically directed to hello@scalewise.co.ke instead of the noreply address. Do not display any "do not reply to this email" message in the email body since the Reply-To header handles this transparently and cleanly without needing to tell the user explicitly.
+8. Add a subtle footer line to all automated emails:
+At the bottom of every automated email, after the main content and before the ScaleWise footer, add this single line in small muted text: "Need help? Contact us at hello@scalewise.co.ke" — this gives recipients a clear friendly path to reach support without needing to reply to the automated email directly.
+9. Human sent emails from hello@scalewise.co.ke:
+Any email that is sent as a direct response to a human inquiry, such as a contact form submission or a support request, should reference hello@scalewise.co.ke as both the sending and reply address. These are not automated emails and should feel personal and direct.
+10. Environment variable:
+The Resend API key must only be read from the RESEND_API_KEY environment variable already added to Replit Secrets. Never read it from a hardcoded value, a config file, or any file that could be committed to version control. If the environment variable is missing at startup, log a clear error message and prevent the application from starting rather than failing silently.
+Apply all of these changes across every file, template, and configuration in the codebase. Do not leave any instance of support@scalewise.co.ke, any other placeholder email address, or any unconnected email logging anywhere in the platform.

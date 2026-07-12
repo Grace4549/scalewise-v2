@@ -4,6 +4,7 @@ import { db, usersTable, expertsTable, passwordResetTokensTable, notificationLog
 import { eq, and, sql } from "drizzle-orm";
 import { hashPassword, verifyPassword, requireAuth } from "../lib/auth";
 import { RegisterBody, LoginBody, VerifyEmailBody, ResendVerificationBody } from "@workspace/api-zod";
+import { sendVerificationEmail } from "../lib/email";
 
 const ADMIN_EMAIL = "kihongegrace4549@gmail.com";
 
@@ -61,16 +62,24 @@ async function issueVerificationToken(
   const basePath = (process.env.BASE_PATH ?? "").replace(/\/$/, "");
   const verificationLink = `${proto}://${host}${basePath}/verify-email?token=${token}`;
 
-  // TODO: Replace this block with your email provider call when ready.
-  await db.insert(notificationLogTable).values({
+  const [row] = await db.insert(notificationLogTable).values({
     bookingId: null,
     recipientUserId: userId,
     notificationType,
     payload: JSON.stringify({ recipientEmail: email, verificationLink }),
     sent: false,
-  });
+  }).returning({ id: notificationLogTable.id });
 
-  req.log.info({ userId, email, notificationType }, "Verification email queued in notification_log");
+  // Send the verification email via Resend (fire and forget — never blocks registration)
+  sendVerificationEmail({
+    to: email,
+    recipientName: (await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, userId)).limit(1))[0]?.name ?? email,
+    verificationLink,
+    isResend: notificationType === "email_verification_resend",
+    notificationLogId: row?.id,
+  }).catch((err) => req.log.error({ err, userId }, "sendVerificationEmail failed"));
+
+  req.log.info({ userId, email, notificationType }, "Verification email sent");
 }
 
 function formatUser(user: typeof usersTable.$inferSelect) {

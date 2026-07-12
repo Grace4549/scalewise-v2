@@ -30,6 +30,8 @@ export const notificationLogTable = pgTable("notification_log", {
   seen: boolean("seen").notNull().default(false),
   sent: boolean("sent").notNull().default(false),
   sentAt: timestamp("sent_at", { withTimezone: true }),
+  failedAt: timestamp("failed_at", { withTimezone: true }),
+  failureReason: text("failure_reason"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   uniqPerBookingRecipientType: uniqueIndex("notification_log_booking_recipient_type_uidx")

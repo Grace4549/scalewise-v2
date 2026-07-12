@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { db, bookingsTable, expertsTable, usersTable, payoutBatchesTable } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { sendRefundProcessedEmail } from "../lib/email";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -64,7 +66,7 @@ router.get("/client/receipts/booking/:bookingId", requireAuth, async (req, res):
     receiptType: "client_booking",
     receiptNumber: `SW-BKG-${String(booking.id).padStart(6, "0")}`,
     issuedAt: booking.createdAt.toISOString(),
-    company: { name: "ScaleWise", email: "support@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     client: { name: client?.name ?? "—", email: client?.email ?? "—" },
     booking: {
       id: booking.id,
@@ -108,7 +110,7 @@ router.get("/client/receipts/refund/:bookingId", requireAuth, async (req, res): 
     receiptType: "client_refund",
     receiptNumber: `SW-REF-${String(booking.id).padStart(6, "0")}`,
     issuedAt: booking.refundPaidAt?.toISOString() ?? new Date().toISOString(),
-    company: { name: "ScaleWise", email: "support@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     client: { name: client?.name ?? "—", email: client?.email ?? "—" },
     booking: {
       id: booking.id,
@@ -264,7 +266,7 @@ router.get("/expert/receipts/payout/:batchId", requireAuth, async (req, res): Pr
     receiptType: "expert_payout",
     receiptNumber: batch.receiptNumber,
     issuedAt: batch.paidAt.toISOString(),
-    company: { name: "ScaleWise", email: "support@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     expert: {
       name: expert?.name ?? "—",
       email: expert?.email ?? "—",
@@ -461,6 +463,17 @@ router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (re
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, updated.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, updated.clientId));
+
+  // Notify the client their refund has been processed (fire and forget — shows client refund amount only)
+  if (client && updated.refundAmount) {
+    sendRefundProcessedEmail({
+      to: client.email,
+      clientName: client.name,
+      refundAmount: updated.refundAmount,
+      sessionType: updated.sessionType,
+      expertName: expert?.name ?? "your expert",
+    }).catch((err) => logger.error({ err, bookingId: updated.id }, "sendRefundProcessedEmail failed"));
+  }
 
   res.json({
     id: updated.id,

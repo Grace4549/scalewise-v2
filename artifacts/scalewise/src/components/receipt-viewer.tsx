@@ -52,7 +52,7 @@ function ReceiptFooter() {
   return (
     <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground space-y-1">
       <p className="font-semibold" style={{ color: C.blue }}>ScaleWise — Expert Marketplace</p>
-      <p>support@scalewise.co.ke · +254707346331 · Nairobi, Kenya</p>
+      <p>hello@scalewise.co.ke · +254707346331 · Nairobi, Kenya</p>
       <p className="mt-2">This is an official payment receipt. Please retain for your records.</p>
     </div>
   );

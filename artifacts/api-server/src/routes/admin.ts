@@ -5,6 +5,8 @@ import { and, eq, ne, gte, lte, sql, isNotNull, isNull, inArray } from "drizzle-
 import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
 import { UpdateBookingStatusBody } from "@workspace/api-zod";
+import { sendExpertApprovedEmail, sendExpertRejectedEmail, sendExpertPayoutEmail } from "../lib/email";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -127,6 +129,14 @@ router.post("/admin/applications/:id/approve", adminMiddleware(), async (req, re
 
   if (!expert) { res.status(404).json({ error: "Not found" }); return; }
 
+  // Send welcome/setup email to the approved applicant (fire and forget)
+  sendExpertApprovedEmail({
+    to: expert.email,
+    expertName: expert.name,
+    inviteToken: plaintextInviteToken,
+    expertEmail: expert.email,
+  }).catch((err) => logger.error({ err, expertId: expert.id }, "sendExpertApprovedEmail failed"));
+
   res.json({
     ...formatApplication(expert),
     inviteToken: plaintextInviteToken,
@@ -163,6 +173,13 @@ router.post("/admin/applications/:id/reject", adminMiddleware(), async (req, res
     .returning();
 
   if (!expert) { res.status(404).json({ error: "Not found" }); return; }
+
+  // Notify the applicant of the rejection (fire and forget)
+  sendExpertRejectedEmail({
+    to: expert.email,
+    expertName: expert.name,
+  }).catch((err) => logger.error({ err, expertId: expert.id }, "sendExpertRejectedEmail failed"));
+
   res.json(formatApplication(expert));
 });
 
@@ -332,6 +349,20 @@ router.post("/admin/experts/:id/mark-paid", adminMiddleware(), async (req, res):
       )
     )
     .returning();
+
+  // Notify the expert of their payout (fire and forget)
+  if (updated.length > 0) {
+    const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
+    if (expert) {
+      const totalAmount = updated.reduce((sum, b) => sum + (b.amount ?? 0), 0);
+      sendExpertPayoutEmail({
+        to: expert.email,
+        expertName: expert.name,
+        totalAmount,
+        sessionCount: updated.length,
+      }).catch((err) => logger.error({ err, expertId }, "sendExpertPayoutEmail failed"));
+    }
+  }
 
   res.json({ count: updated.length });
 });

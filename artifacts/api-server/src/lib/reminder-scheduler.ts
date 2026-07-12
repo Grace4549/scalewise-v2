@@ -4,19 +4,11 @@
  * Checks every minute for upcoming confirmed bookings that have reminder
  * triggers due (48 hr, 24 hr, 1 hr before session start).
  *
- * Each triggered reminder is written to:
- *   1. reminder_log — tracks the email to be dispatched (sent=false until sent)
- *   2. notification_log — creates a visible in-app notification for both the
- *      client and the expert, including action hints (Cancel / Reschedule)
- *
- * Once email integration is connected, find every place marked
- * ── EMAIL SEND HOOK ── below and replace the log line with your actual
- * dispatch call (e.g. resend.emails.send(...)).
- *
- * The UNIQUE constraint on reminder_log(booking_id, reminder_type) guarantees
- * idempotency: even if the scheduler fires twice in the same window, only one
- * row is ever written per reminder — and therefore only one notification_log
- * row is created per client/expert per reminder type.
+ * Each triggered reminder:
+ *   1. Writes a reminder_log row (idempotent — UNIQUE constraint prevents dups)
+ *   2. Calls createNotification() for both client and expert, which:
+ *      - Writes a notification_log row (visible in dashboards)
+ *      - Dispatches the transactional reminder email via Resend
  */
 
 import { db, bookingsTable, usersTable, expertsTable, reminderLogTable } from "@workspace/db";
@@ -25,19 +17,14 @@ import { logger } from "./logger";
 import { createNotification } from "./notify";
 import type { NotificationType } from "@workspace/db";
 
-// How far in advance each reminder fires (in milliseconds).
 const REMINDER_OFFSETS_MS: Record<"48hr" | "24hr" | "1hr", number> = {
   "48hr": 48 * 60 * 60 * 1000,
   "24hr": 24 * 60 * 60 * 1000,
   "1hr":       60 * 60 * 1000,
 };
 
-// Tolerance window: treat a reminder as "due" if the current time is within
-// this many ms PAST the target trigger time (handles scheduler drift / restarts).
-const LOOK_BACK_MS = 2 * 60 * 1000; // 2 minutes
-
-// Tolerance window: how far into the future we still consider a reminder due.
-const LOOK_AHEAD_MS = 60 * 1000; // 1 minute
+const LOOK_BACK_MS = 2 * 60 * 1000;
+const LOOK_AHEAD_MS = 60 * 1000;
 
 interface ReminderPayload {
   bookingId: number;
@@ -55,9 +42,6 @@ interface ReminderPayload {
   meetLink: string | null;
 }
 
-/**
- * Formats a Date into a readable string for log / email body.
- */
 function fmtDate(d: Date): string {
   return d.toLocaleString("en-KE", {
     weekday: "long",
@@ -72,32 +56,9 @@ function fmtDate(d: Date): string {
 }
 
 /**
- * Sends the reminder — creates in-app notifications for both parties and
- * logs the emails that would be sent once email integration is connected.
- *
- * ── EMAIL SEND HOOK ──────────────────────────────────────────────────────────
- * Replace the logger.info calls below with your email dispatch.  Example with
- * Resend (https://resend.com):
- *
- *   import { Resend } from "resend";
- *   const resend = new Resend(process.env.RESEND_API_KEY);
- *
- *   // Client reminder
- *   await resend.emails.send({
- *     from: "ScaleWise <noreply@scalewise.co.ke>",
- *     to: payload.clientEmail,
- *     subject: `Reminder: Your ${payload.sessionType} session is in ${label}`,
- *     html: buildClientReminderHtml(payload),
- *   });
- *
- *   // Expert reminder
- *   await resend.emails.send({
- *     from: "ScaleWise <noreply@scalewise.co.ke>",
- *     to: payload.expertEmail,
- *     subject: `Upcoming session with ${payload.clientName} in ${label}`,
- *     html: buildExpertReminderHtml(payload),
- *   });
- * ─────────────────────────────────────────────────────────────────────────────
+ * Sends reminder emails and creates in-app notifications for both parties.
+ * createNotification() handles both the notification_log insert and the
+ * transactional email dispatch via Resend.
  */
 async function dispatchReminder(payload: ReminderPayload): Promise<void> {
   const label = payload.reminderType === "48hr" ? "48 hours"
@@ -110,11 +71,9 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
 
   const sessionLabel = payload.sessionType.replace(/_/g, " ");
   const sessionStartIso = payload.sessionStart.toISOString();
+  const sessionStartFmt = fmtDate(payload.sessionStart);
 
-  // ── In-app notification: CLIENT ───────────────────────────────────────────
-  // This creates a visible notification in the Client Dashboard.
-  // The payload includes action hints so the frontend can show
-  // "Cancel" and "Reschedule" buttons on the notification card.
+  // Client reminder — email + in-app notification
   await createNotification({
     bookingId: payload.bookingId,
     recipientUserId: payload.clientId,
@@ -123,24 +82,18 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
     recipientName: payload.clientName,
     payload: {
       title: `Session Reminder: ${label} to go`,
-      body: `Your ${sessionLabel} session with ${payload.expertName} starts in ${label}.${
+      body: `Your ${sessionLabel} session with ${payload.expertName} starts in ${label} (${sessionStartFmt}).${
         payload.meetLink ? ` Join: ${payload.meetLink}` : ""
       }`,
       sessionStart: sessionStartIso,
       sessionType: payload.sessionType,
       meetLink: payload.meetLink,
       otherPartyName: payload.expertName,
-      // Actions shown on the notification card in the Client Dashboard.
-      // "Cancel" shows the refund policy summary first.
-      // "Reschedule" opens the reschedule picker.
       actions: ["cancel", "reschedule"],
     },
   });
 
-  // ── In-app notification: EXPERT ───────────────────────────────────────────
-  // Visible notification in the Expert Dashboard.
-  // Actions include "Cancel session" (→ full refund to client) and
-  // "Request to Reschedule" (→ notifies client, booking stays intact).
+  // Expert reminder — email + in-app notification
   await createNotification({
     bookingId: payload.bookingId,
     recipientUserId: payload.expertUserId,
@@ -149,67 +102,20 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
     recipientName: payload.expertName,
     payload: {
       title: `Session Reminder: ${label} to go`,
-      body: `You have a ${sessionLabel} session with ${payload.clientName} in ${label}.${
+      body: `You have a ${sessionLabel} session with ${payload.clientName} in ${label} (${sessionStartFmt}).${
         payload.meetLink ? ` Join: ${payload.meetLink}` : ""
       }`,
       sessionStart: sessionStartIso,
       sessionType: payload.sessionType,
       meetLink: payload.meetLink,
       otherPartyName: payload.clientName,
-      // "cancel" → full refund to client per policy.
-      // "request_reschedule" → sends notification to client to pick new time.
       actions: ["cancel", "request_reschedule"],
     },
   });
-
-  // ── EMAIL SEND HOOK (client) ──────────────────────────────────────────────
-  // TODO: replace this log with an actual email call to payload.clientEmail
-  logger.info(
-    {
-      reminder: {
-        bookingId: payload.bookingId,
-        type: payload.reminderType,
-        to: "CLIENT",
-        clientName: payload.clientName,
-        clientEmail: payload.clientEmail,
-        sessionType: payload.sessionType,
-        sessionStart: fmtDate(payload.sessionStart),
-        durationMinutes: payload.durationMinutes,
-        meetLink: payload.meetLink ?? "(not assigned yet)",
-        actions: "Cancel | Reschedule",
-      },
-    },
-    `[REMINDER] ${label} notice → client ${payload.clientEmail} — booking #${payload.bookingId}`
-  );
-
-  // ── EMAIL SEND HOOK (expert) ──────────────────────────────────────────────
-  // TODO: replace this log with an actual email call to payload.expertEmail
-  logger.info(
-    {
-      reminder: {
-        bookingId: payload.bookingId,
-        type: payload.reminderType,
-        to: "EXPERT",
-        expertName: payload.expertName,
-        expertEmail: payload.expertEmail,
-        clientName: payload.clientName,
-        sessionType: payload.sessionType,
-        sessionStart: fmtDate(payload.sessionStart),
-        durationMinutes: payload.durationMinutes,
-        meetLink: payload.meetLink ?? "(not assigned yet)",
-        actions: "Cancel Session | Request to Reschedule",
-      },
-    },
-    `[REMINDER] ${label} notice → expert ${payload.expertEmail} — booking #${payload.bookingId}`
-  );
 }
 
-/**
- * Core tick — runs once per scheduler interval.
- */
 async function runReminderTick(): Promise<void> {
   const now = new Date();
-
   const lookaheadCutoff = new Date(now.getTime() + REMINDER_OFFSETS_MS["48hr"] + 60_000);
 
   const bookings = await db
@@ -239,7 +145,7 @@ async function runReminderTick(): Promise<void> {
     );
 
   for (const booking of bookings) {
-    if (!booking.expertUserId) continue; // skip if expert has no linked user account
+    if (!booking.expertUserId) continue;
 
     const sessionStart = new Date(booking.scheduledTime);
 
@@ -253,9 +159,6 @@ async function runReminderTick(): Promise<void> {
 
       if (now < windowStart || now > windowEnd) continue;
 
-      // Idempotent insert: UNIQUE(booking_id, reminder_type) prevents duplicates.
-      // A successful insert means this is a new reminder — create notifications.
-      // A 23505 duplicate-key error means it was already processed — skip.
       try {
         await db.insert(reminderLogTable).values({
           bookingId: booking.id,
@@ -288,10 +191,6 @@ async function runReminderTick(): Promise<void> {
       try {
         await dispatchReminder(payload);
 
-        // ── EMAIL SEND HOOK ────────────────────────────────────────────────
-        // Move this update INSIDE your email send call so `sent` only flips
-        // to true after the provider confirms delivery.
-        // ──────────────────────────────────────────────────────────────────
         await db
           .update(reminderLogTable)
           .set({ sent: true, sentAt: new Date() })
@@ -311,9 +210,6 @@ async function runReminderTick(): Promise<void> {
   }
 }
 
-/**
- * Starts the reminder scheduler.  Call once at server startup.
- */
 export function startReminderScheduler(): ReturnType<typeof setInterval> {
   const INTERVAL_MS = 60 * 1000;
 
