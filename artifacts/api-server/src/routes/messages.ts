@@ -3,6 +3,8 @@ import { db, messagesTable, bookingsTable, usersTable, expertsTable } from "@wor
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { SendMessageBody } from "@workspace/api-zod";
+import { sendMessageNotificationEmail } from "../lib/email";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -188,6 +190,43 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
     .returning();
 
   const senderMap = await fetchSenderMap([req.userId!]);
+  const senderName = senderMap[req.userId!]?.name ?? "Someone";
+
+  // Email notification to the other party (fire and forget)
+  if (req.userRole === "expert") {
+    // Sender is expert → notify admin
+    db.select().from(usersTable).where(eq(usersTable.role, "admin")).limit(1)
+      .then(([admin]) => {
+        if (admin) {
+          sendMessageNotificationEmail({
+            to: admin.email,
+            recipientName: admin.name,
+            senderName,
+            senderRole: "expert",
+            messagePreview: parsed.data.body,
+            dashboardUrl: "https://scalewise.co.ke/admin",
+          }).catch((err) => logger.error({ err }, "Admin message notification email failed"));
+        }
+      })
+      .catch((err) => logger.error({ err }, "Admin lookup for message notification failed"));
+  } else if (req.userRole === "admin") {
+    // Sender is admin → notify expert
+    db.select().from(expertsTable).where(eq(expertsTable.id, expertId)).limit(1)
+      .then(([expert]) => {
+        if (expert) {
+          sendMessageNotificationEmail({
+            to: expert.email,
+            recipientName: expert.name,
+            senderName: "ScaleWise",
+            senderRole: "admin",
+            messagePreview: parsed.data.body,
+            dashboardUrl: "https://scalewise.co.ke/expert/dashboard",
+          }).catch((err) => logger.error({ err, expertId }, "Expert message notification email failed"));
+        }
+      })
+      .catch((err) => logger.error({ err }, "Expert lookup for message notification failed"));
+  }
+
   res.status(201).json(formatMessage(message, senderMap));
 });
 
@@ -251,6 +290,45 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
     .returning();
 
   const senderMap = await fetchSenderMap([req.userId!]);
+  const senderName = senderMap[req.userId!]?.name ?? "Someone";
+  const senderRole = req.userRole as "client" | "expert" | "admin";
+
+  // Email notification to the other party (fire and forget)
+  if (req.userRole === "client") {
+    // Notify expert
+    db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId)).limit(1)
+      .then(([expert]) => {
+        if (expert) {
+          sendMessageNotificationEmail({
+            to: expert.email,
+            recipientName: expert.name,
+            senderName,
+            senderRole,
+            messagePreview: parsed.data.body,
+            dashboardUrl: "https://scalewise.co.ke/expert/dashboard",
+          }).catch((err) => logger.error({ err, bookingId }, "Expert message notification email failed"));
+        }
+      })
+      .catch((err) => logger.error({ err }, "Expert lookup for message notification failed"));
+  } else if (req.userRole === "expert") {
+    // Notify client
+    db.select().from(usersTable).where(eq(usersTable.id, booking.clientId)).limit(1)
+      .then(([client]) => {
+        if (client) {
+          sendMessageNotificationEmail({
+            to: client.email,
+            recipientName: client.name,
+            senderName,
+            senderRole,
+            messagePreview: parsed.data.body,
+            dashboardUrl: "https://scalewise.co.ke/client/dashboard",
+          }).catch((err) => logger.error({ err, bookingId }, "Client message notification email failed"));
+        }
+      })
+      .catch((err) => logger.error({ err }, "Client lookup for message notification failed"));
+  }
+  // Admin messages in booking threads: no email (internal)
+
   res.status(201).json(formatMessage(message, senderMap));
 });
 

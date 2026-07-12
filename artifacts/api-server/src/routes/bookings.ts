@@ -5,6 +5,8 @@ import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { generateMeetLink } from "../lib/auth";
 import { CreateBookingBody, UpdateBookingStatusBody } from "@workspace/api-zod";
 import { createNotification } from "../lib/notify";
+import { sendClientBookingConfirmationEmail } from "../lib/email";
+import { generateClientBookingReceiptPdf } from "../lib/pdf";
 
 const router: IRouter = Router();
 
@@ -202,7 +204,7 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
 
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!));
 
-  // Notify the expert of the new booking
+  // Notify the expert of the new booking (in-app + email)
   if (expert.userId) {
     await createNotification({
       bookingId: booking.id,
@@ -220,6 +222,40 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
       },
     });
   }
+
+  // Send client booking confirmation email with PDF receipt (fire and forget)
+  ;(async () => {
+    try {
+      const receiptNumber = `SW-BKG-${String(booking.id).padStart(6, "0")}`;
+      const pdfBuffer = await generateClientBookingReceiptPdf({
+        receiptNumber,
+        issuedAt: booking.createdAt.toISOString(),
+        client: { name: client.name, email: client.email },
+        expert: { name: expert.name, industry: expert.industry ?? "" },
+        booking: {
+          sessionType: booking.sessionType,
+          scheduledTime: booking.scheduledTime.toISOString(),
+          durationMinutes: booking.durationMinutes,
+          amount: booking.amount ?? 0,
+          meetLink: booking.meetLink,
+        },
+      });
+      await sendClientBookingConfirmationEmail({
+        to: client.email,
+        clientName: client.name,
+        expertName: expert.name,
+        sessionType: booking.sessionType,
+        scheduledTime: booking.scheduledTime.toISOString(),
+        durationMinutes: booking.durationMinutes,
+        meetLink: booking.meetLink,
+        amount: booking.amount ?? 0,
+        receiptNumber,
+        pdfBuffer,
+      });
+    } catch (err) {
+      req.log.error({ err, bookingId: booking.id }, "Client booking confirmation email failed");
+    }
+  })();
 
   res.status(201).json(formatBooking(booking, { [expert.id]: expert }, { [client.id]: client }, false));
 });

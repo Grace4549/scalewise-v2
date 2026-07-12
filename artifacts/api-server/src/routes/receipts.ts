@@ -2,7 +2,8 @@ import { Router, type IRouter } from "express";
 import { db, bookingsTable, expertsTable, usersTable, payoutBatchesTable } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
-import { sendRefundProcessedEmail } from "../lib/email";
+import { sendRefundProcessedEmail, sendExpertPayoutReceiptEmail } from "../lib/email";
+import { generateClientRefundReceiptPdf, generateExpertPayoutReceiptPdf } from "../lib/pdf";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -439,6 +440,68 @@ router.post("/admin/experts/:id/payout", adminMiddleware(), async (req, res): Pr
       .where(inArray(bookingsTable.id, sessionBookings.map(b => b.id)));
   }
 
+  // Fire and forget: generate payout receipt PDF and email it to the expert
+  ;(async () => {
+    try {
+      const clientIds = [...new Set([
+        ...sessionBookings.map(b => b.clientId),
+        ...cancellationBookings.map(b => b.clientId),
+      ])];
+      const clientsForPdf = clientIds.length > 0
+        ? await db.select().from(usersTable).where(inArray(usersTable.id, clientIds))
+        : [];
+      const cMap = Object.fromEntries(clientsForPdf.map(c => [c.id, c]));
+
+      const pdfSessionLines = sessionBookings.map(b => {
+        const rate = COMMISSION_RATES[b.sessionType] ?? 0.20;
+        const gross = b.amount ?? 0;
+        return {
+          bookingId: b.id,
+          sessionType: SESSION_TYPE_LABELS[b.sessionType] ?? b.sessionType,
+          clientName: cMap[b.clientId]?.name ?? "—",
+          scheduledTime: b.scheduledTime.toISOString(),
+          grossAmount: gross,
+          commissionRate: rate,
+          netAmount: gross * (1 - rate),
+        };
+      });
+
+      const pdfCancellationLines = cancellationBookings.map(b => ({
+        bookingId: b.id,
+        sessionType: SESSION_TYPE_LABELS[b.sessionType] ?? b.sessionType,
+        clientName: cMap[b.clientId]?.name ?? "—",
+        scheduledTime: b.scheduledTime.toISOString(),
+        expertEarning: b.expertCancellationEarning ?? 0,
+      }));
+
+      const pdfBuffer = await generateExpertPayoutReceiptPdf({
+        receiptNumber: batch.receiptNumber,
+        issuedAt: batch.paidAt.toISOString(),
+        expert: { name: expert.name, email: expert.email, industry: expert.industry ?? "" },
+        period: { start: batch.periodStart.toISOString(), end: batch.periodEnd.toISOString() },
+        sessionLines: pdfSessionLines,
+        cancellationLines: pdfCancellationLines,
+        sessionAmount: batch.sessionAmount,
+        cancellationAmount: batch.cancellationAmount,
+        subtotal: totalAmount - vatAmount,
+        vatRate: VAT_RATE,
+        vatAmount: batch.vatAmount,
+        totalAmount: batch.totalAmount,
+      });
+
+      await sendExpertPayoutReceiptEmail({
+        to: expert.email,
+        expertName: expert.name,
+        totalAmount: batch.totalAmount,
+        receiptNumber: batch.receiptNumber,
+        pdfBuffer,
+        sessionCount: sessionBookings.length,
+      });
+    } catch (err) {
+      logger.error({ err, expertId }, "Failed to generate/send payout receipt email");
+    }
+  })();
+
   res.json({ batchId: batch.id, receiptNumber: batch.receiptNumber, totalAmount, sessionAmount, cancellationAmount, vatAmount });
 });
 
@@ -466,13 +529,42 @@ router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (re
 
   // Notify the client their refund has been processed (fire and forget — shows client refund amount only)
   if (client && updated.refundAmount) {
-    sendRefundProcessedEmail({
-      to: client.email,
-      clientName: client.name,
-      refundAmount: updated.refundAmount,
-      sessionType: updated.sessionType,
-      expertName: expert?.name ?? "your expert",
-    }).catch((err) => logger.error({ err, bookingId: updated.id }, "sendRefundProcessedEmail failed"));
+    // Capture narrowed values before the async IIFE so TS keeps them as non-null
+    const capturedRefundAmount = updated.refundAmount;
+    const capturedRefundPercent = Number(updated.refundPercent ?? 0);
+    const capturedOriginalAmount = Number(updated.amount ?? 0);
+    // Generate refund receipt PDF and email it (fire and forget)
+    ;(async () => {
+      try {
+        const receiptNumber = `SW-REF-${String(updated.id).padStart(6, "0")}`;
+        const pdfBuffer = await generateClientRefundReceiptPdf({
+          receiptNumber,
+          issuedAt: updated.refundPaidAt?.toISOString() ?? new Date().toISOString(),
+          client: { name: client.name, email: client.email },
+          expert: { name: expert?.name ?? "—" },
+          booking: {
+            sessionType: updated.sessionType,
+            scheduledTime: updated.scheduledTime.toISOString(),
+            originalAmount: capturedOriginalAmount,
+            refundPercent: capturedRefundPercent,
+            refundAmount: capturedRefundAmount,
+            cancelledBy: updated.cancelledBy ?? null,
+            refundPaidAt: updated.refundPaidAt?.toISOString() ?? null,
+          },
+        });
+        await sendRefundProcessedEmail({
+          to: client.email,
+          clientName: client.name,
+          refundAmount: capturedRefundAmount,
+          sessionType: updated.sessionType,
+          expertName: expert?.name ?? "your expert",
+          pdfBuffer,
+          receiptNumber,
+        });
+      } catch (err) {
+        logger.error({ err, bookingId: updated.id }, "sendRefundProcessedEmail with PDF failed");
+      }
+    })();
   }
 
   res.json({

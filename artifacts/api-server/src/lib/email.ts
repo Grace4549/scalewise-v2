@@ -208,7 +208,7 @@ function sessionDetailBlock(opts: {
 // ── Retry-aware send (updates notification_log on success/failure) ────────────
 
 async function sendWithRetry(
-  opts: { to: string; subject: string; html: string },
+  opts: { to: string; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer }> },
   notificationLogId?: number,
   maxAttempts = 3,
 ): Promise<boolean> {
@@ -222,6 +222,14 @@ async function sendWithRetry(
         to: opts.to,
         subject: opts.subject,
         html: opts.html,
+        ...(opts.attachments?.length
+          ? {
+              attachments: opts.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+              })),
+            }
+          : {}),
       });
 
       if (notificationLogId != null) {
@@ -708,6 +716,8 @@ export async function sendRefundProcessedEmail(opts: {
   refundAmount: number;
   sessionType: string;
   expertName: string;
+  pdfBuffer?: Buffer;
+  receiptNumber?: string;
 }): Promise<void> {
   const { to, clientName, refundAmount, sessionType, expertName } = opts;
   const first = firstName(clientName);
@@ -740,10 +750,198 @@ export async function sendRefundProcessedEmail(opts: {
     ctaText: "View My Bookings",
   });
 
+  await sendWithRetry(
+    {
+      to,
+      subject,
+      html,
+      attachments: opts.pdfBuffer
+        ? [{ filename: `${opts.receiptNumber ?? "refund-receipt"}.pdf`, content: opts.pdfBuffer }]
+        : undefined,
+    },
+  );
+}
+
+// ── 9. Client booking confirmation + receipt PDF ──────────────────────────────
+
+export async function sendClientBookingConfirmationEmail(opts: {
+  to: string;
+  clientName: string;
+  expertName: string;
+  sessionType: string;
+  scheduledTime: string;
+  durationMinutes: number;
+  meetLink?: string | null;
+  amount: number;
+  receiptNumber: string;
+  pdfBuffer: Buffer;
+}): Promise<void> {
+  const { to, clientName, expertName, sessionType, scheduledTime, durationMinutes, meetLink, amount, receiptNumber, pdfBuffer } = opts;
+  const first = firstName(clientName);
+
+  const subject = `Booking confirmed — ${fmtSessionType(sessionType)} with ${expertName}`;
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      Your booking with <strong>${expertName}</strong> is confirmed and your payment has been
+      received. Here are your session details:
+    </p>
+    ${sessionDetailBlock({
+      sessionType,
+      sessionStart: scheduledTime,
+      meetLink,
+      otherPartyLabel: "Expert",
+      otherPartyName: expertName,
+    })}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;
+                  padding:16px 20px;margin:20px 0;">
+      <tr>
+        <td style="font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">
+          ✓ &nbsp;Amount paid: <strong>KES ${amount.toLocaleString()}</strong>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      Your receipt (<strong>${receiptNumber}</strong>) is attached to this email as a PDF.
+      You can also view and download it from your Client Dashboard.
+    </p>`;
+
+  const html = buildHtml({
+    previewText: `Your ${fmtSessionType(sessionType)} session with ${expertName} is confirmed!`,
+    recipientFirstName: first,
+    bodyHtml,
+    ctaUrl: `${SITE_URL}/client/dashboard`,
+    ctaText: "View My Booking",
+  });
+
+  await sendWithRetry({
+    to,
+    subject,
+    html,
+    attachments: [{ filename: `${receiptNumber}.pdf`, content: pdfBuffer }],
+  });
+}
+
+// ── 10. New message notification ──────────────────────────────────────────────
+
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export async function sendMessageNotificationEmail(opts: {
+  to: string;
+  recipientName: string;
+  senderName: string;
+  senderRole: "client" | "expert" | "admin";
+  messagePreview: string;
+  dashboardUrl: string;
+}): Promise<void> {
+  const { to, recipientName, senderName, senderRole, messagePreview, dashboardUrl } = opts;
+  const first = firstName(recipientName);
+
+  const senderLabel = senderRole === "admin" ? "the ScaleWise Team" : senderName;
+  const subject = `New message from ${senderRole === "admin" ? "ScaleWise" : senderName}`;
+
+  const previewBlock = messagePreview.trim()
+    ? `<table width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background:#F8FAFF;border-left:4px solid #6395EE;border-radius:4px;
+                    padding:14px 18px;margin:16px 0;">
+         <tr>
+           <td style="font-size:14px;line-height:22px;color:#374151;
+                      font-family:'Helvetica Neue',Arial,sans-serif;font-style:italic;">
+             "${escHtml(messagePreview.slice(0, 220))}${messagePreview.length > 220 ? "…" : ""}"
+           </td>
+         </tr>
+       </table>`
+    : "";
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      You have a new message from <strong>${escHtml(senderLabel)}</strong> on ScaleWise.
+    </p>
+    ${previewBlock}
+    <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      Log in to read the full message and reply.
+    </p>`;
+
+  const html = buildHtml({
+    previewText: `New message from ${senderRole === "admin" ? "ScaleWise" : senderName} — log in to reply`,
+    recipientFirstName: first,
+    bodyHtml,
+    ctaUrl: dashboardUrl,
+    ctaText: "Read & Reply",
+  });
+
   await sendWithRetry({ to, subject, html });
 }
 
-// ── 8. Launch subscription confirmation ──────────────────────────────────────
+// ── 11. Expert payout receipt (with full breakdown PDF) ───────────────────────
+
+export async function sendExpertPayoutReceiptEmail(opts: {
+  to: string;
+  expertName: string;
+  totalAmount: number;
+  receiptNumber: string;
+  pdfBuffer: Buffer;
+  sessionCount: number;
+}): Promise<void> {
+  const { to, expertName, totalAmount, receiptNumber, pdfBuffer, sessionCount } = opts;
+  const first = firstName(expertName);
+
+  const subject = "Your ScaleWise payout receipt is ready";
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      Great news! Your payout has been processed and your official receipt is attached.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:0 0 20px;">
+      <tr>
+        <td style="padding:4px 0;font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;width:160px;">Receipt number</td>
+        <td style="padding:4px 0;font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">${receiptNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0;font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">Amount paid</td>
+        <td style="padding:4px 0;font-size:15px;font-weight:600;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">KES ${totalAmount.toLocaleString()}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0;font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">Sessions covered</td>
+        <td style="padding:4px 0;font-size:14px;color:#166534;font-family:'Helvetica Neue',Arial,sans-serif;">${sessionCount} session${sessionCount === 1 ? "" : "s"}</td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      Your full payout statement is attached as a PDF. Please allow 1–3 business days for
+      the funds to reflect in your account.
+    </p>`;
+
+  const html = buildHtml({
+    previewText: `Your ScaleWise payout of KES ${totalAmount.toLocaleString()} — receipt attached`,
+    recipientFirstName: first,
+    bodyHtml,
+    ctaUrl: `${SITE_URL}/expert/dashboard`,
+    ctaText: "View Dashboard",
+  });
+
+  await sendWithRetry({
+    to,
+    subject,
+    html,
+    attachments: [{ filename: `${receiptNumber}.pdf`, content: pdfBuffer }],
+  });
+}
+
+// ── 12. Launch subscription confirmation ──────────────────────────────────────
 
 export async function sendLaunchSubscriptionEmail(opts: {
   to: string;
