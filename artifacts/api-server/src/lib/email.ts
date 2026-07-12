@@ -57,6 +57,14 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // ── HTML Template Builder ─────────────────────────────────────────────────────
 
 interface EmailTemplateOpts {
@@ -78,15 +86,18 @@ function buildHtml(opts: EmailTemplateOpts): string {
     ctaColor = "#6395EE",
   } = opts;
 
-  const ctaBlock = ctaUrl && ctaText
+  const safeCtaUrl = ctaUrl ? escHtml(ctaUrl) : undefined;
+  const safeCtaText = ctaText ? escHtml(ctaText) : undefined;
+
+  const ctaBlock = safeCtaUrl && safeCtaText
     ? `
       <tr>
         <td style="background:#FFFFFF;padding:0 48px 32px;text-align:center;">
-          <a href="${ctaUrl}"
+          <a href="${safeCtaUrl}"
              style="display:inline-block;background:${ctaColor};color:#FFFFFF;text-decoration:none;
                     padding:14px 36px;border-radius:8px;font-size:16px;font-weight:600;
                     font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:0.2px;">
-            ${ctaText}
+            ${safeCtaText}
           </a>
         </td>
       </tr>`
@@ -102,7 +113,7 @@ function buildHtml(opts: EmailTemplateOpts): string {
 </head>
 <body style="margin:0;padding:0;background:#F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;">
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#F3F4F6;mso-hide:all;">
-    ${previewText}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+    ${escHtml(previewText)}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
   <table width="100%" cellpadding="0" cellspacing="0" border="0"
          style="background:#F3F4F6;padding:40px 20px;">
@@ -127,7 +138,7 @@ function buildHtml(opts: EmailTemplateOpts): string {
             <td style="background:#FFFFFF;padding:40px 48px 8px;">
               <p style="margin:0 0 20px;font-size:16px;line-height:26px;color:#374151;
                         font-family:'Helvetica Neue',Arial,sans-serif;">
-                Hi ${recipientFirstName},
+                Hi ${escHtml(recipientFirstName)},
               </p>
               ${bodyHtml}
             </td>
@@ -177,11 +188,12 @@ function sessionDetailBlock(opts: {
   otherPartyLabel: string;
   otherPartyName: string;
 }): string {
-  const meetRow = opts.meetLink
+  const safeMeetLink = opts.meetLink ? escHtml(opts.meetLink) : null;
+  const meetRow = safeMeetLink
     ? `<tr>
         <td style="padding:6px 0;font-size:14px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;width:120px;vertical-align:top;">Google Meet</td>
         <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          <a href="${opts.meetLink}" style="color:#6395EE;text-decoration:none;">${opts.meetLink}</a>
+          <a href="${safeMeetLink}" style="color:#6395EE;text-decoration:none;">${safeMeetLink}</a>
         </td>
       </tr>`
     : "";
@@ -191,15 +203,15 @@ function sessionDetailBlock(opts: {
                   padding:16px 20px;margin:20px 0;">
       <tr>
         <td style="padding:6px 0;font-size:14px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;width:120px;vertical-align:top;">Session type</td>
-        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${fmtSessionType(opts.sessionType)}</td>
+        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${escHtml(fmtSessionType(opts.sessionType))}</td>
       </tr>
       <tr>
         <td style="padding:6px 0;font-size:14px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;width:120px;vertical-align:top;">Date &amp; time</td>
-        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${fmtSessionDate(opts.sessionStart)}</td>
+        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${escHtml(fmtSessionDate(opts.sessionStart))}</td>
       </tr>
       <tr>
-        <td style="padding:6px 0;font-size:14px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;width:120px;vertical-align:top;">${opts.otherPartyLabel}</td>
-        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${opts.otherPartyName}</td>
+        <td style="padding:6px 0;font-size:14px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;width:120px;vertical-align:top;">${escHtml(opts.otherPartyLabel)}</td>
+        <td style="padding:6px 0;font-size:14px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${escHtml(opts.otherPartyName)}</td>
       </tr>
       ${meetRow}
     </table>`;
@@ -376,7 +388,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${payload.sessionStart && payload.sessionType
           ? sessionDetailBlock({
@@ -403,7 +415,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${payload.sessionStart && payload.sessionType
           ? sessionDetailBlock({
@@ -434,7 +446,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${refundNote}`;
 
@@ -464,7 +476,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${refundHighlight}
         <p style="margin:12px 0 0;font-size:14px;line-height:22px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -484,7 +496,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${payload.sessionStart && payload.sessionType
           ? sessionDetailBlock({
@@ -521,7 +533,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
 
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-          ${payload.body}
+          ${escHtml(payload.body)}
         </p>
         ${refundHighlight}`;
 
@@ -533,7 +545,7 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
     default: {
       // Generic fallback — shouldn't normally be reached
       subject = payload.title;
-      bodyHtml = `<p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${payload.body}</p>`;
+      bodyHtml = `<p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">${escHtml(payload.body)}</p>`;
       ctaUrl = `${SITE_URL}/client/dashboard`;
       ctaText = "View Dashboard";
     }
@@ -730,8 +742,8 @@ export async function sendRefundProcessedEmail(opts: {
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-      Your refund for the cancelled ${fmtSessionType(sessionType)} session with
-      <strong>${expertName}</strong> has been processed.
+      Your refund for the cancelled ${escHtml(fmtSessionType(sessionType))} session with
+      <strong>${escHtml(expertName)}</strong> has been processed.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0"
            style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:0 0 20px;">
@@ -788,7 +800,7 @@ export async function sendClientBookingConfirmationEmail(opts: {
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
               font-family:'Helvetica Neue',Arial,sans-serif;">
-      Your booking with <strong>${expertName}</strong> is confirmed and your payment has been
+      Your booking with <strong>${escHtml(expertName)}</strong> is confirmed and your payment has been
       received. Here are your session details:
     </p>
     ${sessionDetailBlock({
@@ -809,7 +821,7 @@ export async function sendClientBookingConfirmationEmail(opts: {
     </table>
     <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
               font-family:'Helvetica Neue',Arial,sans-serif;">
-      Your receipt (<strong>${receiptNumber}</strong>) is attached to this email as a PDF.
+      Your receipt (<strong>${escHtml(receiptNumber)}</strong>) is attached to this email as a PDF.
       You can also view and download it from your Client Dashboard.
     </p>`;
 
@@ -830,14 +842,6 @@ export async function sendClientBookingConfirmationEmail(opts: {
 }
 
 // ── 10. New message notification ──────────────────────────────────────────────
-
-function escHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 export async function sendMessageNotificationEmail(opts: {
   to: string;
@@ -999,22 +1003,22 @@ export async function sendAdminExpertApplicationEmail(opts: {
     <table style="width:100%;border-collapse:collapse;margin:0 0 24px;" cellpadding="0" cellspacing="0">
       <tr>
         <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;white-space:nowrap;">Name</td>
-        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;">${applicantName}</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;">${escHtml(applicantName)}</td>
       </tr>
       <tr>
         <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Email</td>
         <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">
-          <a href="mailto:${applicantEmail}" style="color:#6395EE;text-decoration:none;">${applicantEmail}</a>
+          <a href="mailto:${escHtml(applicantEmail)}" style="color:#6395EE;text-decoration:none;">${escHtml(applicantEmail)}</a>
         </td>
       </tr>
       <tr>
         <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Industry</td>
-        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${industry}</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${escHtml(industry)}</td>
       </tr>
       ${headline ? `
       <tr>
         <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Headline</td>
-        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${headline}</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${escHtml(headline)}</td>
       </tr>` : ""}
     </table>
     <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;">
