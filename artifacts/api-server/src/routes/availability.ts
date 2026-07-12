@@ -1,15 +1,31 @@
 import { Router, type IRouter } from "express";
 import { db, expertAvailabilityTable, expertsTable } from "@workspace/db";
-import { gt, eq, and } from "drizzle-orm";
+import { gt, eq, and, isNotNull } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
 
 // Public: list available slots for an expert (future only)
+// Only exposed for experts who are approved, linked to a user, and accepting bookings —
+// matching the same visibility gates applied by GET /experts and GET /experts/:id.
 router.get("/experts/:id/availability", async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const expertId = parseInt(rawId);
   if (isNaN(expertId)) { res.status(400).json({ message: "Invalid expert id" }); return; }
+
+  const [expert] = await db
+    .select({ id: expertsTable.id })
+    .from(expertsTable)
+    .where(
+      and(
+        eq(expertsTable.id, expertId),
+        eq(expertsTable.status, "approved"),
+        isNotNull(expertsTable.userId),
+        eq(expertsTable.acceptingBookings, true)
+      )
+    );
+
+  if (!expert) { res.status(404).json({ message: "Expert not found" }); return; }
 
   const now = new Date();
   const slots = await db
