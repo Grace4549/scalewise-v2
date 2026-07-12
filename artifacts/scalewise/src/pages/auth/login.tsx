@@ -109,7 +109,7 @@ export default function Login() {
         else                         setLocation("/");
       },
       onError: (err: any) => {
-        const body = err?.body ?? err?.response?.data ?? {};
+        const body = err?.data ?? err?.body ?? err?.response?.data ?? {};
         if (body?.error === "EMAIL_NOT_VERIFIED" && body?.email) {
           setUnverifiedEmail(body.email);
           return;
