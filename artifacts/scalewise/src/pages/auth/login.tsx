@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLogin, useResendVerification } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link } from "wouter";
+import { useLocation, useSearch, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -85,8 +85,8 @@ export default function Login() {
   const queryClient     = useQueryClient();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
-  const params   = new URLSearchParams(window.location.search);
-  const isExpert = params.get("role") === "expert";
+  const search   = useSearch();
+  const isExpert = new URLSearchParams(search).get("role") === "expert";
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver:      zodResolver(loginSchema),
