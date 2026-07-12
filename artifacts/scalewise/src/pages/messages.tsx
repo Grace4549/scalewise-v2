@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, Redirect } from "wouter";
-import { useListMessages, useSendMessage, useGetBooking } from "@workspace/api-client-react";
+import {
+  useListMessages, useSendMessage, useGetBooking,
+  getGetBookingQueryKey, getListMessagesQueryKey,
+} from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +16,15 @@ export default function Messages() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  const { data: booking, isLoading: bookingLoading } = useGetBooking(bookingId);
-  const { data: messages, isLoading: messagesLoading, refetch } = useListMessages(bookingId);
+  // Queries are gated behind confirmed auth so they never consume cached data
+  // from a prior user's session before identity has been verified for this tab.
+  const authenticated = !authLoading && !!user;
+  const { data: booking, isLoading: bookingLoading } = useGetBooking(bookingId, {
+    query: { queryKey: getGetBookingQueryKey(bookingId), enabled: authenticated },
+  });
+  const { data: messages, isLoading: messagesLoading, refetch } = useListMessages(bookingId, {
+    query: { queryKey: getListMessagesQueryKey(bookingId), enabled: authenticated },
+  });
   const sendMessage = useSendMessage();
   
   const [text, setText] = useState("");

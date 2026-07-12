@@ -161,17 +161,26 @@ export default function AdminDashboard() {
   const [cancelBy, setCancelBy] = useState<"client" | "expert" | "admin">("admin");
   const [cancelReason, setCancelReason] = useState("");
 
-  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats();
+  const isAdmin = !authLoading && !!user && user.role === "admin";
+
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats({
+    query: { queryKey: getGetAdminStatsQueryKey(), enabled: isAdmin },
+  });
 
   const appParams = (appDateFrom || appDateTo)
     ? { dateFrom: appDateFrom || undefined, dateTo: appDateTo || undefined }
     : undefined;
-  const { data: apps, isLoading: appsLoading } = useListApplications(appParams);
+  const { data: apps, isLoading: appsLoading } = useListApplications(appParams, {
+    query: { queryKey: getListApplicationsQueryKey(appParams), enabled: isAdmin },
+  });
 
-  const { data: bookings, isLoading: bookingsLoading } = useListAllBookings({
+  const bookingParams = {
     status: bookingFilter as any || undefined,
     dateFrom: bookingDateFrom || undefined,
     dateTo: bookingDateTo || undefined,
+  };
+  const { data: bookings, isLoading: bookingsLoading } = useListAllBookings(bookingParams, {
+    query: { queryKey: getListAllBookingsQueryKey(bookingParams), enabled: isAdmin },
   });
 
   const payoutBookingParams = {
@@ -180,22 +189,26 @@ export default function AdminDashboard() {
     dateTo: payoutDateTo || undefined,
   };
   const { data: completedBookings } = useListAllBookings(payoutBookingParams, {
-    query: { queryKey: getListAllBookingsQueryKey(payoutBookingParams) },
+    query: { queryKey: getListAllBookingsQueryKey(payoutBookingParams), enabled: isAdmin },
   });
 
-  const { data: reviews } = useListReviews();
+  const { data: reviews } = useListReviews(undefined, {
+    query: { queryKey: getListReviewsQueryKey(), enabled: isAdmin },
+  });
 
   const breakdownParams = (payoutDateFrom || payoutDateTo)
     ? { dateFrom: payoutDateFrom || undefined, dateTo: payoutDateTo || undefined }
     : undefined;
-  const { data: breakdown, isLoading: breakdownLoading } = useGetExpertBreakdown(breakdownParams);
+  const { data: breakdown, isLoading: breakdownLoading } = useGetExpertBreakdown(breakdownParams, {
+    query: { queryKey: getGetExpertBreakdownQueryKey(breakdownParams), enabled: isAdmin },
+  });
 
   const { data: adminMessages } = useListAdminMessages(selectedExpertId ?? 0, {
-    query: { queryKey: getListAdminMessagesQueryKey(selectedExpertId ?? 0), enabled: selectedExpertId !== null },
+    query: { queryKey: getListAdminMessagesQueryKey(selectedExpertId ?? 0), enabled: isAdmin && selectedExpertId !== null },
   });
 
   const { data: waitlist, isLoading: waitlistLoading } = useListLaunchNotifications({
-    query: { queryKey: ["listLaunchNotifications"], refetchInterval: 30000 },
+    query: { queryKey: ["listLaunchNotifications"], enabled: isAdmin, refetchInterval: 30000 },
   });
 
   const approveApp = useApproveApplication();

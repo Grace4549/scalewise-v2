@@ -187,10 +187,17 @@ export default function ClientDashboard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: rawBookings, isLoading: bookingsLoading } = useListMyBookings();
+  const isClient = !authLoading && !!user && user.role === "client";
+  const { data: rawBookings, isLoading: bookingsLoading } = useListMyBookings({
+    query: { queryKey: getListMyBookingsQueryKey(), enabled: isClient },
+  });
   const bookings = rawBookings?.filter((b) => b.status !== "pending_payment");
-  const { data: threads, isLoading: threadsLoading } = useGetInbox();
-  const { data: notifications } = useListNotifications();
+  const { data: threads, isLoading: threadsLoading } = useGetInbox({
+    query: { queryKey: getGetInboxQueryKey(), enabled: isClient },
+  });
+  const { data: notifications } = useListNotifications({
+    query: { queryKey: getListNotificationsQueryKey(), enabled: isClient },
+  });
 
   const cancelBooking = useUpdateBookingStatus();
   const rescheduleBooking = useRescheduleBooking();

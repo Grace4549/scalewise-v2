@@ -555,9 +555,16 @@ function ExpertReceiptsTab() {
 
 export default function ExpertDashboard() {
   const { user, isLoading: authLoading } = useAuth();
-  const { data: dashboard, isLoading: dashLoading } = useGetExpertDashboard();
-  const { data: threads, isLoading: threadsLoading } = useGetInbox();
-  const { data: notifications } = useListNotifications();
+  const isExpert = !authLoading && !!user && user.role === "expert";
+  const { data: dashboard, isLoading: dashLoading } = useGetExpertDashboard({
+    query: { queryKey: getGetExpertDashboardQueryKey(), enabled: isExpert },
+  });
+  const { data: threads, isLoading: threadsLoading } = useGetInbox({
+    query: { queryKey: getGetInboxQueryKey(), enabled: isExpert },
+  });
+  const { data: notifications } = useListNotifications({
+    query: { queryKey: getListNotificationsQueryKey(), enabled: isExpert },
+  });
 
   const updateStatus = useUpdateBookingStatus();
   const expertCancel = useExpertCancelBooking();
