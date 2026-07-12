@@ -186,6 +186,9 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const { user } = useAuth();
+  const isExpert  = user?.role === "expert";
+
   return (
     <footer className="border-t bg-card text-card-foreground">
       <div className="container mx-auto px-4 py-12 md:py-16">
@@ -221,7 +224,12 @@ export function Footer() {
             <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mint }}>For Experts</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/apply-expert" className="hover:text-foreground transition-colors">Apply as a Founding Expert</Link></li>
-              <li><Link href="/expert/dashboard" className="hover:text-foreground transition-colors">Expert Dashboard</Link></li>
+              {isExpert
+                ? <li><Link href="/expert/dashboard" className="hover:text-foreground transition-colors">Expert Dashboard</Link></li>
+                : <>
+                    <li><Link href="/login?role=expert" className="hover:text-foreground transition-colors">Expert Login</Link></li>
+                  </>
+              }
             </ul>
           </div>
 

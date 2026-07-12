@@ -148,19 +148,6 @@ export default function RefundPolicy() {
           </div>
         </Section>
 
-        <Section title="Expert Cancellation Standards" color={P.mgreen}>
-          <div className="rounded-2xl border p-6 text-sm text-muted-foreground leading-relaxed" style={{ borderColor: P.mgreen + "28" }}>
-            <p className="mb-3">
-              Every expert on ScaleWise commits to showing up for every confirmed session. If an expert cancels:
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>The client receives a full 100% refund automatically.</li>
-              <li>The expert receives no compensation for the cancelled session.</li>
-              <li>Repeated cancellations may result in account review or removal from the platform.</li>
-            </ul>
-          </div>
-        </Section>
-
         <div
           className="rounded-3xl p-8 text-center"
           style={{ background: P.mgreen + "0A", border: `1px solid ${P.mgreen}30` }}
