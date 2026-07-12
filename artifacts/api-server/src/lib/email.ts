@@ -592,6 +592,7 @@ export async function sendAvailabilityReminderEmail(opts: {
   await sendWithRetry({ to, subject, html });
 }
 
+
 // ── 4. Expert application approved ───────────────────────────────────────────
 
 export async function sendExpertApprovedEmail(opts: {
@@ -631,6 +632,7 @@ export async function sendExpertApprovedEmail(opts: {
   await sendWithRetry({ to, subject, html });
 }
 
+
 // ── 5. Expert application rejected ───────────────────────────────────────────
 
 export async function sendExpertRejectedEmail(opts: {
@@ -663,6 +665,7 @@ export async function sendExpertRejectedEmail(opts: {
 
   await sendWithRetry({ to, subject, html });
 }
+
 
 // ── 6. Expert payout processed ────────────────────────────────────────────────
 
@@ -707,6 +710,7 @@ export async function sendExpertPayoutEmail(opts: {
 
   await sendWithRetry({ to, subject, html });
 }
+
 
 // ── 7. Refund processed (client only — never show expert/platform share) ──────
 
@@ -884,6 +888,7 @@ export async function sendMessageNotificationEmail(opts: {
   await sendWithRetry({ to, subject, html });
 }
 
+
 // ── 11. Expert payout receipt (with full breakdown PDF) ───────────────────────
 
 export async function sendExpertPayoutReceiptEmail(opts: {
@@ -973,4 +978,56 @@ export async function sendLaunchSubscriptionEmail(opts: {
   });
 
   await sendWithRetry({ to, subject, html });
+}
+
+// ── Admin: new expert application received ────────────────────────────────────
+
+export async function sendAdminExpertApplicationEmail(opts: {
+  applicantName: string;
+  applicantEmail: string;
+  industry: string;
+  headline?: string | null;
+}): Promise<void> {
+  const { applicantName, applicantEmail, industry, headline } = opts;
+
+  const subject = `New Expert Application: ${applicantName}`;
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
+      A new expert application has been submitted and is awaiting your review.
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 24px;" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;white-space:nowrap;">Name</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;">${applicantName}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Email</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">
+          <a href="mailto:${applicantEmail}" style="color:#6395EE;text-decoration:none;">${applicantEmail}</a>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Industry</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${industry}</td>
+      </tr>
+      ${headline ? `
+      <tr>
+        <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;white-space:nowrap;">Headline</td>
+        <td style="padding:10px 14px;font-size:14px;color:#111827;font-family:'Helvetica Neue',Arial,sans-serif;background:#FFFFFF;border:1px solid #E5E7EB;border-top:none;">${headline}</td>
+      </tr>` : ""}
+    </table>
+    <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;">
+      Visit the Admin Dashboard to review the full application and approve or reject the applicant.
+    </p>`;
+
+  const html = buildHtml({
+    previewText: `New expert application from ${applicantName} — action required`,
+    recipientFirstName: "Admin",
+    bodyHtml,
+    ctaUrl: `${SITE_URL}/admin`,
+    ctaText: "Review Application",
+  });
+
+  await sendWithRetry({ to: REPLY_TO, subject, html });
 }

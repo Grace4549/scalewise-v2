@@ -3,6 +3,7 @@ import { db, expertsTable, usersTable, reviewsTable, bookingsTable } from "@work
 import { and, eq, ilike, or, sql, inArray, isNotNull } from "drizzle-orm";
 import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { publicWriteLimiter, searchSuggestionsLimiter } from "../lib/limiters";
+import { sendAdminExpertApplicationEmail } from "../lib/email";
 import { ApplyAsExpertBody, ListExpertsQueryParams, GetSearchSuggestionsQueryParams, UpdateExpertProfileBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -213,6 +214,13 @@ router.post("/experts/apply", publicWriteLimiter, async (req, res): Promise<void
         growthPrice6mo: parsed.data.growthPrice6mo ?? null,
         status: "pending",
       });
+
+    sendAdminExpertApplicationEmail({
+      applicantName: parsed.data.name,
+      applicantEmail: parsed.data.email,
+      industry: parsed.data.industry,
+      headline: parsed.data.headline ?? null,
+    }).catch((err) => req.log.error({ err }, "Failed to send admin expert application email"));
   }
 
   res.status(200).json({ message: "Your application has been received. We will be in touch soon." });
