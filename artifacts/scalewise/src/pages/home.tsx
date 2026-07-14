@@ -717,8 +717,29 @@ function IndustriesSection() {
 }
 
 // ── Main Page ──────────────────────────────────────────────────
+const CYCLING_PHRASES = [
+  "Stuck on pricing?",
+  "Losing your best staff?",
+  "Stalled on growth?",
+  "Not sure what's wrong?",
+  "Struggling to scale?",
+  "Overwhelmed and unsure where to start?",
+];
+
 export default function Home() {
   usePageTitle("ScaleWise — Connect With Verified Business Experts");
+  const [phraseIdx, setPhraseIdx]         = useState(0);
+  const [phraseVisible, setPhraseVisible] = useState(true);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseVisible(false);
+      setTimeout(() => {
+        setPhraseIdx(i => (i + 1) % CYCLING_PHRASES.length);
+        setPhraseVisible(true);
+      }, 400);
+    }, 2500);
+    return () => clearInterval(id);
+  }, []);
   const [search, setSearch]       = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchWrapperRef          = useRef<HTMLDivElement>(null);
@@ -801,6 +822,17 @@ export default function Home() {
                   <span style={{ color: P.blue }}>Who</span> Gets <span style={{ color: P.mint }}>It</span>
                 </h1>
               </Reveal>
+              <p
+                className="text-xl font-semibold"
+                style={{
+                  color: P.blue,
+                  opacity: phraseVisible ? 1 : 0,
+                  transition: "opacity 0.4s ease",
+                  minHeight: "1.75rem",
+                }}
+              >
+                {CYCLING_PHRASES[phraseIdx]}
+              </p>
               <Reveal delay={120}>
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
                   Stuck on <strong style={{ color: P.mgreen }}>pricing</strong>? Losing <strong style={{ color: P.blue }}>staff</strong>? Stalled on <strong style={{ color: P.mint }}>growth</strong>? Or wrestling with a problem you can&apos;t even put into words yet?{" "}
