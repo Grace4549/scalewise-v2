@@ -458,13 +458,17 @@ type SelectedThread =
   | null;
 
 const NOTIF_ICON: Record<string, string> = {
-  "48hr_reminder": "🔔",
-  "24hr_reminder": "🔔",
-  "1hr_reminder":  "🔔",
-  "client_cancelled":   "❌",
-  "client_rescheduled": "🔄",
+  "48hr_reminder":   "🔔",
+  "24hr_reminder":   "🔔",
+  "1hr_reminder":    "🔔",
+  "new_booking":     "📅",
+  "client_cancelled":          "❌",
+  "client_rescheduled":        "🔄",
+  "client_no_show":            "⚠️",
   "expert_cancelled":          "📋",
   "expert_reschedule_requested": "📋",
+  "payout_processed":          "💰",
+  "new_message":               "💬",
 };
 
 function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: number }) {

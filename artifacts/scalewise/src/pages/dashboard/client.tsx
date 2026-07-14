@@ -173,13 +173,17 @@ function ClientReceiptsTab() {
 }
 
 const NOTIF_ICON: Record<string, string> = {
-  "48hr_reminder": "🔔",
-  "24hr_reminder": "🔔",
-  "1hr_reminder":  "🔔",
-  "expert_cancelled":         "❌",
+  "48hr_reminder":   "🔔",
+  "24hr_reminder":   "🔔",
+  "1hr_reminder":    "🔔",
+  "booking_confirmed":         "✅",
+  "expert_cancelled":          "❌",
   "expert_reschedule_requested": "🔄",
-  "client_cancelled":   "📋",
-  "client_rescheduled": "📋",
+  "client_cancelled":          "📋",
+  "client_rescheduled":        "📋",
+  "client_no_show":            "⚠️",
+  "refund_processed":          "💸",
+  "new_message":               "💬",
 };
 
 export default function ClientDashboard() {

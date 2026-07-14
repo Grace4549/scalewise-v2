@@ -3,6 +3,7 @@ import { db, bookingsTable, expertsTable, usersTable, payoutBatchesTable } from 
 import { and, eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { sendRefundProcessedEmail, sendExpertPayoutReceiptEmail } from "../lib/email";
+import { createNotification } from "../lib/notify";
 import { generateClientRefundReceiptPdf, generateExpertPayoutReceiptPdf } from "../lib/pdf";
 import { logger } from "../lib/logger";
 
@@ -526,6 +527,24 @@ router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (re
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, updated.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, updated.clientId));
+
+  // In-app notification for the client
+  if (client && updated.refundAmount) {
+    createNotification({
+      bookingId: updated.id,
+      recipientUserId: updated.clientId,
+      notificationType: "refund_processed",
+      recipientEmail: client.email,
+      recipientName: client.name,
+      payload: {
+        title: "Refund Processed",
+        body: "Your refund has been processed and will arrive within 72 business hours. Contact hello@scalewise.co.ke if you have not received it.",
+        sessionStart: updated.scheduledTime.toISOString(),
+        sessionType: updated.sessionType,
+        refundAmount: updated.refundAmount,
+      },
+    }).catch((err: unknown) => logger.error({ err, bookingId: updated.id }, "refund_processed notification failed"));
+  }
 
   // Notify the client their refund has been processed (fire and forget — shows client refund amount only)
   if (client && updated.refundAmount) {

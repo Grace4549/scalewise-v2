@@ -82,9 +82,7 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
     recipientName: payload.clientName,
     payload: {
       title: `Session Reminder: ${label} to go`,
-      body: `Your ${sessionLabel} session with ${payload.expertName} starts in ${label} (${sessionStartFmt}).${
-        payload.meetLink ? ` Join: ${payload.meetLink}` : ""
-      }`,
+      body: `Reminder: Your session with ${payload.expertName} is coming up on ${sessionStartFmt}. ${payload.meetLink ? `Join using your Google Meet link: ${payload.meetLink}` : "Your Google Meet link is available in your dashboard."}`,
       sessionStart: sessionStartIso,
       sessionType: payload.sessionType,
       meetLink: payload.meetLink,
@@ -102,9 +100,7 @@ async function dispatchReminder(payload: ReminderPayload): Promise<void> {
     recipientName: payload.expertName,
     payload: {
       title: `Session Reminder: ${label} to go`,
-      body: `You have a ${sessionLabel} session with ${payload.clientName} in ${label} (${sessionStartFmt}).${
-        payload.meetLink ? ` Join: ${payload.meetLink}` : ""
-      }`,
+      body: `Reminder: Your session with ${payload.clientName} is coming up on ${sessionStartFmt}. ${payload.meetLink ? `Join using your Google Meet link: ${payload.meetLink}` : "Your Google Meet link is available in your dashboard."}`,
       sessionStart: sessionStartIso,
       sessionType: payload.sessionType,
       meetLink: payload.meetLink,

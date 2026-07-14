@@ -15,6 +15,18 @@ export function getCommissionRate(sessionType: string): number {
   return 0.20;
 }
 
+function fmtDate(d: Date): string {
+  return d.toLocaleDateString("en-KE", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    timeZone: "Africa/Nairobi",
+  });
+}
+function fmtTime(d: Date): string {
+  return d.toLocaleTimeString("en-KE", {
+    hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi",
+  });
+}
+
 function getPriceForSession(expert: typeof expertsTable.$inferSelect, sessionType: string): number | null {
   switch (sessionType) {
     case "discovery": return expert.discoveryPrice;
@@ -212,12 +224,12 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
     await createNotification({
       bookingId: booking.id,
       recipientUserId: expert.userId,
-      notificationType: "client_rescheduled",
+      notificationType: "new_booking",
       recipientEmail: expert.email,
       recipientName: expert.name,
       payload: {
-        title: "New Booking Confirmed",
-        body: `${client.name} has booked a ${sessionType.replace(/_/g, " ")} session with you on ${newStart.toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}.`,
+        title: "New Session Booking",
+        body: `You have a new session booking from ${client.name} on ${fmtDate(newStart)} at ${fmtTime(newStart)}. Go to your dashboard to acknowledge it.`,
         sessionStart: newStart.toISOString(),
         sessionType,
         otherPartyName: client.name,
@@ -225,6 +237,23 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
       },
     });
   }
+
+  // Notify the client that their booking is confirmed (in-app)
+  await createNotification({
+    bookingId: booking.id,
+    recipientUserId: req.userId!,
+    notificationType: "booking_confirmed",
+    recipientEmail: client.email,
+    recipientName: client.name,
+    payload: {
+      title: "Booking Confirmed",
+      body: `Your session with ${expert.name} on ${fmtDate(newStart)} at ${fmtTime(newStart)} is confirmed. Your Google Meet link is ready in your dashboard.`,
+      sessionStart: newStart.toISOString(),
+      sessionType,
+      meetLink,
+      otherPartyName: expert.name,
+    },
+  });
 
   // Send client booking confirmation email with PDF receipt (fire and forget)
   ;(async () => {
@@ -400,7 +429,7 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res): Promise<void
       recipientName: expert.name,
       payload: {
         title: "Client Cancelled Their Session",
-        body: `${client.name} has cancelled their ${sessionLabel} session${(updateFields.cancellationReason as string | null) ? ` — reason: "${String(updateFields.cancellationReason)}"` : ""}. Client refund: ${refPct}%${refAmt ? ` (KES ${refAmt.toLocaleString()})` : ""}.`,
+        body: `${client.name} has cancelled their session scheduled for ${fmtDate(booking.scheduledTime)} at ${fmtTime(booking.scheduledTime)}.`,
         sessionStart: booking.scheduledTime.toISOString(),
         sessionType: booking.sessionType,
         otherPartyName: client.name,
@@ -514,8 +543,8 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
       recipientEmail: expert.email,
       recipientName: expert.name,
       payload: {
-        title: "Client Rescheduled Their Session",
-        body: `${client.name} has rescheduled their ${booking.sessionType.replace(/_/g, " ")} session to ${newTimeStr}.`,
+        title: "Client Requested to Reschedule",
+        body: `${client.name} has requested to reschedule their session originally booked for ${fmtDate(booking.scheduledTime)} at ${fmtTime(booking.scheduledTime)}.`,
         sessionStart: newStart.toISOString(),
         sessionType: booking.sessionType,
         otherPartyName: client.name,
@@ -586,7 +615,7 @@ router.post("/bookings/:id/mark-no-show", requireAuth, async (req, res): Promise
     recipientName: client.name,
     payload: {
       title: "Session Marked as No-Show",
-      body: `Your ${booking.sessionType.replace(/_/g, " ")} session with ${expert.name} has been marked as a no-show. You will receive a refund of KES ${ref.refundAmount.toLocaleString()} (${ref.refundPercent}%). Your refund will be processed within 72 business hours.`,
+      body: `Your session on ${fmtDate(booking.scheduledTime)} at ${fmtTime(booking.scheduledTime)} was marked as a no-show. Please refer to our Cancellation and Refund Policy for details.`,
       sessionStart: booking.scheduledTime.toISOString(),
       sessionType: booking.sessionType,
       otherPartyName: expert.name,
@@ -651,7 +680,7 @@ router.post("/bookings/:id/expert-cancel", requireAuth, async (req, res): Promis
     recipientName: client.name,
     payload: {
       title: "Your Session Was Cancelled by the Expert",
-      body: `${expert.name} has cancelled your ${booking.sessionType.replace(/_/g, " ")} session${reason ? ` — reason: "${reason}"` : ""}. You will receive a full refund of KES ${(refund.refundAmount || booking.amount || 0).toLocaleString()} as per our cancellation policy.`,
+      body: `${expert.name} has cancelled your session on ${fmtDate(booking.scheduledTime)} at ${fmtTime(booking.scheduledTime)}. You will receive a full refund within 72 business hours.`,
       sessionStart: booking.scheduledTime.toISOString(),
       sessionType: booking.sessionType,
       otherPartyName: expert.name,
@@ -698,7 +727,7 @@ router.post("/bookings/:id/request-reschedule", requireAuth, async (req, res): P
     recipientName: client.name,
     payload: {
       title: "Expert Requested to Reschedule",
-      body: `${expert.name} has requested to reschedule your ${booking.sessionType.replace(/_/g, " ")} session${reason ? ` — reason: "${reason}"` : ""}. Please visit your Client Dashboard to select a new available time slot.`,
+      body: `${expert.name} has requested to reschedule your session. Please visit your dashboard to select a new time.`,
       sessionStart: booking.scheduledTime.toISOString(),
       sessionType: booking.sessionType,
       otherPartyName: expert.name,

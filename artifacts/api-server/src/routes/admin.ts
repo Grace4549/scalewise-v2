@@ -6,6 +6,7 @@ import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
 import { UpdateBookingStatusBody } from "@workspace/api-zod";
 import { sendExpertApprovedEmail, sendExpertRejectedEmail, sendExpertPayoutEmail } from "../lib/email";
+import { createNotification } from "../lib/notify";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -323,6 +324,25 @@ router.post("/admin/bookings/:id/mark-paid", adminMiddleware(), async (req, res)
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, updated.expertId));
   const [client] = await db.select().from(usersTable).where(eq(usersTable.id, updated.clientId));
 
+  // Notify the expert of their payout (fire and forget)
+  if (expert?.userId && updated.amount) {
+    const commission = COMMISSION_RATES[updated.sessionType] ?? 0.20;
+    const netAmount = Math.round(updated.amount * (1 - commission));
+    createNotification({
+      bookingId: updated.id,
+      recipientUserId: expert.userId,
+      notificationType: "payout_processed",
+      recipientEmail: expert.email,
+      recipientName: expert.name,
+      payload: {
+        title: "Payout Processed",
+        body: `Your payout of KES ${netAmount.toLocaleString()} has been sent. Check your bank account within a few business days.`,
+        sessionStart: updated.scheduledTime.toISOString(),
+        sessionType: updated.sessionType,
+      },
+    }).catch((err: unknown) => logger.error({ err }, "payout_processed notification failed"));
+  }
+
   res.json(formatAdminBooking(updated, { [expert.id]: expert }, { [client.id]: client }));
 });
 
@@ -362,6 +382,25 @@ router.post("/admin/experts/:id/mark-paid", adminMiddleware(), async (req, res):
         totalAmount,
         sessionCount: updated.length,
       }).catch((err) => logger.error({ err, expertId }, "sendExpertPayoutEmail failed"));
+
+      // In-app notification with total net payout
+      if (expert.userId) {
+        const totalNet = updated.reduce((sum, b) => {
+          const commission = COMMISSION_RATES[b.sessionType] ?? 0.20;
+          return sum + Math.round((b.amount ?? 0) * (1 - commission));
+        }, 0);
+        createNotification({
+          bookingId: null,
+          recipientUserId: expert.userId,
+          notificationType: "payout_processed",
+          recipientEmail: expert.email,
+          recipientName: expert.name,
+          payload: {
+            title: "Payout Processed",
+            body: `Your payout of KES ${totalNet.toLocaleString()} has been sent. Check your bank account within a few business days.`,
+          },
+        }).catch((err: unknown) => logger.error({ err, expertId }, "payout_processed notification failed"));
+      }
     }
   }
 

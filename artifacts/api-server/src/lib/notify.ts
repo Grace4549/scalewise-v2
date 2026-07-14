@@ -28,7 +28,7 @@ export interface NotificationPayload {
 }
 
 export interface CreateNotificationParams {
-  bookingId: number;
+  bookingId: number | null;
   recipientUserId: number;
   notificationType: NotificationType;
   payload: NotificationPayload;

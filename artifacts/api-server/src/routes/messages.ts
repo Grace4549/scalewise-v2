@@ -4,6 +4,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { SendMessageBody } from "@workspace/api-zod";
 import { sendMessageNotificationEmail } from "../lib/email";
+import { createNotification } from "../lib/notify";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -192,9 +193,9 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
   const senderMap = await fetchSenderMap([req.userId!]);
   const senderName = senderMap[req.userId!]?.name ?? "Someone";
 
-  // Email notification to the other party (fire and forget)
+  // Email + in-app notification to the other party (fire and forget)
   if (req.userRole === "expert") {
-    // Sender is expert → notify admin
+    // Sender is expert → notify admin via email only
     db.select().from(usersTable).where(eq(usersTable.role, "admin")).limit(1)
       .then(([admin]) => {
         if (admin) {
@@ -210,7 +211,7 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
       })
       .catch((err) => logger.error({ err }, "Admin lookup for message notification failed"));
   } else if (req.userRole === "admin") {
-    // Sender is admin → notify expert
+    // Sender is admin → notify expert via email + in-app
     db.select().from(expertsTable).where(eq(expertsTable.id, expertId)).limit(1)
       .then(([expert]) => {
         if (expert) {
@@ -222,6 +223,20 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
             messagePreview: parsed.data.body,
             dashboardUrl: "https://scalewise.co.ke/expert/dashboard",
           }).catch((err) => logger.error({ err, expertId }, "Expert message notification email failed"));
+          if (expert.userId) {
+            createNotification({
+              bookingId: null,
+              recipientUserId: expert.userId,
+              notificationType: "new_message",
+              recipientEmail: expert.email,
+              recipientName: expert.name,
+              payload: {
+                title: "New Message from ScaleWise",
+                body: `You have a new message from the ScaleWise team. Open your inbox to reply.`,
+                otherPartyName: "ScaleWise",
+              },
+            }).catch((err: unknown) => logger.error({ err, expertId }, "new_message notification (admin→expert) failed"));
+          }
         }
       })
       .catch((err) => logger.error({ err }, "Expert lookup for message notification failed"));
@@ -293,7 +308,7 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
   const senderName = senderMap[req.userId!]?.name ?? "Someone";
   const senderRole = req.userRole as "client" | "expert" | "admin";
 
-  // Email notification to the other party (fire and forget)
+  // Email + in-app notification to the other party (fire and forget)
   if (req.userRole === "client") {
     // Notify expert
     db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId)).limit(1)
@@ -307,6 +322,20 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
             messagePreview: parsed.data.body,
             dashboardUrl: "https://scalewise.co.ke/expert/dashboard",
           }).catch((err) => logger.error({ err, bookingId }, "Expert message notification email failed"));
+          if (expert.userId) {
+            createNotification({
+              bookingId: null,
+              recipientUserId: expert.userId,
+              notificationType: "new_message",
+              recipientEmail: expert.email,
+              recipientName: expert.name,
+              payload: {
+                title: "New Message",
+                body: `You have a new message from ${senderName}. Open your inbox to reply.`,
+                otherPartyName: senderName,
+              },
+            }).catch((err: unknown) => logger.error({ err }, "new_message notification (expert) failed"));
+          }
         }
       })
       .catch((err) => logger.error({ err }, "Expert lookup for message notification failed"));
@@ -323,6 +352,18 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
             messagePreview: parsed.data.body,
             dashboardUrl: "https://scalewise.co.ke/client/dashboard",
           }).catch((err) => logger.error({ err, bookingId }, "Client message notification email failed"));
+          createNotification({
+            bookingId: null,
+            recipientUserId: client.id,
+            notificationType: "new_message",
+            recipientEmail: client.email,
+            recipientName: client.name,
+            payload: {
+              title: "New Message",
+              body: `You have a new message from ${senderName}. Open your inbox to reply.`,
+              otherPartyName: senderName,
+            },
+          }).catch((err: unknown) => logger.error({ err }, "new_message notification (client) failed"));
         }
       })
       .catch((err) => logger.error({ err }, "Client lookup for message notification failed"));
