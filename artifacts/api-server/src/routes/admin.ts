@@ -85,6 +85,7 @@ function formatAdminBooking(
     rescheduledBy: b.rescheduledBy ?? null,
     rescheduledFromTime: b.rescheduledFromTime ? b.rescheduledFromTime.toISOString() : null,
     rescheduledAt: b.rescheduledAt ? b.rescheduledAt.toISOString() : null,
+    isTestBooking: b.isTestBooking,
   };
 }
 
@@ -481,21 +482,22 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     .where(eq(bookingsTable.status, "cancelled"));
 
   const allBookings = await db.select().from(bookingsTable);
-  const completedBookings = allBookings.filter((b) => b.status === "completed");
-  const cancellationBookings = allBookings.filter(
+  const realBookings = allBookings.filter((b) => !b.isTestBooking);
+  const completedBookings = realBookings.filter((b) => b.status === "completed");
+  const cancellationBookings = realBookings.filter(
     (b) => (b.status === "cancelled" || b.status === "no-show") && (b.expertCancellationEarning ?? 0) > 0
   );
 
   // Gross volume = all money collected from clients (non-pending_payment bookings with an amount)
-  const grossVolume = allBookings
+  const grossVolume = realBookings
     .filter((b) => b.status !== "pending_payment" && b.amount != null)
     .reduce((sum, b) => sum + (b.amount ?? 0), 0);
 
   // Refund amounts in KES
-  const pendingRefundAmount = allBookings
+  const pendingRefundAmount = realBookings
     .filter((b) => b.refundStatus === "pending" && b.refundAmount != null)
     .reduce((sum, b) => sum + (b.refundAmount ?? 0), 0);
-  const paidRefundAmount = allBookings
+  const paidRefundAmount = realBookings
     .filter((b) => b.refundStatus === "paid" && b.refundAmount != null)
     .reduce((sum, b) => sum + (b.refundAmount ?? 0), 0);
 
@@ -509,7 +511,7 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
   }, 0);
 
   // Platform revenue from cancellations (amount - refund - expert earning)
-  const cancellationPlatformRevenue = allBookings
+  const cancellationPlatformRevenue = realBookings
     .filter((b) => (b.status === "cancelled" || b.status === "no-show") && b.amount != null && b.refundAmount != null)
     .reduce((sum, b) => {
       const kept = (b.amount ?? 0) - (b.refundAmount ?? 0) - (b.expertCancellationEarning ?? 0);
@@ -594,6 +596,7 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     pendingRefunds: pendingRefundCount?.count ?? 0,
     paidRefunds: paidRefundCount?.count ?? 0,
     recentBookings: recentBookings.map((b) => formatAdminBooking(b, expertMap, clientMap)),
+    testMode: process.env.TEST_MODE === "true",
   });
 });
 

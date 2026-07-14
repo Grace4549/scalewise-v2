@@ -51,4 +51,5 @@ export interface Booking {
   rescheduledFromTime?: string | null;
   /** @nullable */
   rescheduledAt?: string | null;
+  isTestBooking?: boolean;
 }

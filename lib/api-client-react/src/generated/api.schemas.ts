@@ -311,6 +311,7 @@ export interface Booking {
   rescheduledFromTime?: string | null;
   /** @nullable */
   rescheduledAt?: string | null;
+  isTestBooking?: boolean;
 }
 
 export type BookingInputSessionType = typeof BookingInputSessionType[keyof typeof BookingInputSessionType];
@@ -328,6 +329,7 @@ export interface BookingInput {
   sessionType: BookingInputSessionType;
   scheduledTime: string;
   notes?: string;
+  isTestBooking?: boolean;
 }
 
 export type BookingStatusUpdateStatus = typeof BookingStatusUpdateStatus[keyof typeof BookingStatusUpdateStatus];
@@ -432,6 +434,7 @@ export interface AdminBooking {
   rescheduledFromTime?: string | null;
   /** @nullable */
   rescheduledAt?: string | null;
+  isTestBooking?: boolean;
 }
 
 export interface AdminExpertBreakdown {
@@ -563,6 +566,7 @@ export interface AdminStats {
   pendingRefunds?: number;
   paidRefunds?: number;
   recentBookings: AdminBooking[];
+  testMode?: boolean;
 }
 
 export type NotificationPayload = { [key: string]: unknown };

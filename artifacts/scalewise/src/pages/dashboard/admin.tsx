@@ -406,6 +406,15 @@ export default function AdminDashboard() {
         Back to Home
       </Link>
 
+      {/* Test Mode Banner */}
+      {stats?.testMode && (
+        <div className="mb-6 flex items-center gap-3 px-5 py-3 rounded-2xl border-2 text-sm font-semibold"
+          style={{ backgroundColor: "#fef9c3", borderColor: "#fbbf24", color: "#92400e" }}>
+          <span className="text-lg">🧪</span>
+          <span>TEST MODE ACTIVE — test bookings are excluded from all financial reporting.</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <div className="w-1.5 h-12 rounded-full" style={{ background: `linear-gradient(to bottom, ${C.blue}, ${C.mint})` }} />
@@ -744,7 +753,17 @@ export default function AdminDashboard() {
                             <div>{fmtDate(b.scheduledTime)}</div>
                             <div className="text-xs text-muted-foreground">{fmtTime(b.scheduledTime)}</div>
                           </td>
-                          <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <StatusBadge status={b.status} />
+                              {b.isTestBooking && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                                  style={{ backgroundColor: "#fef9c3", color: "#92400e", border: "1px solid #fbbf24" }}>
+                                  TEST
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3">{b.amount ? `KES ${b.amount.toLocaleString()}` : "—"}</td>
                           <td className="px-4 py-3 font-medium" style={{ color: C.blue }}>
                             {b.commission ? `KES ${b.commission.toFixed(0)}` : "—"}

@@ -57,6 +57,7 @@ export function formatBooking(
     rescheduledBy: b.rescheduledBy ?? null,
     rescheduledFromTime: b.rescheduledFromTime ? b.rescheduledFromTime.toISOString() : null,
     rescheduledAt: b.rescheduledAt ? b.rescheduledAt.toISOString() : null,
+    isTestBooking: b.isTestBooking,
   };
   if (includePayoutFields) {
     return {
@@ -140,7 +141,8 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
   const parsed = CreateBookingBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const { expertId, sessionType, scheduledTime, notes } = parsed.data;
+  const { expertId, sessionType, scheduledTime, notes, isTestBooking } = parsed.data;
+  const testModeActive = process.env.TEST_MODE === "true";
 
   const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, expertId));
   if (!expert || expert.status !== "approved" || expert.userId === null) {
@@ -199,6 +201,7 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
       meetLink,
       amount,
       status: "upcoming",
+      isTestBooking: testModeActive && isTestBooking === true,
     })
     .returning();
 

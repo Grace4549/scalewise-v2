@@ -30,4 +30,5 @@ export interface AdminStats {
   pendingRefunds?: number;
   paidRefunds?: number;
   recentBookings: AdminBooking[];
+  testMode?: boolean;
 }

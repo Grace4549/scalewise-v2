@@ -1,0 +1,20 @@
+Temporarily allow bookings to be completed without payment for testing purposes only. Implement this as follows:
+1. Bypass payment step temporarily:
+Add a clearly visible "Test Mode" banner or label somewhere in the booking flow (visible only in the admin view or when logged in as admin, not to regular visitors) so it is obvious this is a test bypass and not the real payment flow.
+When a user reaches the payment step during booking, instead of triggering the M-Pesa payment flow, show a button labeled "Complete Test Booking (No Payment)" that immediately confirms the booking as if payment was successful. This button should only appear when the platform is in test mode.
+2. Trigger all normal post-booking logic:
+When the test booking is confirmed, trigger every piece of logic that would normally run after a real payment:
+
+Create the booking record in the database with status "confirmed"
+Generate a Google Meet link and attach it to the booking
+Send the booking confirmation email to the client (via Resend)
+Send the booking notification email to the expert
+Show the booking in the client dashboard under Upcoming Sessions
+Show the booking in the expert dashboard under Incoming Bookings with the yellow Acknowledge button
+Unlock the messaging thread between the client and expert for this booking
+Schedule the 48 hour, 24 hour, and 1 hour reminder emails
+
+3. Mark test bookings clearly:
+Add a field called is_test_booking set to true in the database for any booking created through this bypass. Display a "Test Booking" badge on these bookings in the admin dashboard so they are clearly distinguishable from real bookings. Exclude test bookings from all commission calculations, payout totals, and revenue reporting in the admin dashboard.
+4. Easy to reverse:
+Structure this so that removing test mode later requires only one change, such as setting a single TEST_MODE environment variable to false in Replit Secrets, which immediately disables the bypass button and restores the normal M-Pesa payment requirement for all new bookings. Do not hardcode the test mode toggle anywhere that would require searching through multiple files to reverse it.

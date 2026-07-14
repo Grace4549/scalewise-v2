@@ -1520,6 +1520,8 @@ components:
           type: ["string", "null"]
         rescheduledAt:
           type: ["string", "null"]
+        isTestBooking:
+          type: boolean
 
     BookingInput:
       type: object
@@ -1534,6 +1536,8 @@ components:
           type: string
         notes:
           type: string
+        isTestBooking:
+          type: boolean
 
     BookingStatusUpdate:
       type: object
@@ -1618,6 +1622,8 @@ components:
           type: ["string", "null"]
         rescheduledAt:
           type: ["string", "null"]
+        isTestBooking:
+          type: boolean
 
     AdminExpertBreakdown:
       type: object
@@ -1843,6 +1849,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminBooking"
+        testMode:
+          type: boolean
 
     Notification:
       type: object

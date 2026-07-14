@@ -12,4 +12,5 @@ export interface BookingInput {
   sessionType: BookingInputSessionType;
   scheduledTime: string;
   notes?: string;
+  isTestBooking?: boolean;
 }

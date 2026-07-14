@@ -354,7 +354,8 @@ export const ListMyBookingsResponseItem = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 export const ListMyBookingsResponse = zod.array(ListMyBookingsResponseItem)
 
@@ -366,7 +367,8 @@ export const CreateBookingBody = zod.object({
   "expertId": zod.number(),
   "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
   "scheduledTime": zod.string(),
-  "notes": zod.string().optional()
+  "notes": zod.string().optional(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -402,7 +404,8 @@ export const GetBookingResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -443,7 +446,8 @@ export const RescheduleBookingResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -485,7 +489,8 @@ export const UpdateBookingStatusResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -525,7 +530,8 @@ export const ExpertCancelBookingResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -840,7 +846,8 @@ export const ListAllBookingsResponseItem = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 export const ListAllBookingsResponse = zod.array(ListAllBookingsResponseItem)
 
@@ -885,7 +892,8 @@ export const AdminUpdateBookingStatusResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -923,7 +931,8 @@ export const MarkRefundPaidResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -961,7 +970,8 @@ export const MarkBookingPaidResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })
 
 
@@ -1017,8 +1027,10 @@ export const GetAdminStatsResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
-}))
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
+})),
+  "testMode": zod.boolean().optional()
 })
 
 
@@ -1238,7 +1250,8 @@ export const GetExpertDashboardResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })),
   "completedBookings": zod.array(zod.object({
   "id": zod.number(),
@@ -1265,7 +1278,8 @@ export const GetExpertDashboardResponse = zod.object({
   "expertCancellationEarning": zod.number().nullish(),
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
-  "rescheduledAt": zod.string().nullish()
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional()
 })),
   "cancelledWithEarnings": zod.array(zod.record(zod.string(), zod.unknown())),
   "totalEarnings": zod.number(),

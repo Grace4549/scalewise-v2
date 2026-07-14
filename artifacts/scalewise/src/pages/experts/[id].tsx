@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   useGetExpert, useCreateVerifiedReview, useListMyBookings,
-  useGetExpertAvailability,
+  useGetExpertAvailability, useCreateBooking,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -306,11 +307,24 @@ export default function ExpertProfile() {
   const { id } = useParams();
   const expertId = parseInt(id!);
   const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [activeReviewTab, setActiveReviewTab] = useState<"all" | "verified">("all");
   const [bookingAttempted, setBookingAttempted] = useState(false);
 
   const { data: expert, isLoading } = useGetExpert(expertId);
   const { data: availabilitySlots = [] } = useGetExpertAvailability(expertId);
+
+  const { data: config } = useQuery({
+    queryKey: ["config"],
+    queryFn: async () => {
+      const res = await fetch("/api/config");
+      return res.json() as Promise<{ testMode: boolean }>;
+    },
+  });
+  const testMode = config?.testMode ?? false;
+
+  const createBookingMutation = useCreateBooking();
 
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -331,8 +345,23 @@ export default function ExpertProfile() {
     }
   };
 
-  const onSubmit = () => {
-    setBookingAttempted(true);
+  const onSubmit = (values: z.infer<typeof bookingSchema>) => {
+    if (testMode) {
+      createBookingMutation.mutate(
+        { data: { expertId, sessionType: values.sessionType, scheduledTime: values.scheduledTime, notes: values.notes || undefined, isTestBooking: true } },
+        {
+          onSuccess: () => {
+            toast({ title: "Test booking created!", description: "Your test booking has been placed without payment." });
+            navigate("/dashboard/client");
+          },
+          onError: (err: any) => {
+            toast({ title: "Booking failed", description: err?.message ?? "Something went wrong", variant: "destructive" });
+          },
+        }
+      );
+    } else {
+      setBookingAttempted(true);
+    }
   };
 
   if (isLoading) {
@@ -555,9 +584,9 @@ export default function ExpertProfile() {
 
                     {user ? (
                       <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-xl"
-                        disabled={selectedPrice == null || !selectedTime}
-                        style={{ background: P_BLUE, color: "white" }}>
-                        Request Booking
+                        disabled={selectedPrice == null || !selectedTime || createBookingMutation.isPending}
+                        style={{ background: testMode ? "#f59e0b" : P_BLUE, color: "white" }}>
+                        {testMode ? "Complete Test Booking (No Payment)" : "Request Booking"}
                       </Button>
                     ) : (
                       <Link href="/login">
@@ -568,7 +597,9 @@ export default function ExpertProfile() {
                     )}
 
                     <p className="text-xs text-center text-muted-foreground">
-                      Payment is required to confirm your session.
+                      {testMode
+                        ? "🧪 Test mode — no payment is processed."
+                        : "Payment is required to confirm your session."}
                     </p>
                   </form>
                 </Form>

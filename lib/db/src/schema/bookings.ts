@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -32,6 +32,8 @@ export const bookingsTable = pgTable("bookings", {
   rescheduledFromTime: timestamp("rescheduled_from_time", { withTimezone: true }),
   rescheduledAt: timestamp("rescheduled_at", { withTimezone: true }),
   rescheduleCount: integer("reschedule_count").notNull().default(0),
+
+  isTestBooking: boolean("is_test_booking").notNull().default(false),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({ id: true, createdAt: true, status: true, meetLink: true });
