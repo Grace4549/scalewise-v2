@@ -57,7 +57,9 @@ function ReviewCard({ review }: { review: ReviewData }) {
         )}
       </div>
       <p className="text-muted-foreground leading-relaxed mb-2">"{review.body}"</p>
-      <div className="text-sm font-semibold text-foreground">{review.reviewerName}</div>
+      <div className="text-sm font-semibold text-foreground">
+        {review.reviewerName}{review.businessName ? `, ${review.businessName}` : ""}
+      </div>
     </div>
   );
 }
@@ -141,6 +143,14 @@ function ClientReviewForm({ expertId }: { expertId: number }) {
       )}
 
       <div>
+        <label className="block text-sm font-medium mb-1">
+          Your business or role <span className="text-muted-foreground font-normal">(optional)</span>
+        </label>
+        <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
+          placeholder="e.g. Salon owner, Westlands or Restaurant founder, Nairobi." />
+      </div>
+
+      <div>
         <label className="block text-sm font-medium mb-2">Rating</label>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((s) => (
@@ -150,14 +160,6 @@ function ClientReviewForm({ expertId }: { expertId: number }) {
             </button>
           ))}
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Business <span className="text-muted-foreground font-normal">(optional)</span>
-        </label>
-        <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
-          placeholder="Mama Chiku's Salon" />
       </div>
 
       <div>

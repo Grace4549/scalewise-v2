@@ -439,7 +439,7 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
         </div>
         <p className="italic text-muted-foreground text-sm leading-relaxed flex-1">"{r.body}"</p>
         <div className="mt-5 pt-4 border-t">
-          <div className="font-semibold text-foreground text-sm">{r.reviewerName}</div>
+          <div className="font-semibold text-foreground text-sm">{r.reviewerName}{r.businessName ? `, ${r.businessName}` : ""}</div>
         </div>
       </div>
     );
@@ -457,7 +457,7 @@ function ReviewsCarousel({ reviews }: { reviews: ReviewItem[] }) {
               </div>
               <p className="italic text-muted-foreground text-sm leading-relaxed flex-1">"{r.body}"</p>
               <div className="mt-5 pt-4 border-t">
-                <div className="font-semibold text-foreground text-sm">{r.reviewerName}</div>
+                <div className="font-semibold text-foreground text-sm">{r.reviewerName}{r.businessName ? `, ${r.businessName}` : ""}</div>
               </div>
             </div>
           );
@@ -566,6 +566,19 @@ function LeaveReviewForm() {
           style={{ background: P.mgreen + "08", borderColor: P.mgreen + "30" }}>
           <h3 className="font-bold text-lg mb-5 text-center">Share Your Experience</h3>
 
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Your Name <span className="text-red-500">*</span></label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              Your business or role <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
+            <Input value={business} onChange={e => setBusiness(e.target.value)}
+              placeholder="e.g. Salon owner, Westlands or Restaurant founder, Nairobi." />
+          </div>
+
           {/* Star rating */}
           <div className="mb-5">
             <label className="block text-sm font-medium mb-2">Rating</label>
@@ -577,18 +590,6 @@ function LeaveReviewForm() {
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Your Name <span className="text-red-500">*</span></label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" required />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Business Name <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <Input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Mama Chiku's Salon" />
           </div>
 
           <div className="mb-6">
