@@ -248,6 +248,47 @@ const SESSION_TYPES = [
   },
 ];
 
+const WHY_SCALEWISE = [
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    ),
+    label: "Industry-Specific Matching",
+    text: "We don't match you with a generic business coach. We match you with someone who has run a salon, a restaurant, a farm, a tech startup, or a business — exactly like yours.",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    ),
+    label: "Real Operators, Not Theorists",
+    text: "Every expert on ScaleWise has built and run a real business. Their advice comes from experience, not from a textbook or a certification.",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+      </svg>
+    ),
+    label: "Pay Only for What You Need",
+    text: "No monthly retainers, no long-term contracts, no pressure. Book one session, a focused consultancy, or a full growth plan — only when you need it.",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+    label: "The Conversation Continues",
+    text: "After your session, you keep the thread. Message your expert directly through the platform with follow-up questions, progress updates, or your next challenge.",
+  },
+];
+
 const FALLBACK_REVIEWS = [
   { id: -1, rating: 5, body: "I had been stuck on my pricing for eight months. After one session, I had a clear model that actually worked. The ROI was immediate.", reviewerName: "Grace Wanjiru" },
   { id: -2, rating: 5, body: "I was skeptical at first. Then I walked away from a discovery call with a staffing playbook I started using the same week.", reviewerName: "David Mwangi" },
@@ -1110,6 +1151,36 @@ export default function Home() {
                       Find an Expert →
                     </Button>
                   </Link>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHY SCALEWISE ── */}
+      <section className="py-16" style={{ background: "#F8FAFC" }}>
+        <div className="container mx-auto px-4">
+          <Reveal>
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <div className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.blue }}>
+                Why ScaleWise
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Not Another Generic Platform</h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Most advice platforms connect you with coaches and consultants who've read about your problem. ScaleWise connects you with people who've actually lived it — in your exact industry.
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+            {WHY_SCALEWISE.map((point, i) => (
+              <Reveal key={point.label} delay={i * 80}>
+                <div className="flex gap-4 p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow h-full">
+                  <div className="shrink-0 mt-0.5">{point.icon}</div>
+                  <div>
+                    <div className="font-bold text-sm mb-1.5" style={{ color: P.blue }}>{point.label}</div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{point.text}</p>
+                  </div>
                 </div>
               </Reveal>
             ))}

@@ -1,0 +1,21 @@
+Add a "Why ScaleWise" section to the homepage placed after the Three Ways to Get Help section and before the Browse By Industry section. This section should clearly articulate ScaleWise's specific competitive difference compared to generic business advice platforms, networking sites, and coaching directories.
+
+Use this exact content:
+
+Section eyebrow (small uppercase text): "WHY SCALEWISE"
+
+Heading: "Not Another Generic Platform"
+
+Subheading: "Most advice platforms connect you with coaches and consultants who've read about your problem. ScaleWise connects you with people who've actually lived it — in your exact industry."
+
+Below the heading, display four differentiator points in a two-by-two grid layout, each with a small icon, a bold short label, and one sentence of explanation:
+
+Point 1 — Icon: industry/category icon | Label: "Industry-Specific Matching" | Text: "We don't match you with a generic business coach. We match you with someone who has run a salon, a restaurant, a farm, a tech startup, or a business — exactly like yours."
+
+Point 2 — Icon: verified/checkmark icon | Label: "Real Operators, Not Theorists" | Text: "Every expert on ScaleWise has built and run a real business. Their advice comes from experience, not from a textbook or a certification."
+
+Point 3 — Icon: target/focus icon | Label: "Pay Only for What You Need" | Text: "No monthly retainers, no long-term contracts, no pressure. Book one session, a focused consultancy, or a full growth plan — only when you need it."
+
+Point 4 — Icon: message/conversation icon | Label: "The Conversation Continues" | Text: "After your session, you keep the thread. Message your expert directly through the platform with follow-up questions, progress updates, or your next challenge."
+
+Use cornflower blue (#6395EE) for icons and bold labels, and standard dark text for the explanation sentences. Add a subtle fade-in animation as each point enters the viewport on scroll. Keep the section background a very light gray (#F8FAFC) to visually separate it from surrounding white sections.
