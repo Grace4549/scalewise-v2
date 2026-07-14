@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -129,6 +130,7 @@ function SectionHeader({ color, children }: { color: string; children: React.Rea
 }
 
 export default function AdminDashboard() {
+  usePageTitle("Admin — ScaleWise");
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

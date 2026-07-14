@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -187,6 +188,7 @@ const NOTIF_ICON: Record<string, string> = {
 };
 
 export default function ClientDashboard() {
+  usePageTitle("My Dashboard — ScaleWise");
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();

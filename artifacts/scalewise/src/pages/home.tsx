@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -698,6 +699,7 @@ function IndustriesSection() {
 
 // ── Main Page ──────────────────────────────────────────────────
 export default function Home() {
+  usePageTitle("ScaleWise — Connect With Verified Business Experts");
   const [search, setSearch]       = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchWrapperRef          = useRef<HTMLDivElement>(null);

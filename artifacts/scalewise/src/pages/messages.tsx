@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, Redirect } from "wouter";
 import {
@@ -11,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Messages() {
+  usePageTitle("Messages — ScaleWise");
   const { bookingId: bookingIdStr } = useParams();
   const bookingId = parseInt(bookingIdStr!);
   const { user, isLoading: authLoading } = useAuth();

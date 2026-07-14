@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useListExperts, useListIndustries } from "@workspace/api-client-react";
@@ -16,6 +17,7 @@ const P = {
 };
 
 export default function ExpertsList() {
+  usePageTitle("Browse Experts — ScaleWise");
   const [searchParams] = useLocation();
   const queryParams = new URLSearchParams(window.location.search);
 

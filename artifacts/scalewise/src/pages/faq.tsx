@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useMemo } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
@@ -404,6 +405,7 @@ function getAnswerText(a: React.ReactNode): string {
 }
 
 export default function FAQ() {
+  usePageTitle("FAQ — ScaleWise");
   const { user } = useAuth();
   const isExpert = user?.role === "expert";
   const [query, setQuery] = useState("");

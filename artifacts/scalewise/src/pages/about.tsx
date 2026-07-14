@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useEffect, useRef, useState } from "react";
@@ -204,6 +205,7 @@ function BeforeAfterImage({ wide = false }: { wide?: boolean }) {
 }
 
 export default function About() {
+  usePageTitle("About Us — ScaleWise");
   return (
     <div className="min-h-screen">
 

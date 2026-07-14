@@ -1,4 +1,7 @@
+import { usePageTitle } from "@/hooks/use-page-title";
+
 export default function Terms() {
+  usePageTitle("Terms of Service — ScaleWise");
   return (
     <div className="py-14 container mx-auto px-4 max-w-3xl prose prose-slate dark:prose-invert">
       <h1>Terms of Service</h1>

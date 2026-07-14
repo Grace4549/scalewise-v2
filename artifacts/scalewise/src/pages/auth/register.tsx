@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,6 +88,7 @@ function CheckInboxScreen({ email, role }: { email: string; role: "client" | "ex
 }
 
 export default function Register() {
+  usePageTitle("Sign Up — ScaleWise");
   const registerMutation = useRegister();
   const { toast }        = useToast();
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);

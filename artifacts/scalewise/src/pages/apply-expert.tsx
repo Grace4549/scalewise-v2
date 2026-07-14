@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +53,7 @@ const applySchema = z.object({
 );
 
 export default function ApplyExpert() {
+  usePageTitle("Become an Expert — ScaleWise");
   const [submitted, setSubmitted] = useState(false);
   const applyAsExpert = useApplyAsExpert();
   const { data: industries } = useListIndustries();

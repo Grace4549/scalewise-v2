@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Mail, MessageSquare, Clock, Phone, MapPin } from "lucide-react";
@@ -40,6 +41,7 @@ const CONTACT_OPTIONS = [
 ];
 
 export default function Contact() {
+  usePageTitle("Contact Us — ScaleWise");
   return (
     <div className="min-h-screen">
 

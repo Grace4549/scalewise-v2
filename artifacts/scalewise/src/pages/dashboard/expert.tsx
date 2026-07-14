@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -659,6 +660,7 @@ function ExpertReceiptsTab() {
 }
 
 export default function ExpertDashboard() {
+  usePageTitle("Expert Dashboard — ScaleWise");
   const { user, isLoading: authLoading } = useAuth();
   const isExpert = !authLoading && !!user && user.role === "expert";
   const { data: dashboard, isLoading: dashLoading } = useGetExpertDashboard({

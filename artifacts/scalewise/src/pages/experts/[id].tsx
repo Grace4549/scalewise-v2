@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -304,6 +305,7 @@ function SlotPicker({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ExpertProfile() {
+  usePageTitle("Expert Profile — ScaleWise");
   const { id } = useParams();
   const expertId = parseInt(id!);
   const { user } = useAuth();

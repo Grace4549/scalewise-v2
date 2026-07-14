@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Link } from "wouter";
 
 const P = {
@@ -37,6 +38,7 @@ function PolicyCard({ scenario, client, note }: {
 }
 
 export default function RefundPolicy() {
+  usePageTitle("Cancellation & Refund Policy — ScaleWise");
   return (
     <div className="min-h-screen">
       {/* Hero */}
