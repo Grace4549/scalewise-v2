@@ -211,10 +211,7 @@ const HOW_IT_WORKS = [
 const SESSION_TYPES = [
   {
     icon: (
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="7"/>
-        <path d="m21 21-4.35-4.35"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Magnifying%20glass%20tilted%20right/3D/magnifying_glass_tilted_right_3d.png" alt="Magnifying glass" width={60} height={60} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     color: P.blue, bg: "rgba(99,149,238,0.06)",
     name: "Business Discovery", tagline: "Open conversation",
@@ -223,11 +220,7 @@ const SESSION_TYPES = [
   },
   {
     icon: (
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#88CFA8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="12" r="2"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Bullseye/3D/bullseye_3d.png" alt="Bullseye" width={60} height={60} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     color: P.mgreen, bg: "rgba(136,207,168,0.06)",
     name: "Consultancy", tagline: "Focused problem-solving",
@@ -236,10 +229,7 @@ const SESSION_TYPES = [
   },
   {
     icon: (
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#90B8D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Chart%20increasing/3D/chart_increasing_3d.png" alt="Chart increasing" width={60} height={60} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     color: P.mint, bg: "rgba(133,222,203,0.06)",
     name: "Growth Strategy", tagline: "3 or 6 month program",
@@ -251,38 +241,28 @@ const SESSION_TYPES = [
 const WHY_SCALEWISE = [
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle piece" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     label: "Industry-Specific Matching",
     text: "We don't match you with a generic business coach. We match you with someone who has run a salon, a restaurant, a farm, a tech startup, or a business — exactly like yours.",
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <polyline points="9 12 11 14 15 10"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Shield/3D/shield_3d.png" alt="Shield" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     label: "Real Operators, Not Theorists",
     text: "Every expert on ScaleWise has built and run a real business. Their advice comes from experience, not from a textbook or a certification.",
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Money%20bag/3D/money_bag_3d.png" alt="Money bag" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     label: "Pay Only for What You Need",
     text: "No monthly retainers, no long-term contracts, no pressure. Book one session, a focused consultancy, or a full growth plan — only when you need it.",
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
+      <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Speech%20balloon/3D/speech_balloon_3d.png" alt="Speech balloon" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     label: "The Conversation Continues",
     text: "After your session, you keep the thread. Message your expert directly through the platform with follow-up questions, progress updates, or your next challenge.",
