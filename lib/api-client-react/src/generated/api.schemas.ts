@@ -598,6 +598,13 @@ export interface LaunchNotification {
   createdAt: string;
 }
 
+export interface AvailabilityBulkSet {
+  /** ISO datetime of the Monday that starts the week being replaced */
+  weekStart: string;
+  /** Array of ISO datetimes for each 1-hour slot to set */
+  slots: string[];
+}
+
 export type ExpertSettingsAvailabilityMode = typeof ExpertSettingsAvailabilityMode[keyof typeof ExpertSettingsAvailabilityMode];
 
 
@@ -780,6 +787,10 @@ export type GetSearchSuggestionsParams = {
  * @maxLength 100
  */
 q: string;
+};
+
+export type ReplaceWeekAvailability200 = {
+  count: number;
 };
 
 export type RequestReschedule200 = {

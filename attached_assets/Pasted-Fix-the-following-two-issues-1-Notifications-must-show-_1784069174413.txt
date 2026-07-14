@@ -1,0 +1,73 @@
+Fix the following two issues:
+
+1. Notifications must show meaningful, readable content:
+Every notification across the entire platform (for clients, experts, and admin) must display a clear, human-readable message describing exactly what the notification is about. Currently some notifications are showing with no text content at all, only a timestamp and an icon.
+
+Fix every notification type to include a specific message. Use these exact messages for each notification type:
+
+
+
+
+
+Expert application approved: "Your application has been approved. Welcome to ScaleWise! Complete your profile to start receiving bookings."
+
+
+
+Expert application rejected: "Thank you for applying to ScaleWise. Unfortunately your application was not successful at this time. Contact us at hello@scalewise.co.ke for more information."
+
+
+
+New booking received (expert): "You have a new session booking from [Client Name] on [Date] at [Time]. Go to your dashboard to acknowledge it."
+
+
+
+Booking confirmed (client): "Your session with [Expert Name] on [Date] at [Time] is confirmed. Your Google Meet link is ready in your dashboard."
+
+
+
+Booking acknowledged (client): "[Expert Name] has acknowledged your upcoming session on [Date] at [Time]."
+
+
+
+Session reminder (both): "Reminder: Your session with [Name] is coming up on [Date] at [Time]. Join using your Google Meet link."
+
+
+
+Expert cancelled session (client): "[Expert Name] has cancelled your session on [Date] at [Time]. You will receive a full refund within 72 business hours."
+
+
+
+Client cancelled session (expert): "[Client Name] has cancelled their session scheduled for [Date] at [Time]."
+
+
+
+Reschedule request received (client): "[Expert Name] has requested to reschedule your session. Please visit your dashboard to select a new time."
+
+
+
+Reschedule request received (expert): "[Client Name] has requested to reschedule their session originally booked for [Date] at [Time]."
+
+
+
+Refund processed (client): "Your refund has been processed. You should receive it within 72 business hours. Contact hello@scalewise.co.ke if you have not received it by then."
+
+
+
+Payout processed (expert): "Your payout of [Amount] has been sent. Check your bank account within a few business days."
+
+
+
+New message received (both): "You have a new message from [Sender Name]. Open your inbox to reply."
+
+
+
+No-show marked (client): "Your session on [Date] at [Time] was marked as a no-show. Please refer to our Cancellation and Refund Policy for details."
+
+Replace all placeholder values such as [Client Name], [Expert Name], [Date], [Time], and [Amount] with the actual dynamic values from the booking or transaction record at the time the notification is created. Every notification must be human readable and self-explanatory without needing to click anywhere to understand what it means.
+
+2. Update the under construction banner text:
+Replace the current banner text with exactly this:
+
+"🚀 ScaleWise is launching soon — be first in line to connect with Africa's most trusted business experts."
+
+Keep the existing email capture input field and Notify Me button exactly as they are, just update the text. Keep the banner's existing styling, positioning, and dismiss behavior exactly as they are.

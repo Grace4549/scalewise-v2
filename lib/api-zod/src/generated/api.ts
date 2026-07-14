@@ -319,6 +319,19 @@ export const AddAvailabilitySlotBody = zod.object({
 
 
 /**
+ * @summary Atomically replace all slots for a specific week (expert only)
+ */
+export const ReplaceWeekAvailabilityBody = zod.object({
+  "weekStart": zod.string().describe('ISO datetime of the Monday that starts the week being replaced'),
+  "slots": zod.array(zod.string()).describe('Array of ISO datetimes for each 1-hour slot to set')
+})
+
+export const ReplaceWeekAvailabilityResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
  * @summary Delete an availability slot (expert only)
  */
 export const DeleteAvailabilitySlotParams = zod.object({

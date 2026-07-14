@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, expertAvailabilityTable, expertsTable } from "@workspace/db";
-import { gt, eq, and, isNotNull } from "drizzle-orm";
+import { gt, gte, lt, eq, and, isNotNull } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -81,6 +81,55 @@ router.post("/expert/availability", requireAuth, async (req, res): Promise<void>
     if (err.code === "23505") { res.status(409).json({ message: "Slot already exists" }); return; }
     throw err;
   }
+});
+
+// Expert: bulk-replace all slots for a specific week
+router.put("/expert/availability/bulk", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert) { res.status(404).json({ message: "Expert not found" }); return; }
+
+  const body = req.body as { weekStart?: string; slots?: string[] };
+  if (!body.weekStart || !Array.isArray(body.slots)) {
+    res.status(400).json({ message: "weekStart and slots[] are required" }); return;
+  }
+
+  const weekStartDate = new Date(body.weekStart);
+  if (isNaN(weekStartDate.getTime())) { res.status(400).json({ message: "Invalid weekStart" }); return; }
+
+  const weekEndDate = new Date(weekStartDate);
+  weekEndDate.setDate(weekEndDate.getDate() + 7);
+
+  const now = new Date();
+
+  // Delete all existing slots for this expert in this week
+  await db
+    .delete(expertAvailabilityTable)
+    .where(and(
+      eq(expertAvailabilityTable.expertId, expert.id),
+      gte(expertAvailabilityTable.startTime, weekStartDate),
+      lt(expertAvailabilityTable.startTime, weekEndDate),
+    ));
+
+  // Insert new slots (filter past ones, normalize to top of hour)
+  const toInsert = body.slots
+    .map((iso) => {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      d.setMinutes(0, 0, 0);
+      return d;
+    })
+    .filter((d): d is Date => d !== null && d > now);
+
+  if (toInsert.length > 0) {
+    await db
+      .insert(expertAvailabilityTable)
+      .values(toInsert.map((d) => ({ expertId: expert.id, startTime: d })))
+      .onConflictDoNothing();
+  }
+
+  res.json({ count: toInsert.length });
 });
 
 // Expert: delete a slot

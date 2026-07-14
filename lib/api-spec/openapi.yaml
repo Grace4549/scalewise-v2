@@ -365,6 +365,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/AvailabilitySlot"
 
+  /expert/availability/bulk:
+    put:
+      operationId: replaceWeekAvailability
+      tags: [experts]
+      summary: Atomically replace all slots for a specific week (expert only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityBulkSet"
+      responses:
+        "200":
+          description: Count of new slots created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count]
+                properties:
+                  count:
+                    type: integer
+
   /expert/availability/{id}:
     delete:
       operationId: deleteAvailabilitySlot
@@ -1902,6 +1927,19 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    AvailabilityBulkSet:
+      type: object
+      required: [weekStart, slots]
+      properties:
+        weekStart:
+          type: string
+          description: ISO datetime of the Monday that starts the week being replaced
+        slots:
+          type: array
+          items:
+            type: string
+          description: Array of ISO datetimes for each 1-hour slot to set
 
     ExpertSettings:
       type: object

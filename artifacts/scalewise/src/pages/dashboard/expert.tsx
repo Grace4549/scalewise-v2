@@ -6,7 +6,7 @@ import {
   useGetInbox, useListMessages, useSendMessage,
   useListAdminMessages, useSendAdminMessage,
   useListNotifications, useMarkNotificationSeen,
-  useListMyAvailability, useAddAvailabilitySlot, useDeleteAvailabilitySlot,
+  useListMyAvailability, useReplaceWeekAvailability,
   useGetExpertSettings, useUpdateExpertSettings,
   useListExpertReceipts,
   getGetExpertPayoutReceiptQueryOptions,
@@ -33,6 +33,47 @@ const C = { blue: "#6395EE", mblue: "#90B8D6", green: "#88CFA8", mint: "#85DECB"
 // ── Availability Calendar ─────────────────────────────────────────────────────
 
 const HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+
+// Number hours: 0-23. "start" = first hour, "end" = first hour NOT included
+type TimeRange = { start: number; end: number };
+
+function fmtHour(h: number): string {
+  const ampm = h < 12 ? "AM" : "PM";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:00 ${ampm}`;
+}
+
+function slotsToRanges(slots: { startTime: string }[], day: Date): TimeRange[] {
+  const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
+  const dayEnd   = new Date(day); dayEnd.setHours(24, 0, 0, 0);
+  const hours = slots
+    .map(s => new Date(s.startTime))
+    .filter(d => d >= dayStart && d < dayEnd)
+    .map(d => d.getHours())
+    .sort((a, b) => a - b);
+  if (hours.length === 0) return [];
+  const ranges: TimeRange[] = [];
+  let i = 0;
+  while (i < hours.length) {
+    const start = hours[i];
+    let end = start + 1;
+    while (i + 1 < hours.length && hours[i + 1] === end) { i++; end++; }
+    ranges.push({ start, end });
+    i++;
+  }
+  return ranges;
+}
+
+function rangesToSlots(day: Date, ranges: TimeRange[]): string[] {
+  const out: string[] = [];
+  for (const { start, end } of ranges) {
+    for (let h = start; h < end; h++) {
+      const d = new Date(day); d.setHours(h, 0, 0, 0);
+      out.push(d.toISOString());
+    }
+  }
+  return out;
+}
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function getMondayOfWeek(d: Date): Date {
@@ -162,83 +203,74 @@ function AvailabilitySettings() {
 }
 
 function AvailabilityCalendar() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const queryClient        = useQueryClient();
+  const { toast }          = useToast();
   const { data: slots = [], isLoading } = useListMyAvailability();
-  const addSlot = useAddAvailabilitySlot();
-  const deleteSlot = useDeleteAvailabilitySlot();
+  const replaceAvailability = useReplaceWeekAvailability();
 
   const [weekStart, setWeekStart] = useState<Date>(() => getMondayOfWeek(new Date()));
-  const [pending, setPending] = useState<string | null>(null);
+  const [dayRanges, setDayRanges] = useState<TimeRange[][]>(() => Array.from({ length: 7 }, () => []));
 
-  const now = new Date();
+  const now      = new Date();
+  const today0   = new Date(now); today0.setHours(0, 0, 0, 0);
 
-  // Build a set of existing slot ISO strings for fast lookup
-  const slotSet = useMemo(() => {
-    const s = new Map<string, number>();
-    for (const slot of slots) {
-      const key = new Date(slot.startTime).toISOString();
-      s.set(key, slot.id);
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
+  }), [weekStart]);
+
+  // Re-derive ranges from saved slots whenever week or data changes
+  useEffect(() => {
+    if (!isLoading) {
+      setDayRanges(weekDays.map(day => slotsToRanges(slots, day)));
     }
+  }, [weekStart, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const prevWeek = () => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); };
+  const nextWeek = () => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); };
+
+  const addRange = (di: number) =>
+    setDayRanges(prev => { const n = prev.map(r => [...r]); n[di] = [...n[di], { start: 9, end: 10 }]; return n; });
+
+  const removeRange = (di: number, ri: number) =>
+    setDayRanges(prev => { const n = prev.map(r => [...r]); n[di] = n[di].filter((_, i) => i !== ri); return n; });
+
+  const updateRange = (di: number, ri: number, field: "start" | "end", value: number) =>
+    setDayRanges(prev => {
+      const n = prev.map(r => r.map(x => ({ ...x })));
+      n[di][ri] = { ...n[di][ri], [field]: value };
+      // Auto-fix: end must be > start
+      if (field === "start" && n[di][ri].end <= value) n[di][ri].end = value + 1;
+      return n;
+    });
+
+  const handleSave = () => {
+    const allSlots = weekDays.flatMap((day, i) => rangesToSlots(day, dayRanges[i] ?? []));
+    replaceAvailability.mutate(
+      { data: { weekStart: weekStart.toISOString(), slots: allSlots } },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: getListMyAvailabilityQueryKey() });
+          toast({ title: "Availability saved", description: `${data.count} slot${data.count !== 1 ? "s" : ""} published for this week.` });
+        },
+        onError: (err: any) => {
+          toast({ title: "Failed to save", description: err?.message, variant: "destructive" });
+        },
+      }
+    );
+  };
+
+  // Slot set for the read-only summary grid
+  const slotSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const slot of slots) s.add(new Date(slot.startTime).toISOString());
     return s;
   }, [slots]);
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() + i);
-      return d;
-    });
-  }, [weekStart]);
-
-  const prevWeek = () => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() - 7);
-    setWeekStart(d);
-  };
-
-  const nextWeek = () => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + 7);
-    setWeekStart(d);
-  };
-
-  const handleToggle = useCallback(async (day: Date, hour: number) => {
-    const cellDate = new Date(day);
-    cellDate.setHours(hour, 0, 0, 0);
-    if (cellDate <= now) return; // past — ignore
-    const iso = cellDate.toISOString();
-    if (pending) return; // debounce
-
-    const existingId = slotSet.get(iso);
-    setPending(iso);
-
-    if (existingId !== undefined) {
-      deleteSlot.mutate({ id: existingId }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListMyAvailabilityQueryKey() });
-          setPending(null);
-        },
-        onError: (err: any) => {
-          toast({ title: "Failed to remove slot", description: err.message, variant: "destructive" });
-          setPending(null);
-        },
-      });
-    } else {
-      addSlot.mutate({ data: { startTime: iso } }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListMyAvailabilityQueryKey() });
-          setPending(null);
-        },
-        onError: (err: any) => {
-          toast({ title: "Failed to add slot", description: err.message, variant: "destructive" });
-          setPending(null);
-        },
-      });
-    }
-  }, [slotSet, pending, addSlot, deleteSlot, queryClient, toast, now]);
-
   const weekLabel = `Week of ${weekStart.toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}`;
+
+  // Start-hour options (6–22); end-hour options (7–23)
+  const START_HOURS = Array.from({ length: 17 }, (_, i) => i + 6);  // 6..22
+  const END_HOURS   = Array.from({ length: 17 }, (_, i) => i + 7);  // 7..23
 
   return (
     <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
@@ -246,8 +278,7 @@ function AvailabilityCalendar() {
       <div className="p-6 border-b bg-muted/30">
         <h2 className="text-xl font-semibold mb-0.5">Availability Calendar</h2>
         <p className="text-sm text-muted-foreground">
-          Click a cell to mark yourself available for that 1-hour slot. Click again to remove it.
-          Clients will see these slots on your profile when booking.
+          Set time ranges for each day. The system splits each range into 1-hour slots that clients can book.
         </p>
       </div>
 
@@ -258,90 +289,160 @@ function AvailabilityCalendar() {
         <Button variant="ghost" size="sm" onClick={nextWeek} className="h-8 px-3">Next ›</Button>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 px-6 py-2 border-b text-xs text-muted-foreground bg-muted/5">
-        <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-sm inline-block" style={{ backgroundColor: C.green + "60", border: `1px solid ${C.green}` }} />
-          Available
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-sm inline-block bg-muted border" />
-          Not set
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-sm inline-block bg-muted/40 border border-dashed" />
-          Past (locked)
-        </span>
-      </div>
-
       {isLoading ? (
         <div className="p-12 text-center text-muted-foreground">Loading your calendar…</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse" style={{ minWidth: 560 }}>
-            <thead>
-              <tr>
-                <th className="w-16 px-2 py-2 text-muted-foreground font-medium text-right border-b border-r bg-muted/10">Time</th>
-                {weekDays.map((day, i) => {
-                  const isToday = day.toDateString() === new Date().toDateString();
-                  return (
-                    <th key={i} className="py-2 px-1 border-b font-medium text-center"
-                      style={isToday ? { color: C.blue, backgroundColor: C.blue + "08" } : {}}>
-                      <div>{DAY_LABELS[i]}</div>
-                      <div className={`text-[11px] font-normal ${isToday ? "" : "text-muted-foreground"}`}>
-                        {day.toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {HOURS.map((hour) => (
-                <tr key={hour} className="border-b last:border-0">
-                  <td className="text-right pr-3 py-0.5 text-muted-foreground border-r bg-muted/5 font-mono text-[10px]">
-                    {String(hour).padStart(2, "0")}:00
-                  </td>
-                  {weekDays.map((day, di) => {
-                    const cellDate = new Date(day);
-                    cellDate.setHours(hour, 0, 0, 0);
-                    const iso = cellDate.toISOString();
-                    const isPast = cellDate <= now;
-                    const isAvailable = slotSet.has(iso);
-                    const isPending = pending === iso;
+        <>
+          {/* Range editor */}
+          <div className="p-5 space-y-3">
+            {weekDays.map((day, di) => {
+              const dayDate = new Date(day); dayDate.setHours(0, 0, 0, 0);
+              const isPastDay = dayDate < today0;
+              const isToday   = dayDate.getTime() === today0.getTime();
+              const dayLabel  = `${DAY_LABELS[di]} · ${day.toLocaleDateString("en-KE", { month: "short", day: "numeric" })}`;
+              const ranges    = dayRanges[di] ?? [];
 
-                    return (
-                      <td key={di} className="p-0.5">
-                        <button
-                          type="button"
-                          disabled={isPast || !!pending}
-                          onClick={() => handleToggle(day, hour)}
-                          title={isPast ? "Past slot" : isAvailable ? "Click to remove slot" : "Click to add slot"}
-                          className="w-full h-7 rounded transition-all text-[10px] font-semibold"
-                          style={
-                            isPast
-                              ? { backgroundColor: "#f3f4f6", color: "#d1d5db", cursor: "not-allowed", border: "1px dashed #e5e7eb" }
-                              : isPending
-                              ? { backgroundColor: "#e5e7eb", cursor: "wait", border: "1px solid #d1d5db" }
-                              : isAvailable
-                              ? { backgroundColor: C.green + "50", color: "#1a5730", border: `1px solid ${C.green}`, cursor: "pointer" }
-                              : { backgroundColor: "white", color: "#9ca3af", border: "1px solid #e5e7eb", cursor: "pointer" }
-                          }
-                        >
-                          {isAvailable && !isPast ? "✓" : ""}
-                        </button>
+              return (
+                <div key={di} className="border rounded-2xl overflow-hidden">
+                  {/* Day header */}
+                  <div className="flex items-center justify-between px-4 py-2.5"
+                    style={{ backgroundColor: isToday ? C.blue + "10" : "var(--muted)" }}>
+                    <span className="text-sm font-semibold" style={isToday ? { color: C.blue } : {}}>
+                      {dayLabel}{isToday ? " (today)" : ""}
+                    </span>
+                    {!isPastDay && (
+                      <button type="button" onClick={() => addRange(di)}
+                        className="text-xs font-medium px-3 py-1 rounded-lg transition-colors hover:opacity-80"
+                        style={{ color: C.blue, backgroundColor: C.blue + "18", border: `1px solid ${C.blue}40` }}>
+                        + Add Range
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Day body */}
+                  {isPastDay ? (
+                    <div className="px-4 py-3 text-xs text-muted-foreground italic">Past day — cannot edit.</div>
+                  ) : ranges.length === 0 ? (
+                    <div className="px-4 py-3 text-xs text-muted-foreground">
+                      No availability set. Click <strong>+ Add Range</strong> to add a time window.
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 space-y-2">
+                      {ranges.map((range, ri) => {
+                        const slotCount = range.end - range.start;
+                        return (
+                          <div key={ri} className="flex items-center gap-2 flex-wrap">
+                            <select
+                              value={range.start}
+                              onChange={e => updateRange(di, ri, "start", parseInt(e.target.value))}
+                              className="h-8 px-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-1"
+                              style={{ borderColor: C.blue + "60" }}
+                            >
+                              {START_HOURS.map(h => (
+                                <option key={h} value={h}>{fmtHour(h)}</option>
+                              ))}
+                            </select>
+                            <span className="text-sm text-muted-foreground font-medium">→</span>
+                            <select
+                              value={range.end}
+                              onChange={e => updateRange(di, ri, "end", parseInt(e.target.value))}
+                              className="h-8 px-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-1"
+                              style={{ borderColor: C.blue + "60" }}
+                            >
+                              {END_HOURS.filter(h => h > range.start).map(h => (
+                                <option key={h} value={h}>{fmtHour(h)}</option>
+                              ))}
+                            </select>
+                            <span className="text-xs text-muted-foreground">
+                              {slotCount} slot{slotCount !== 1 ? "s" : ""}
+                            </span>
+                            <button type="button" onClick={() => removeRange(di, ri)}
+                              className="text-xs px-2 py-1 rounded-lg text-destructive hover:bg-destructive/10 transition-colors">
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Save button */}
+          <div className="px-5 pb-5">
+            <Button
+              onClick={handleSave}
+              disabled={replaceAvailability.isPending}
+              className="w-full h-11 text-white"
+              style={{ background: `linear-gradient(135deg, ${C.blue}, ${C.mblue})` }}
+            >
+              {replaceAvailability.isPending ? "Saving…" : "Save Availability for This Week"}
+            </Button>
+          </div>
+
+          {/* Read-only summary grid */}
+          <div className="border-t">
+            <div className="px-5 pt-4 pb-2">
+              <p className="text-sm font-semibold">Saved slots — this week</p>
+              <p className="text-xs text-muted-foreground">Green cells reflect what clients currently see on your profile.</p>
+            </div>
+            <div className="overflow-x-auto pb-2">
+              <table className="w-full text-xs border-collapse" style={{ minWidth: 540 }}>
+                <thead>
+                  <tr>
+                    <th className="w-14 px-2 py-1.5 text-muted-foreground font-medium text-right border-b border-r bg-muted/10 text-[10px]">Time</th>
+                    {weekDays.map((day, i) => {
+                      const isToday = day.toDateString() === new Date().toDateString();
+                      return (
+                        <th key={i} className="py-1.5 px-0.5 border-b font-medium text-center text-[10px]"
+                          style={isToday ? { color: C.blue, backgroundColor: C.blue + "08" } : {}}>
+                          {DAY_LABELS[i]}
+                          <div className="font-normal text-muted-foreground" style={isToday ? { color: C.blue } : {}}>
+                            {day.toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {HOURS.map((hour) => (
+                    <tr key={hour} className="border-b last:border-0">
+                      <td className="text-right pr-2 py-0.5 text-muted-foreground border-r bg-muted/5 font-mono text-[9px]">
+                        {String(hour).padStart(2, "0")}:00
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      {weekDays.map((day, di) => {
+                        const cellDate = new Date(day); cellDate.setHours(hour, 0, 0, 0);
+                        const iso        = cellDate.toISOString();
+                        const isPast     = cellDate <= now;
+                        const isAvail    = slotSet.has(iso);
+                        return (
+                          <td key={di} className="p-0.5">
+                            <div className="w-full h-6 rounded text-[9px] flex items-center justify-center"
+                              style={isPast
+                                ? { backgroundColor: "#f3f4f6", border: "1px dashed #e5e7eb" }
+                                : isAvail
+                                ? { backgroundColor: C.green + "50", color: "#1a5730", border: `1px solid ${C.green}`, fontWeight: 600 }
+                                : { border: "1px solid #f0f0f0" }
+                              }>
+                              {isAvail && !isPast ? "✓" : ""}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Summary */}
-      <div className="px-6 py-4 border-t bg-muted/10">
+      {/* Footer */}
+      <div className="px-5 py-4 border-t bg-muted/10">
         <p className="text-xs text-muted-foreground">
           <strong>{slots.length}</strong> upcoming slot{slots.length !== 1 ? "s" : ""} published on your profile.
           {" "}Slots are shown to clients for the next 60 days.

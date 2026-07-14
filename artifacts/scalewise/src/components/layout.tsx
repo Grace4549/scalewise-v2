@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +31,8 @@ export function Navbar() {
   const logout            = useLogout();
   const queryClient       = useQueryClient();
 
+  const [, navigate]      = useLocation();
+
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
@@ -39,6 +41,7 @@ export function Navbar() {
         // by static route strings, not user identity).
         queryClient.clear();
         refetch();
+        navigate("/");
       },
     });
   };

@@ -25,6 +25,7 @@ import type {
   AdminReceiptsList,
   AdminStats,
   AuthResponse,
+  AvailabilityBulkSet,
   AvailabilitySlot,
   AvailabilitySlotInput,
   Booking,
@@ -66,6 +67,7 @@ import type {
   PlatformStats,
   RegisterInput,
   RegisterPending,
+  ReplaceWeekAvailability200,
   RequestReschedule200,
   RescheduleRequestInput,
   ResendVerificationInput,
@@ -1437,6 +1439,77 @@ export const useAddAvailabilitySlot = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAddAvailabilitySlotMutationOptions(options));
+    }
+
+export const getReplaceWeekAvailabilityUrl = () => {
+
+
+
+
+  return `/api/expert/availability/bulk`
+}
+
+/**
+ * @summary Atomically replace all slots for a specific week (expert only)
+ */
+export const replaceWeekAvailability = async (availabilityBulkSet: AvailabilityBulkSet, options?: RequestInit): Promise<ReplaceWeekAvailability200> => {
+
+  return customFetch<ReplaceWeekAvailability200>(getReplaceWeekAvailabilityUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      availabilityBulkSet,)
+  }
+);}
+
+
+
+
+export const getReplaceWeekAvailabilityMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceWeekAvailability>>, TError,{data: BodyType<AvailabilityBulkSet>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceWeekAvailability>>, TError,{data: BodyType<AvailabilityBulkSet>}, TContext> => {
+
+const mutationKey = ['replaceWeekAvailability'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceWeekAvailability>>, {data: BodyType<AvailabilityBulkSet>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  replaceWeekAvailability(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplaceWeekAvailabilityMutationResult = NonNullable<Awaited<ReturnType<typeof replaceWeekAvailability>>>
+    export type ReplaceWeekAvailabilityMutationBody = BodyType<AvailabilityBulkSet>
+    export type ReplaceWeekAvailabilityMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Atomically replace all slots for a specific week (expert only)
+ */
+export const useReplaceWeekAvailability = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceWeekAvailability>>, TError,{data: BodyType<AvailabilityBulkSet>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof replaceWeekAvailability>>,
+        TError,
+        {data: BodyType<AvailabilityBulkSet>},
+        TContext
+      > => {
+      return useMutation(getReplaceWeekAvailabilityMutationOptions(options));
     }
 
 export const getDeleteAvailabilitySlotUrl = (id: number,) => {
