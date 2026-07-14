@@ -210,19 +210,38 @@ const HOW_IT_WORKS = [
 
 const SESSION_TYPES = [
   {
-    icon: "🔍", color: P.blue,   bg: "rgba(99,149,238,0.06)",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6395EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+    ),
+    color: P.blue, bg: "rgba(99,149,238,0.06)",
     name: "Business Discovery", tagline: "Open conversation",
     desc: "Honest, expert perspective on your biggest challenge. No agenda — just real talk.",
-    duration: "30 to 60 min", best: "Getting unstuck fast",
+    duration: "60 min", best: "Getting unstuck fast",
   },
   {
-    icon: "🎯", color: P.mgreen, bg: "rgba(136,207,168,0.06)",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#88CFA8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="12" r="2"/>
+      </svg>
+    ),
+    color: P.mgreen, bg: "rgba(136,207,168,0.06)",
     name: "Consultancy", tagline: "Focused problem-solving",
     desc: "Deep dive into one specific challenge. Walk away with a clear, actionable plan.",
-    duration: "60 to 90 min", best: "Solving a specific problem",
+    duration: "60 min", best: "Solving a specific problem",
   },
   {
-    icon: "📈", color: P.mint,   bg: "rgba(133,222,203,0.06)",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#90B8D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    ),
+    color: P.mint, bg: "rgba(133,222,203,0.06)",
     name: "Growth Strategy", tagline: "3 or 6 month program",
     desc: "Weekly touchpoints, milestone tracking, and accountability all the way to scale.",
     duration: "3 or 6 months", best: "Scaling your business",
@@ -1013,14 +1032,24 @@ export default function Home() {
                   className="p-8 rounded-3xl border shadow-sm hover:shadow-md transition-all hover:-translate-y-1 flex flex-col h-full"
                   style={{ background: t.bg, borderColor: t.color + "35" }}
                 >
-                  <div className="text-4xl mb-4">{t.icon}</div>
+                  <div className="mb-4">{t.icon}</div>
                   <div className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: t.color }}>{t.tagline}</div>
                   <h3 className="text-xl font-bold mb-3 text-foreground">{t.name}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed flex-1">{t.desc}</p>
                   <div className="mt-6 pt-5 border-t flex justify-between text-sm">
                     <span className="text-muted-foreground">⏱ {t.duration}</span>
-                    <span className="font-medium" style={{ color: t.color }}>Best for: {t.best}</span>
+                    <span className="font-medium" style={{ color: P.mgreen }}>Best for: {t.best}</span>
                   </div>
+                  <Link href="/experts" className="mt-4 block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-xl text-sm font-medium"
+                      style={{ color: P.blue, borderColor: P.blue + "55" }}
+                    >
+                      Find an Expert →
+                    </Button>
+                  </Link>
                 </div>
               </Reveal>
             ))}
