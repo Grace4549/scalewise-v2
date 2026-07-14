@@ -981,6 +981,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── VERIFICATION TRUST BANNER ── */}
+      <div
+        style={{
+          background: "rgba(99,149,238,0.09)",
+          borderTop: "1px solid rgba(99,149,238,0.14)",
+          borderBottom: "1px solid rgba(99,149,238,0.14)",
+        }}
+      >
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-start sm:items-center justify-center gap-3 max-w-4xl mx-auto">
+            <svg
+              className="shrink-0 mt-0.5 sm:mt-0"
+              width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="#6395EE" strokeWidth="2.2"
+              strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Every expert on ScaleWise is manually reviewed by our team. We check their background, their industry experience, and their track record before approving them. No unverified profiles. No generic advice. Just real experience, matched to your exact challenge.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" className="py-12 bg-muted/30" style={{ scrollMarginTop: "72px" }}>
         <div className="container mx-auto px-4">
