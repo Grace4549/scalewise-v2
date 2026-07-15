@@ -1,9 +1,10 @@
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, Redirect } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  useListMessages, useSendMessage, useGetBooking,
-  getGetBookingQueryKey, getListMessagesQueryKey,
+  useListMessages, useSendMessage, useGetBooking, useMarkThreadRead,
+  getGetBookingQueryKey, getListMessagesQueryKey, getGetInboxQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,10 +29,21 @@ export default function Messages() {
     query: { queryKey: getListMessagesQueryKey(bookingId), enabled: authenticated },
   });
   const sendMessage = useSendMessage();
+  const markRead = useMarkThreadRead();
+  const queryClient = useQueryClient();
   
   const [text, setText] = useState("");
   const [pendingMsgs, setPendingMsgs] = useState<Array<{ id: number; senderId: number; body: string; createdAt: string }>>([]);
+  const [blockedMsgs, setBlockedMsgs] = useState<Array<{ id: number; senderId: number; body: string }>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Mark thread as read when the user views the conversation
+  useEffect(() => {
+    if (!authenticated) return;
+    markRead.mutate({ bookingId }, {
+      onSuccess: () => { queryClient.invalidateQueries({ queryKey: getGetInboxQueryKey() }); },
+    });
+  }, [authenticated, bookingId]);
 
   // Poll for new messages
   useEffect(() => {
@@ -44,7 +56,7 @@ export default function Messages() {
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, blockedMsgs]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +75,9 @@ export default function Messages() {
       onError: (err: any) => {
         setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
         const errBody = err?.body ?? err?.response?.data ?? {};
-        if (errBody?.error === "EMAIL_NOT_VERIFIED") {
+        if (errBody?.error === "CONTACT_INFO_BLOCKED") {
+          setBlockedMsgs((prev) => [...prev, { id: tempId, senderId: user?.id ?? 0, body: msgBody }]);
+        } else if (errBody?.error === "EMAIL_NOT_VERIFIED") {
           toast({
             title: "Email not verified",
             description: "Please verify your email address before sending messages.",
@@ -132,6 +146,21 @@ export default function Messages() {
                 </div>
                 <div className="px-4 py-3 rounded-2xl max-w-[80%] bg-primary text-primary-foreground rounded-tr-sm opacity-60">
                   {msg.body}
+                </div>
+              </div>
+            ))}
+            {blockedMsgs.map((msg) => (
+              <div key={msg.id} className="flex flex-col items-end">
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-sm font-medium">You</span>
+                  <span className="text-xs text-red-500 font-medium">🚫 Message blocked</span>
+                </div>
+                <div className="px-4 py-3 rounded-2xl max-w-[80%] border-2 rounded-tr-sm"
+                  style={{ backgroundColor: "#fef2f2", borderColor: "#fca5a5" }}>
+                  <p className="text-red-800/60 line-through text-sm">{msg.body}</p>
+                  <p className="text-xs text-red-600/80 mt-1.5 leading-snug">
+                    ScaleWise does not allow sharing of personal contact details through the platform. All sessions must be booked and conducted through ScaleWise. Contact hello@scalewise.co.ke if you need assistance.
+                  </p>
                 </div>
               </div>
             ))}

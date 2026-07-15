@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useLogout, useGetInbox, getGetMeQueryKey, getGetInboxQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, MessageSquare } from "lucide-react";
 
 const P = {
   blue:   "#6395EE",
@@ -32,6 +32,10 @@ export function Navbar() {
   const queryClient       = useQueryClient();
 
   const [, navigate]      = useLocation();
+
+  const showInbox = !!user && (user.role === "client" || user.role === "expert");
+  const { data: inbox } = useGetInbox({ query: { queryKey: getGetInboxQueryKey(), enabled: showInbox } });
+  const totalUnread = showInbox ? (inbox?.reduce((sum, t) => sum + (t.unreadCount ?? 0), 0) ?? 0) : 0;
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -75,7 +79,21 @@ export function Navbar() {
             const dashHref  = user.role === "admin" ? "/admin" : user.role === "expert" ? "/expert/dashboard" : "/dashboard";
             const dashLabel = user.role === "admin" ? "Admin Console" : "My Dashboard";
             return (
-              <DropdownMenu>
+              <div className="flex items-center gap-2">
+                {(user.role === "client" || user.role === "expert") && (
+                  <Link href={user.role === "expert" ? "/expert/dashboard" : "/dashboard"}>
+                    <button className="relative p-2 rounded-lg hover:bg-muted/60 transition-colors" aria-label="Messages">
+                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                      {totalUnread > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold flex items-center justify-center text-white px-0.5"
+                          style={{ backgroundColor: "#ef4444" }}>
+                          {totalUnread > 99 ? "99+" : totalUnread}
+                        </span>
+                      )}
+                    </button>
+                  </Link>
+                )}
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-muted/60 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
@@ -115,6 +133,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             );
           })() : (
             <>

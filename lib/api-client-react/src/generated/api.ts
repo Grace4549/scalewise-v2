@@ -2828,6 +2828,76 @@ export const useSendMessage = <TError = ErrorType<unknown>,
       return useMutation(getSendMessageMutationOptions(options));
     }
 
+export const getMarkThreadReadUrl = (bookingId: number,) => {
+
+
+
+
+  return `/api/messages/${bookingId}/mark-read`
+}
+
+/**
+ * @summary Mark all messages in a booking thread as read for the current user
+ */
+export const markThreadRead = async (bookingId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getMarkThreadReadUrl(bookingId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkThreadReadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markThreadRead>>, TError,{bookingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markThreadRead>>, TError,{bookingId: number}, TContext> => {
+
+const mutationKey = ['markThreadRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markThreadRead>>, {bookingId: number}> = (props) => {
+          const {bookingId} = props ?? {};
+
+          return  markThreadRead(bookingId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkThreadReadMutationResult = NonNullable<Awaited<ReturnType<typeof markThreadRead>>>
+
+    export type MarkThreadReadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark all messages in a booking thread as read for the current user
+ */
+export const useMarkThreadRead = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markThreadRead>>, TError,{bookingId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markThreadRead>>,
+        TError,
+        {bookingId: number},
+        TContext
+      > => {
+      return useMutation(getMarkThreadReadMutationOptions(options));
+    }
+
 export const getListAdminMessagesUrl = (expertId: number,) => {
 
 

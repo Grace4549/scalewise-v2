@@ -750,6 +750,14 @@ export const SendMessageBody = zod.object({
 
 
 /**
+ * @summary Mark all messages in a booking thread as read for the current user
+ */
+export const MarkThreadReadParams = zod.object({
+  "bookingId": zod.coerce.number()
+})
+
+
+/**
  * @summary List admin-to-expert direct messages
  */
 export const ListAdminMessagesParams = zod.object({

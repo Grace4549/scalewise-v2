@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   useListMyBookings, useGetInbox, useListMessages, useSendMessage,
   useUpdateBookingStatus, useRescheduleBooking, useKeepOriginalTime,
+  useMarkThreadRead,
   useListNotifications, useMarkNotificationSeen,
   useListClientReceipts,
   getGetClientBookingReceiptQueryOptions, getGetClientRefundReceiptQueryOptions,
@@ -26,15 +27,23 @@ const C = { blue: "#6395EE", mblue: "#90B8D6", green: "#88CFA8", mint: "#85DECB"
 function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: number }) {
   const { data: messages, isLoading } = useListMessages(bookingId);
   const sendMsg = useSendMessage();
+  const markRead = useMarkThreadRead();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [body, setBody] = useState("");
   const [pendingMsgs, setPendingMsgs] = useState<Array<{ id: number; body: string; createdAt: string }>>([]);
+  const [blockedMsgs, setBlockedMsgs] = useState<Array<{ id: number; body: string }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    markRead.mutate({ bookingId }, {
+      onSuccess: () => { queryClient.invalidateQueries({ queryKey: getGetInboxQueryKey() }); },
+    });
+  }, [bookingId]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, pendingMsgs]);
+  }, [messages, pendingMsgs, blockedMsgs]);
 
   const handleSend = () => {
     const msgBody = body.trim();
@@ -48,19 +57,26 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
         queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey(bookingId) });
         queryClient.invalidateQueries({ queryKey: getGetInboxQueryKey() });
       },
-      onError: () => {
+      onError: (err: any) => {
         setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
-        toast({ title: "Failed to send", variant: "destructive" });
+        const errBody = err?.body ?? err?.response?.data ?? {};
+        if (errBody?.error === "CONTACT_INFO_BLOCKED") {
+          setBlockedMsgs((prev) => [...prev, { id: tempId, body: msgBody }]);
+        } else {
+          toast({ title: "Failed to send", variant: "destructive" });
+        }
       },
     });
   };
+
+  const hasContent = (messages?.length ?? 0) > 0 || pendingMsgs.length > 0 || blockedMsgs.length > 0;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[420px]">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Loading messages…</div>
-        ) : !messages?.length && !pendingMsgs.length ? (
+        ) : !hasContent ? (
           <div className="p-8 text-center text-muted-foreground text-sm">
             No messages yet. Start the conversation below.
           </div>
@@ -87,6 +103,18 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
                   <div className="text-xs mb-0.5 opacity-70 font-medium">You</div>
                   <p className="leading-snug">{m.body}</p>
                   <div className="text-[10px] mt-1 opacity-50 text-right">Sending…</div>
+                </div>
+              </div>
+            ))}
+            {blockedMsgs.map((m) => (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[70%] rounded-xl border-2 px-4 py-2.5 text-sm"
+                  style={{ backgroundColor: "#fef2f2", borderColor: "#fca5a5" }}>
+                  <div className="text-xs mb-0.5 font-semibold text-red-600">🚫 Message blocked</div>
+                  <p className="leading-snug text-red-800/60 line-through text-xs">{m.body}</p>
+                  <div className="text-[10px] mt-1.5 text-red-600/80 leading-tight">
+                    ScaleWise does not allow sharing personal contact details. All sessions must be booked through the platform.
+                  </div>
                 </div>
               </div>
             ))}
@@ -221,6 +249,7 @@ export default function ClientDashboard() {
   const { data: threads, isLoading: threadsLoading } = useGetInbox({
     query: { queryKey: getGetInboxQueryKey(), enabled: isClient },
   });
+  const totalUnreadMsgs = threads?.reduce((sum, t) => sum + (t.unreadCount ?? 0), 0) ?? 0;
   const { data: notifications } = useListNotifications({
     query: { queryKey: getListNotificationsQueryKey(), enabled: isClient },
   });
@@ -351,9 +380,9 @@ export default function ClientDashboard() {
           </TabsTrigger>
           <TabsTrigger value="inbox" className="rounded-lg font-medium px-5">
             Inbox
-            {(threads?.length ?? 0) > 0 && (
+            {totalUnreadMsgs > 0 && (
               <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                style={{ backgroundColor: C.mint + "40", color: "#0f7a6a" }}>{threads!.length}</span>
+                style={{ backgroundColor: "#ef4444", color: "white" }}>{totalUnreadMsgs}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg font-medium px-5">🧾 Receipts</TabsTrigger>

@@ -10,3 +10,4 @@ export * from "./notification-log";
 export * from "./expert-availability";
 export * from "./availability-reminder-log";
 export * from "./payout-batches";
+export * from "./thread-last-read";

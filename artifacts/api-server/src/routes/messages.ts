@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, messagesTable, bookingsTable, usersTable, expertsTable } from "@workspace/db";
+import { db, messagesTable, bookingsTable, usersTable, expertsTable, threadLastReadTable } from "@workspace/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { requireAuth, requireEmailVerified } from "../lib/auth";
 import { SendMessageBody } from "@workspace/api-zod";
@@ -8,6 +8,38 @@ import { createNotification } from "../lib/notify";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
+
+const CONTACT_PATTERNS: RegExp[] = [
+  // Kenyan / East African phone numbers (07XX, +254, 254...)
+  /\b0[0-9]{9}\b/,
+  /\+?254[\s\-]?[0-9]{9}\b/,
+  // Generic formatted phone (digits in phone-length groups with separators)
+  /\b\d{3,5}[\s\-]\d{3,5}[\s\-]\d{3,4}\b/,
+  // Email addresses
+  /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,
+  // Physical address / location directions
+  /\b(?:come\s+to|find\s+me\s+at|located\s+at|my\s+address\s+is|our\s+address\s+is|my\s+office\s+is)\b/i,
+  // Off-platform contact prompts
+  /\bwhatsapp\s*(?:me|on|number|chat)\b/i,
+  /\bcall\s+me\s+(?:on|at|via)\b/i,
+  /\b(?:text|dm|message)\s+me\s+(?:on|at|via|directly)\b/i,
+  /\breach\s+me\s+(?:on|at|via)\b/i,
+  // Social media
+  /\bfind\s+me\s+on\b/i,
+  /\b(?:my|on)\s+(?:instagram|facebook|twitter|linkedin|tiktok|telegram|whatsapp)\b/i,
+  /\b(?:instagram|facebook|twitter|linkedin|tiktok|telegram)\s*(?::|is|handle|username|account)\b/i,
+  // @handle (not part of an email address — email pattern already caught above)
+  /(?:^|\s)@[a-zA-Z0-9_.]{3,}/,
+];
+
+function containsContactInfo(text: string): boolean {
+  return CONTACT_PATTERNS.some((re) => re.test(text));
+}
+
+const CONTACT_BLOCKED_ERROR =
+  "This message could not be sent. ScaleWise does not allow sharing of personal contact details through the platform. " +
+  "All sessions must be booked and conducted through ScaleWise. " +
+  "Contact hello@scalewise.co.ke if you need assistance.";
 
 async function fetchSenderMap(senderIds: number[]) {
   if (senderIds.length === 0) return {} as Record<number, typeof usersTable.$inferSelect>;
@@ -89,6 +121,14 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
         });
       }
 
+      // Batch-load lastReadAt for all booking threads for this user
+      const readRecords = await db.select()
+        .from(threadLastReadTable)
+        .where(eq(threadLastReadTable.userId, req.userId!));
+      const lastReadMap: Record<number, Date> = Object.fromEntries(
+        readRecords.map((r) => [r.bookingId, r.lastReadAt])
+      );
+
       const expertBookings = await db.select().from(bookingsTable).where(eq(bookingsTable.expertId, expert.id));
       for (const booking of expertBookings) {
         const msgs = await db
@@ -99,6 +139,10 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
         if (msgs.length > 0) {
           const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
           const last = msgs[msgs.length - 1];
+          const lastReadAt = lastReadMap[booking.id] ?? null;
+          const unreadCount = msgs.filter(
+            (m) => m.senderId !== req.userId && (!lastReadAt || m.createdAt > lastReadAt)
+          ).length;
           threads.push({
             threadType: "booking",
             bookingId: booking.id,
@@ -107,12 +151,20 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
             otherPartyRole: "client",
             lastMessage: last.body,
             lastMessageAt: last.createdAt.toISOString(),
-            unreadCount: 0,
+            unreadCount,
           });
         }
       }
     }
   } else {
+    // Batch-load lastReadAt for all booking threads for this user
+    const readRecords = await db.select()
+      .from(threadLastReadTable)
+      .where(eq(threadLastReadTable.userId, req.userId!));
+    const lastReadMap: Record<number, Date> = Object.fromEntries(
+      readRecords.map((r) => [r.bookingId, r.lastReadAt])
+    );
+
     const clientBookings = await db.select().from(bookingsTable).where(eq(bookingsTable.clientId, req.userId!));
     for (const booking of clientBookings) {
       const msgs = await db
@@ -123,6 +175,10 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
       if (msgs.length > 0) {
         const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
         const last = msgs[msgs.length - 1];
+        const lastReadAt = lastReadMap[booking.id] ?? null;
+        const unreadCount = msgs.filter(
+          (m) => m.senderId !== req.userId && (!lastReadAt || m.createdAt > lastReadAt)
+        ).length;
         threads.push({
           threadType: "booking",
           bookingId: booking.id,
@@ -131,7 +187,7 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
           otherPartyRole: "expert",
           lastMessage: last.body,
           lastMessageAt: last.createdAt.toISOString(),
-          unreadCount: 0,
+          unreadCount,
         });
       }
     }
@@ -193,9 +249,7 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
   const senderMap = await fetchSenderMap([req.userId!]);
   const senderName = senderMap[req.userId!]?.name ?? "Someone";
 
-  // Email + in-app notification to the other party (fire and forget)
   if (req.userRole === "expert") {
-    // Sender is expert → notify admin via email only
     db.select().from(usersTable).where(eq(usersTable.role, "admin")).limit(1)
       .then(([admin]) => {
         if (admin) {
@@ -211,7 +265,6 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
       })
       .catch((err) => logger.error({ err }, "Admin lookup for message notification failed"));
   } else if (req.userRole === "admin") {
-    // Sender is admin → notify expert via email + in-app
     db.select().from(expertsTable).where(eq(expertsTable.id, expertId)).limit(1)
       .then(([expert]) => {
         if (expert) {
@@ -270,13 +323,10 @@ router.get("/messages/:bookingId", requireAuth, async (req, res): Promise<void> 
   res.json(messages.map((m) => formatMessage(m, senderMap)));
 });
 
-router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (req, res): Promise<void> => {
+router.post("/messages/:bookingId/mark-read", requireAuth, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
   const bookingId = parseInt(raw, 10);
   if (isNaN(bookingId)) { res.status(400).json({ error: "Invalid bookingId" }); return; }
-
-  const parsed = SendMessageBody.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, bookingId));
   if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
@@ -286,9 +336,39 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
     if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
   }
 
-  // Messaging is only available for confirmed (upcoming) bookings.
-  // Blocking on pending_payment prevents unpaid placeholder bookings from
-  // being used as a free spam channel to reach experts.
+  const now = new Date();
+  await db.insert(threadLastReadTable)
+    .values({ userId: req.userId!, bookingId, lastReadAt: now })
+    .onConflictDoUpdate({
+      target: [threadLastReadTable.userId, threadLastReadTable.bookingId],
+      set: { lastReadAt: now },
+    });
+
+  res.status(204).send();
+});
+
+router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
+  const bookingId = parseInt(raw, 10);
+  if (isNaN(bookingId)) { res.status(400).json({ error: "Invalid bookingId" }); return; }
+
+  const parsed = SendMessageBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  // Block contact information sharing between clients and experts
+  if (containsContactInfo(parsed.data.body)) {
+    res.status(422).json({ error: "CONTACT_INFO_BLOCKED", message: CONTACT_BLOCKED_ERROR });
+    return;
+  }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, bookingId));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  if (req.userRole !== "admin" && booking.clientId !== req.userId) {
+    const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+    if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+  }
+
   if (booking.status === "pending_payment") {
     res.status(403).json({ error: "Messaging is only available once a booking has been confirmed and payment received." });
     return;
@@ -304,9 +384,6 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
     })
     .returning();
 
-  // Graceful fallback: if the sender-map lookup fails, the message is already
-  // saved — still return a 201 with "Unknown" as the sender name rather than
-  // letting a secondary DB error roll back or 500 the whole request.
   let senderMap: Record<number, typeof usersTable.$inferSelect> = {};
   try {
     senderMap = await fetchSenderMap([req.userId!]);
@@ -316,9 +393,7 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
   const senderName = senderMap[req.userId!]?.name ?? "Someone";
   const senderRole = req.userRole as "client" | "expert" | "admin";
 
-  // Email + in-app notification to the other party (fire and forget)
   if (req.userRole === "client") {
-    // Notify expert
     db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId)).limit(1)
       .then(([expert]) => {
         if (expert) {
@@ -348,7 +423,6 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
       })
       .catch((err) => logger.error({ err }, "Expert lookup for message notification failed"));
   } else if (req.userRole === "expert") {
-    // Notify client
     db.select().from(usersTable).where(eq(usersTable.id, booking.clientId)).limit(1)
       .then(([client]) => {
         if (client) {
@@ -376,7 +450,6 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
       })
       .catch((err) => logger.error({ err }, "Client lookup for message notification failed"));
   }
-  // Admin messages in booking threads: no email (internal)
 
   res.status(201).json(formatMessage(message, senderMap));
 });
