@@ -25,6 +25,7 @@ export interface NotificationPayload {
   refundAmount?: number;
   refundPercent?: number;
   actions?: string[];
+  bookingId?: number;
 }
 
 export interface CreateNotificationParams {

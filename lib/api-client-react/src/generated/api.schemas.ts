@@ -798,6 +798,10 @@ export type RequestReschedule200 = {
   ok: boolean;
 };
 
+export type KeepOriginalTime200 = {
+  ok: boolean;
+};
+
 export type ListReviewsParams = {
 expertId?: number;
 };

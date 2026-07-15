@@ -87,8 +87,10 @@ export default function Login() {
   const queryClient     = useQueryClient();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
-  const search   = useSearch();
-  const isExpert = new URLSearchParams(search).get("role") === "expert";
+  const search    = useSearch();
+  const params    = new URLSearchParams(search);
+  const isExpert  = params.get("role") === "expert";
+  const redirect  = params.get("redirect");
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver:      zodResolver(loginSchema),
@@ -106,7 +108,8 @@ export default function Login() {
         queryClient.clear();
         queryClient.setQueryData(getGetMeQueryKey(), (res as any)?.user ?? null);
         refetch();
-        if (role === "admin")        setLocation("/admin");
+        if (redirect)                setLocation(redirect);
+        else if (role === "admin")   setLocation("/admin");
         else if (role === "expert")  setLocation("/expert/dashboard");
         else                         setLocation("/dashboard");
       },

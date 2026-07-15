@@ -760,13 +760,55 @@ router.post("/bookings/:id/request-reschedule", requireAuth, async (req, res): P
     recipientName: client.name,
     payload: {
       title: "Expert Requested to Reschedule",
-      body: `${expert.name} has requested to reschedule your session. Please visit your dashboard to select a new time.`,
+      body: `${expert.name} has requested to reschedule your session. Please choose how you'd like to proceed.`,
       sessionStart: booking.scheduledTime.toISOString(),
       sessionType: booking.sessionType,
       otherPartyName: expert.name,
       actions: ["reschedule"],
+      bookingId: booking.id,
     },
   });
+
+  res.json({ ok: true });
+});
+
+// ── Client keeps original time, declining expert's reschedule request ──────────
+router.post("/bookings/:id/keep-original", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+  if (booking.clientId !== req.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (TERMINAL_STATUSES.has(booking.status)) {
+    res.status(409).json({ error: "This booking can no longer be modified" });
+    return;
+  }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+
+  if (expert?.userId) {
+    await createNotification({
+      bookingId: booking.id,
+      recipientUserId: expert.userId,
+      notificationType: "expert_reschedule_declined",
+      recipientEmail: expert.email,
+      recipientName: expert.name,
+      payload: {
+        title: "Client Kept Original Booking Time",
+        body: `${client.name} has chosen to keep the original session time and expects the session to proceed as scheduled.`,
+        sessionStart: booking.scheduledTime.toISOString(),
+        sessionType: booking.sessionType,
+        otherPartyName: client.name,
+        bookingId: booking.id,
+      },
+    });
+  }
 
   res.json({ ok: true });
 });

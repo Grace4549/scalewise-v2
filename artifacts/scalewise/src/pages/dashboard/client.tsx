@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   useListMyBookings, useGetInbox, useListMessages, useSendMessage,
-  useUpdateBookingStatus, useRescheduleBooking,
+  useUpdateBookingStatus, useRescheduleBooking, useKeepOriginalTime,
   useListNotifications, useMarkNotificationSeen,
   useListClientReceipts,
   getGetClientBookingReceiptQueryOptions, getGetClientRefundReceiptQueryOptions,
@@ -12,7 +12,7 @@ import {
 } from "@workspace/api-client-react";
 import { ReceiptModal } from "@/components/receipt-viewer";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -225,8 +225,10 @@ export default function ClientDashboard() {
     query: { queryKey: getListNotificationsQueryKey(), enabled: isClient },
   });
 
+  const [, navigate] = useLocation();
   const cancelBooking = useUpdateBookingStatus();
   const rescheduleBooking = useRescheduleBooking();
+  const keepOriginal = useKeepOriginalTime();
   const markSeen = useMarkNotificationSeen();
 
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
@@ -478,24 +480,61 @@ export default function ClientDashboard() {
                               ✓ Full refund of KES {p.refundAmount?.toLocaleString()} will be processed
                             </div>
                           )}
-                          {/* Action buttons */}
-                          {(isReminder || isRescheduleReq) && (() => {
+                          {/* Action buttons — session reminders */}
+                          {isReminder && (() => {
                             const activeBooking = bookings?.find((b) => b.id === notif.bookingId && (b.status === "upcoming" || b.status === "pending_payment"));
                             if (!activeBooking) return null;
                             return (
                               <div className="ml-6 mt-3 flex gap-2 flex-wrap">
-                                {isReminder && (
-                                  <Button size="sm" variant="outline"
-                                    className="border-red-200 text-red-600 hover:bg-red-50 text-xs h-8"
-                                    onClick={() => openCancelDialog(notif.bookingId, notif.id)}>
-                                    Cancel Session
-                                  </Button>
-                                )}
+                                <Button size="sm" variant="outline"
+                                  className="border-red-200 text-red-600 hover:bg-red-50 text-xs h-8"
+                                  onClick={() => openCancelDialog(notif.bookingId, notif.id)}>
+                                  Cancel Session
+                                </Button>
                                 <Button size="sm" variant="outline"
                                   className="text-xs h-8"
                                   style={{ borderColor: C.blue + "60", color: C.blue }}
                                   onClick={() => openRescheduleDialog(notif.bookingId, notif.id)}>
-                                  {isRescheduleReq ? "Choose New Time" : "Reschedule"}
+                                  Reschedule
+                                </Button>
+                              </div>
+                            );
+                          })()}
+                          {/* Action buttons — expert requested reschedule */}
+                          {isRescheduleReq && (() => {
+                            const activeBooking = bookings?.find((b) => b.id === notif.bookingId && (b.status === "upcoming" || b.status === "pending_payment"));
+                            if (!activeBooking) return null;
+                            return (
+                              <div className="ml-6 mt-3 flex gap-2 flex-wrap">
+                                <Button size="sm"
+                                  className="text-xs h-8 hover:opacity-90"
+                                  style={{ backgroundColor: C.blue, color: "white" }}
+                                  onClick={() => {
+                                    handleMarkSeen(notif.id);
+                                    navigate(`/reschedule/${notif.bookingId}`);
+                                  }}>
+                                  Pick a New Time
+                                </Button>
+                                <Button size="sm" variant="outline"
+                                  className="text-xs h-8"
+                                  disabled={keepOriginal.isPending}
+                                  onClick={() => {
+                                    handleMarkSeen(notif.id);
+                                    keepOriginal.mutate({ id: notif.bookingId! }, {
+                                      onSuccess: () => {
+                                        queryClient.invalidateQueries({ queryKey: getListMyBookingsQueryKey() });
+                                        queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey() });
+                                        toast({ title: "Expert notified — original time confirmed." });
+                                      },
+                                      onError: (err: any) => toast({ title: "Could not send response", description: err.message, variant: "destructive" }),
+                                    });
+                                  }}>
+                                  {keepOriginal.isPending ? "Sending…" : "Keep Original Time"}
+                                </Button>
+                                <Button size="sm" variant="outline"
+                                  className="border-red-200 text-red-600 hover:bg-red-50 text-xs h-8"
+                                  onClick={() => openCancelDialog(notif.bookingId, notif.id)}>
+                                  Cancel This Booking
                                 </Button>
                               </div>
                             );

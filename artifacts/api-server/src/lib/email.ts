@@ -344,6 +344,7 @@ export interface NotificationEmailOpts {
     refundAmount?: number;
     refundPercent?: number;
     actions?: string[];
+    bookingId?: number;
   };
 }
 
@@ -494,6 +495,12 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
       const sessionLabel = payload.sessionType ? fmtSessionType(payload.sessionType) : "session";
       subject = `${payload.otherPartyName ?? "Your expert"} requested to reschedule your ${sessionLabel} session`;
 
+      const rescheduleBase = payload.bookingId
+        ? `${SITE_URL}/reschedule/${payload.bookingId}`
+        : `${SITE_URL}/dashboard`;
+      const keepUrl   = `${rescheduleBase}?action=keep`;
+      const cancelUrl = `${rescheduleBase}?action=cancel`;
+
       bodyHtml = `
         <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
           ${escHtml(payload.body)}
@@ -506,10 +513,72 @@ export async function sendNotificationEmail(opts: NotificationEmailOpts): Promis
               otherPartyLabel: "Expert",
               otherPartyName: payload.otherPartyName ?? "",
             })
-          : ""}`;
+          : ""}
+        <p style="margin:20px 0 12px;font-size:14px;font-weight:600;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
+          What would you like to do?
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
+          <tr><td style="padding-bottom:10px;">
+            <a href="${escHtml(rescheduleBase)}"
+               style="display:inline-block;background:#6395EE;color:#FFFFFF;text-decoration:none;
+                      padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;
+                      font-family:'Helvetica Neue',Arial,sans-serif;">
+              Pick a New Time
+            </a>
+          </td></tr>
+          <tr><td style="padding-bottom:10px;">
+            <a href="${escHtml(keepUrl)}"
+               style="display:inline-block;background:#F9FAFB;border:1.5px solid #D1D5DB;color:#374151;
+                      text-decoration:none;padding:11px 28px;border-radius:8px;font-size:15px;font-weight:600;
+                      font-family:'Helvetica Neue',Arial,sans-serif;">
+              Keep Original Time
+            </a>
+          </td></tr>
+          <tr><td style="padding-bottom:10px;">
+            <a href="${escHtml(cancelUrl)}"
+               style="display:inline-block;background:#FEF2F2;border:1.5px solid #FECACA;color:#DC2626;
+                      text-decoration:none;padding:11px 28px;border-radius:8px;font-size:15px;font-weight:600;
+                      font-family:'Helvetica Neue',Arial,sans-serif;">
+              Cancel This Booking
+            </a>
+          </td></tr>
+        </table>
+        <p style="margin:8px 0 0;font-size:12px;line-height:18px;color:#9CA3AF;font-family:'Helvetica Neue',Arial,sans-serif;">
+          Keeping the original time notifies the expert that you expect the session to proceed as scheduled.
+          If the expert cannot attend, they must formally cancel — which triggers a full refund to you.
+        </p>`;
 
-      ctaUrl = `${SITE_URL}/client/dashboard`;
-      ctaText = "Pick a New Time";
+      ctaUrl  = undefined;
+      ctaText = undefined;
+      break;
+    }
+
+    // ── Client declined reschedule → expert ───────────────────────────────────
+    case "expert_reschedule_declined": {
+      const sessionLabel = payload.sessionType ? fmtSessionType(payload.sessionType) : "session";
+      subject = `${payload.otherPartyName ?? "Your client"} chose to keep the original ${sessionLabel} time`;
+
+      bodyHtml = `
+        <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
+          ${escHtml(payload.body)}
+        </p>
+        ${payload.sessionStart && payload.sessionType
+          ? sessionDetailBlock({
+              sessionType: payload.sessionType,
+              sessionStart: payload.sessionStart,
+              meetLink: null,
+              otherPartyLabel: "Client",
+              otherPartyName: payload.otherPartyName ?? "",
+            })
+          : ""}
+        <p style="margin:16px 0 0;font-size:14px;line-height:22px;color:#6B7280;font-family:'Helvetica Neue',Arial,sans-serif;">
+          Please plan to attend at the original scheduled time. If you are unable to attend,
+          you must cancel the session from your Expert Dashboard.
+          Per our policy, an expert cancellation results in a full refund to the client.
+        </p>`;
+
+      ctaUrl  = `${SITE_URL}/expert/dashboard`;
+      ctaText = "View Expert Dashboard";
       break;
     }
 

@@ -52,6 +52,7 @@ import type {
   GetSearchSuggestionsParams,
   HealthStatus,
   InboxThread,
+  KeepOriginalTime200,
   LaunchNotification,
   LaunchSubscribeInput,
   ListAllBookingsParams,
@@ -2163,6 +2164,76 @@ export const useRequestReschedule = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getRequestRescheduleMutationOptions(options));
+    }
+
+export const getKeepOriginalTimeUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/keep-original`
+}
+
+/**
+ * @summary Client declines expert's reschedule request and keeps the original booking time
+ */
+export const keepOriginalTime = async (id: number, options?: RequestInit): Promise<KeepOriginalTime200> => {
+
+  return customFetch<KeepOriginalTime200>(getKeepOriginalTimeUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getKeepOriginalTimeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keepOriginalTime>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof keepOriginalTime>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['keepOriginalTime'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof keepOriginalTime>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  keepOriginalTime(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type KeepOriginalTimeMutationResult = NonNullable<Awaited<ReturnType<typeof keepOriginalTime>>>
+
+    export type KeepOriginalTimeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Client declines expert's reschedule request and keeps the original booking time
+ */
+export const useKeepOriginalTime = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof keepOriginalTime>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof keepOriginalTime>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getKeepOriginalTimeMutationOptions(options));
     }
 
 export const getListNotificationsUrl = () => {

@@ -587,6 +587,29 @@ paths:
                   ok:
                     type: boolean
 
+  /bookings/{id}/keep-original:
+    post:
+      operationId: keepOriginalTime
+      tags: [bookings]
+      summary: Client declines expert's reschedule request and keeps the original booking time
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expert notified
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+
   /notifications:
     get:
       operationId: listNotifications

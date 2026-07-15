@@ -27,6 +27,7 @@ import ClientDashboard from "@/pages/dashboard/client";
 import ExpertDashboard from "@/pages/dashboard/expert";
 import AdminDashboard from "@/pages/dashboard/admin";
 import Messages from "@/pages/messages";
+import ReschedulePage from "@/pages/reschedule/[id]";
 
 function NotFound() {
   return (
@@ -101,6 +102,7 @@ function Router() {
           <Route path="/expert/dashboard" component={ExpertDashboard} />
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/messages/:bookingId" component={Messages} />
+          <Route path="/reschedule/:id" component={ReschedulePage} />
           <Route component={NotFound} />
         </Switch>
       </main>

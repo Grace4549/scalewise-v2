@@ -13,6 +13,7 @@ export const NOTIFICATION_TYPES = [
   "client_rescheduled",
   "expert_cancelled",
   "expert_reschedule_requested",
+  "expert_reschedule_declined",
   "client_no_show",
   "refund_processed",
   "payout_processed",

@@ -608,6 +608,18 @@ export const RequestRescheduleResponse = zod.object({
 
 
 /**
+ * @summary Client declines expert's reschedule request and keeps the original booking time
+ */
+export const KeepOriginalTimeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const KeepOriginalTimeResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List notifications for the authenticated user (newest first)
  */
 export const ListNotificationsResponseItem = zod.object({
