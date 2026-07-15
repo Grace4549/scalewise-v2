@@ -272,7 +272,10 @@ export default function ClientDashboard() {
   const [newTime, setNewTime] = useState("");
 
   if (authLoading) return <div className="p-8"><Skeleton className="h-[400px]" /></div>;
-  if (!user || user.role !== "client") return <Redirect to="/login" />;
+  if (!user) return <Redirect to="/login" />;
+  if (user.role === "expert") return <Redirect to="/expert/dashboard" />;
+  if (user.role === "admin") return <Redirect to="/admin" />;
+  if (user.role !== "client") return <Redirect to="/login" />;
 
   const unseenCount = notifications?.filter((n) => !n.seen).length ?? 0;
 

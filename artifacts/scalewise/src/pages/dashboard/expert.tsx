@@ -767,7 +767,10 @@ export default function ExpertDashboard() {
       </div>
     );
   }
-  if (!user || user.role !== "expert") return <Redirect to="/login" />;
+  if (!user) return <Redirect to="/login" />;
+  if (user.role === "client") return <Redirect to="/dashboard" />;
+  if (user.role === "admin") return <Redirect to="/admin" />;
+  if (user.role !== "expert") return <Redirect to="/login" />;
   if (!dashboard) return <div className="p-8 text-center">Failed to load dashboard.</div>;
 
   const expert = dashboard.expert;

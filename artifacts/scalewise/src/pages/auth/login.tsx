@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLogin, useResendVerification } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, useSearch, Link } from "wouter";
+import { useLocation, useSearch, Link, Redirect } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ function UnverifiedEmailBanner({ email }: { email: string }) {
 export default function Login() {
   usePageTitle("Log In — ScaleWise");
   const login           = useLogin();
-  const { refetch }     = useAuth();
+  const { user, isLoading: authLoading, refetch } = useAuth();
   const [, setLocation] = useLocation();
   const { toast }       = useToast();
   const queryClient     = useQueryClient();
@@ -96,6 +96,12 @@ export default function Login() {
     resolver:      zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  if (!authLoading && user) {
+    if (user.role === "admin") return <Redirect to="/admin" />;
+    if (user.role === "expert") return <Redirect to="/expert/dashboard" />;
+    return <Redirect to="/dashboard" />;
+  }
 
   if (unverifiedEmail) {
     return <UnverifiedEmailBanner email={unverifiedEmail} />;

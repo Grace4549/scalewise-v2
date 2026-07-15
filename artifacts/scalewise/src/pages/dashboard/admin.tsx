@@ -317,7 +317,10 @@ export default function AdminDashboard() {
   const sendAdminMsg = useSendAdminMessage();
 
   if (authLoading) return <div className="p-8"><Skeleton className="h-[400px]" /></div>;
-  if (!user || user.role !== "admin") return <Redirect to="/" />;
+  if (!user) return <Redirect to="/login" />;
+  if (user.role === "client") return <Redirect to="/dashboard" />;
+  if (user.role === "expert") return <Redirect to="/expert/dashboard" />;
+  if (user.role !== "admin") return <Redirect to="/login" />;
 
   const handleApprove = (id: number) => {
     approveApp.mutate({ id }, {
