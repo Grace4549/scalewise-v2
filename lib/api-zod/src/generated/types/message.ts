@@ -16,5 +16,6 @@ export interface Message {
   senderName?: string;
   senderRole?: string;
   body: string;
+  blocked?: boolean;
   createdAt: string;
 }

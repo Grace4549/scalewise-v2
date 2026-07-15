@@ -732,6 +732,7 @@ export const ListMessagesResponseItem = zod.object({
   "senderName": zod.string().optional(),
   "senderRole": zod.string().optional(),
   "body": zod.string(),
+  "blocked": zod.boolean().optional(),
   "createdAt": zod.string()
 })
 export const ListMessagesResponse = zod.array(ListMessagesResponseItem)
@@ -772,6 +773,7 @@ export const ListAdminMessagesResponseItem = zod.object({
   "senderName": zod.string().optional(),
   "senderRole": zod.string().optional(),
   "body": zod.string(),
+  "blocked": zod.boolean().optional(),
   "createdAt": zod.string()
 })
 export const ListAdminMessagesResponse = zod.array(ListAdminMessagesResponseItem)
@@ -803,6 +805,23 @@ export const GetInboxResponseItem = zod.object({
   "unreadCount": zod.number()
 })
 export const GetInboxResponse = zod.array(GetInboxResponseItem)
+
+
+/**
+ * @summary List all client-expert conversation threads (admin only)
+ */
+export const ListAdminConversationsResponseItem = zod.object({
+  "bookingId": zod.number(),
+  "clientId": zod.number(),
+  "clientName": zod.string(),
+  "expertId": zod.number(),
+  "expertName": zod.string(),
+  "lastMessage": zod.string(),
+  "lastMessageAt": zod.string(),
+  "messageCount": zod.number(),
+  "hasBlocked": zod.boolean()
+})
+export const ListAdminConversationsResponse = zod.array(ListAdminConversationsResponseItem)
 
 
 /**

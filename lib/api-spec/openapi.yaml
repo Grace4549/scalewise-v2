@@ -837,6 +837,23 @@ paths:
                 items:
                   $ref: "#/components/schemas/InboxThread"
 
+  /admin/conversations:
+    get:
+      operationId: listAdminConversations
+      tags: [admin]
+      summary: List all client-expert conversation threads (admin only)
+      responses:
+        "200":
+          description: All booking message threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminConversation"
+        "403":
+          description: Forbidden
+
   /admin/applications:
     get:
       operationId: listApplications
@@ -1823,8 +1840,33 @@ components:
           type: string
         body:
           type: string
+        blocked:
+          type: boolean
         createdAt:
           type: string
+
+    AdminConversation:
+      type: object
+      required: [bookingId, clientId, clientName, expertId, expertName, lastMessage, lastMessageAt, messageCount, hasBlocked]
+      properties:
+        bookingId:
+          type: integer
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        expertId:
+          type: integer
+        expertName:
+          type: string
+        lastMessage:
+          type: string
+        lastMessageAt:
+          type: string
+        messageCount:
+          type: integer
+        hasBlocked:
+          type: boolean
 
     MessageInput:
       type: object

@@ -1,5 +1,5 @@
 import { usePageTitle } from "@/hooks/use-page-title";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   useGetAdminStats, useListApplications, useListAllBookings, useListReviews,
@@ -7,7 +7,9 @@ import {
   useGetExpertBreakdown, useMarkBookingPaid, useAdminUpdateBookingStatus,
   useListAdminMessages, useSendAdminMessage, useMarkExpertPaid, useMarkRefundPaid,
   useListLaunchNotifications, useListAdminReceipts, useCreateExpertPayout,
+  useListAdminConversations, useListMessages,
   getGetExpertPayoutReceiptQueryOptions,
+  getListAdminConversationsQueryKey, getListMessagesQueryKey,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
 } from "@workspace/api-client-react";
@@ -129,6 +131,81 @@ function SectionHeader({ color, children }: { color: string; children: React.Rea
   );
 }
 
+function MonitorThreadView({
+  bookingId, clientName, expertName,
+}: { bookingId: number; clientName: string; expertName: string }) {
+  const { data: messages, isLoading } = useListMessages(bookingId, {
+    query: { queryKey: getListMessagesQueryKey(bookingId) },
+  });
+  const bottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  const hasBlocked = messages?.some((m) => m.blocked);
+  return (
+    <>
+      <div className="p-4 border-b shrink-0" style={{ backgroundColor: C.mblue + "20" }}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="font-semibold" style={{ color: "#1a3a5c" }}>
+              {clientName} ↔ {expertName}
+            </h3>
+            <p className="text-xs text-muted-foreground">Booking #{bookingId} · Read-only admin view</p>
+          </div>
+          {hasBlocked && (
+            <span className="px-2 py-1 rounded-full text-xs font-bold border"
+              style={{ backgroundColor: "#fef2f2", color: "#dc2626", borderColor: "#fca5a5" }}>
+              🚩 Contains blocked messages
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">Loading…</div>
+        ) : !messages?.length ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">No messages in this thread.</div>
+        ) : (
+          messages.map((m) =>
+            m.blocked ? (
+              <div key={m.id} className="flex justify-center">
+                <div className="w-full max-w-[90%] rounded-xl border-2 px-4 py-3 text-sm"
+                  style={{ backgroundColor: "#fef2f2", borderColor: "#fca5a5" }}>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-xs font-semibold text-red-600">
+                      🚫 Blocked — {m.senderName} ({m.senderRole})
+                    </span>
+                    <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold"
+                      style={{ backgroundColor: "#ef4444", color: "white" }}>BLOCKED</span>
+                  </div>
+                  <p className="text-sm text-red-900/70 line-through leading-snug">{m.body}</p>
+                  <div className="text-[10px] mt-1.5 text-red-500/80">
+                    {new Date(m.createdAt).toLocaleString("en-KE")} · Contact info filter triggered
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div key={m.id} className={`flex ${m.senderRole === "expert" ? "justify-end" : "justify-start"}`}>
+                <div className="max-w-[72%] rounded-2xl px-4 py-2.5 text-sm"
+                  style={m.senderRole === "expert"
+                    ? { backgroundColor: C.green, color: "#1a5730" }
+                    : { backgroundColor: "#f3f4f6" }}>
+                  <div className="text-xs mb-0.5 opacity-70 font-medium">
+                    {m.senderName} <span className="opacity-60">({m.senderRole})</span>
+                  </div>
+                  <p className="leading-snug">{m.body}</p>
+                  <div className="text-[10px] mt-1 opacity-50 text-right">
+                    {new Date(m.createdAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              </div>
+            )
+          )
+        )}
+        <div ref={bottomRef} />
+      </div>
+    </>
+  );
+}
+
 export default function AdminDashboard() {
   usePageTitle("Admin — ScaleWise");
   const { user, isLoading: authLoading } = useAuth();
@@ -162,6 +239,10 @@ export default function AdminDashboard() {
   const [cancelDialog, setCancelDialog] = useState<{ bookingId: number; currentStatus: string } | null>(null);
   const [cancelBy, setCancelBy] = useState<"client" | "expert" | "admin">("admin");
   const [cancelReason, setCancelReason] = useState("");
+
+  const [monitorFilter, setMonitorFilter] = useState<"all" | "flagged">("all");
+  const [monitorSearch, setMonitorSearch] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
 
   const isAdmin = !authLoading && !!user && user.role === "admin";
 
@@ -211,6 +292,19 @@ export default function AdminDashboard() {
 
   const { data: waitlist, isLoading: waitlistLoading } = useListLaunchNotifications({
     query: { queryKey: ["listLaunchNotifications"], enabled: isAdmin, refetchInterval: 30000 },
+  });
+
+  const { data: conversations } = useListAdminConversations({
+    query: { queryKey: getListAdminConversationsQueryKey(), enabled: isAdmin },
+  });
+  const flaggedConvCount = conversations?.filter((c) => c.hasBlocked).length ?? 0;
+  const filteredConversations = (conversations ?? []).filter((c) => {
+    if (monitorFilter === "flagged" && !c.hasBlocked) return false;
+    if (monitorSearch) {
+      const q = monitorSearch.toLowerCase();
+      if (!c.clientName.toLowerCase().includes(q) && !c.expertName.toLowerCase().includes(q)) return false;
+    }
+    return true;
   });
 
   const approveApp = useApproveApplication();
@@ -569,6 +663,21 @@ export default function AdminDashboard() {
             className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
             style={activeTab === "receipts" ? { backgroundColor: C.blue, color: "white" } : { color: C.blue }}>
             <span className="flex items-center gap-2">🧾 Receipts</span>
+          </TabsTrigger>
+          <TabsTrigger value="monitor"
+            className="rounded-lg font-medium transition-all data-[state=active]:shadow-sm"
+            style={activeTab === "monitor" ? { backgroundColor: C.blue, color: "white" } : { color: C.blue }}>
+            <span className="flex items-center gap-2">
+              💬 Monitor
+              {flaggedConvCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={activeTab === "monitor"
+                    ? { backgroundColor: "#ef4444", color: "white" }
+                    : { backgroundColor: "#fef2f2", color: "#dc2626" }}>
+                  {flaggedConvCount}
+                </span>
+              )}
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -1380,6 +1489,107 @@ export default function AdminDashboard() {
         {/* ── RECEIPTS TAB ── */}
         <TabsContent value="receipts">
           <AdminReceiptsTab />
+        </TabsContent>
+
+        {/* ── MESSAGE MONITOR TAB ── */}
+        <TabsContent value="monitor">
+          <div className="grid md:grid-cols-[340px_1fr] gap-6" style={{ height: 680 }}>
+            {/* Left: Conversation List */}
+            <div className="bg-card rounded-2xl border overflow-hidden flex flex-col">
+              <div className="p-4 border-b shrink-0" style={{ backgroundColor: C.mblue + "20" }}>
+                <h3 className="font-semibold text-sm" style={{ color: "#1a3a5c" }}>All Conversations</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Client ↔ Expert booking threads</p>
+              </div>
+              {/* Filters */}
+              <div className="p-3 border-b shrink-0 space-y-2">
+                <div className="flex gap-1.5">
+                  <button onClick={() => setMonitorFilter("all")}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={monitorFilter === "all"
+                      ? { backgroundColor: C.blue, color: "white" }
+                      : { backgroundColor: C.blue + "15", color: C.blue }}>
+                    All
+                  </button>
+                  <button onClick={() => setMonitorFilter("flagged")}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                    style={monitorFilter === "flagged"
+                      ? { backgroundColor: "#ef4444", color: "white" }
+                      : { backgroundColor: "#fef2f2", color: "#dc2626" }}>
+                    🚩 Flagged
+                    {flaggedConvCount > 0 && (
+                      <span className="px-1.5 rounded-full text-[10px] font-bold"
+                        style={monitorFilter === "flagged"
+                          ? { backgroundColor: "rgba(255,255,255,0.3)" }
+                          : { backgroundColor: "#fca5a5", color: "#7f1d1d" }}>
+                        {flaggedConvCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <input value={monitorSearch} onChange={(e) => setMonitorSearch(e.target.value)}
+                  placeholder="Search by client or expert name…"
+                  className="w-full h-8 px-3 rounded-lg border bg-background text-xs" />
+              </div>
+              {/* List */}
+              <div className="overflow-y-auto flex-1 divide-y">
+                {filteredConversations.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm">
+                    {monitorSearch || monitorFilter === "flagged"
+                      ? "No conversations match this filter."
+                      : "No conversations yet."}
+                  </div>
+                ) : (
+                  filteredConversations.map((conv) => (
+                    <button key={conv.bookingId}
+                      onClick={() => setSelectedConversation(conv.bookingId)}
+                      className="w-full text-left px-4 py-3 hover:bg-muted/30 transition-colors"
+                      style={selectedConversation === conv.bookingId ? { backgroundColor: C.blue + "12" } : {}}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-medium truncate">{conv.clientName}</span>
+                            <span className="text-xs text-muted-foreground">↔</span>
+                            <span className="text-sm font-medium truncate">{conv.expertName}</span>
+                            {conv.hasBlocked && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                style={{ backgroundColor: "#fef2f2", color: "#dc2626" }}>Flagged</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Booking #{conv.bookingId} · {conv.messageCount} msg{conv.messageCount !== 1 ? "s" : ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">{conv.lastMessage}</div>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(conv.lastMessageAt).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Right: Thread View */}
+            <div className="bg-card rounded-2xl border overflow-hidden flex flex-col">
+              {selectedConversation === null ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-12 text-center gap-4">
+                  <div className="text-5xl">💬</div>
+                  <div>
+                    <p className="font-medium text-foreground">Select a conversation</p>
+                    <p className="text-sm mt-1">Full message history will appear here, including any blocked messages.</p>
+                  </div>
+                </div>
+              ) : (
+                <MonitorThreadView
+                  key={selectedConversation}
+                  bookingId={selectedConversation}
+                  clientName={conversations?.find((c) => c.bookingId === selectedConversation)?.clientName ?? "Client"}
+                  expertName={conversations?.find((c) => c.bookingId === selectedConversation)?.expertName ?? "Expert"}
+                />
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

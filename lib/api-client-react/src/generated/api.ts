@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminBooking,
+  AdminConversation,
   AdminExpertBreakdown,
   AdminReceiptsList,
   AdminStats,
@@ -3112,6 +3113,83 @@ export function useGetInbox<TData = Awaited<ReturnType<typeof getInbox>>, TError
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetInboxQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListAdminConversationsUrl = () => {
+
+
+
+
+  return `/api/admin/conversations`
+}
+
+/**
+ * @summary List all client-expert conversation threads (admin only)
+ */
+export const listAdminConversations = async ( options?: RequestInit): Promise<AdminConversation[]> => {
+
+  return customFetch<AdminConversation[]>(getListAdminConversationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminConversationsQueryKey = () => {
+    return [
+    `/api/admin/conversations`
+    ] as const;
+    }
+
+
+export const getListAdminConversationsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminConversations>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminConversations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminConversationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminConversations>>> = ({ signal }) => listAdminConversations({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminConversations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminConversationsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminConversations>>>
+export type ListAdminConversationsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List all client-expert conversation threads (admin only)
+ */
+
+export function useListAdminConversations<TData = Awaited<ReturnType<typeof listAdminConversations>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminConversations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminConversationsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

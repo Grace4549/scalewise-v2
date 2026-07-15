@@ -47,7 +47,7 @@ async function fetchSenderMap(senderIds: number[]) {
   return Object.fromEntries(senders.map((s) => [s.id, s]));
 }
 
-function formatMessage(m: typeof messagesTable.$inferSelect, senderMap: Record<number, typeof usersTable.$inferSelect>) {
+function formatMessage(m: typeof messagesTable.$inferSelect, senderMap: Record<number, typeof usersTable.$inferSelect>, includeBlocked = false) {
   return {
     id: m.id,
     bookingId: m.bookingId ?? null,
@@ -56,6 +56,7 @@ function formatMessage(m: typeof messagesTable.$inferSelect, senderMap: Record<n
     senderName: senderMap[m.senderId]?.name ?? "Unknown",
     senderRole: senderMap[m.senderId]?.role ?? "client",
     body: m.body,
+    blocked: includeBlocked ? m.blocked : undefined,
     createdAt: m.createdAt.toISOString(),
   };
 }
@@ -134,7 +135,7 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
         const msgs = await db
           .select()
           .from(messagesTable)
-          .where(eq(messagesTable.bookingId, booking.id))
+          .where(and(eq(messagesTable.bookingId, booking.id), eq(messagesTable.blocked, false)))
           .orderBy(messagesTable.createdAt);
         if (msgs.length > 0) {
           const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
@@ -170,7 +171,7 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
       const msgs = await db
         .select()
         .from(messagesTable)
-        .where(eq(messagesTable.bookingId, booking.id))
+        .where(and(eq(messagesTable.bookingId, booking.id), eq(messagesTable.blocked, false)))
         .orderBy(messagesTable.createdAt);
       if (msgs.length > 0) {
         const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
@@ -314,13 +315,17 @@ router.get("/messages/:bookingId", requireAuth, async (req, res): Promise<void> 
   const messages = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.bookingId, bookingId))
+    .where(
+      req.userRole === "admin"
+        ? eq(messagesTable.bookingId, bookingId)
+        : and(eq(messagesTable.bookingId, bookingId), eq(messagesTable.blocked, false))
+    )
     .orderBy(messagesTable.createdAt);
 
   const senderIds = [...new Set(messages.map((m) => m.senderId))];
   const senderMap = await fetchSenderMap(senderIds);
 
-  res.json(messages.map((m) => formatMessage(m, senderMap)));
+  res.json(messages.map((m) => formatMessage(m, senderMap, req.userRole === "admin")));
 });
 
 router.post("/messages/:bookingId/mark-read", requireAuth, async (req, res): Promise<void> => {
@@ -355,12 +360,6 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
   const parsed = SendMessageBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  // Block contact information sharing between clients and experts
-  if (containsContactInfo(parsed.data.body)) {
-    res.status(422).json({ error: "CONTACT_INFO_BLOCKED", message: CONTACT_BLOCKED_ERROR });
-    return;
-  }
-
   const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, bookingId));
   if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
 
@@ -371,6 +370,19 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
 
   if (booking.status === "pending_payment") {
     res.status(403).json({ error: "Messaging is only available once a booking has been confirmed and payment received." });
+    return;
+  }
+
+  // Block contact information sharing; persist for admin review
+  if (containsContactInfo(parsed.data.body)) {
+    db.insert(messagesTable).values({
+      bookingId,
+      expertId: null,
+      senderId: req.userId!,
+      body: parsed.data.body,
+      blocked: true,
+    }).catch((err) => req.log.warn({ err }, "Failed to persist blocked message"));
+    res.status(422).json({ error: "CONTACT_INFO_BLOCKED", message: CONTACT_BLOCKED_ERROR });
     return;
   }
 

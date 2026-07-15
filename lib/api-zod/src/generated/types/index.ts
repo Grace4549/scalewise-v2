@@ -9,6 +9,7 @@
 export * from './adminBooking';
 export * from './adminBookingPayoutStatus';
 export * from './adminBookingRefundStatus';
+export * from './adminConversation';
 export * from './adminExpertBreakdown';
 export * from './adminReceiptsList';
 export * from './adminReceiptsListPayoutReceiptsItem';

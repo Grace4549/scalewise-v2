@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
-import { db, expertsTable, bookingsTable, reviewsTable, usersTable } from "@workspace/db";
+import { db, expertsTable, bookingsTable, reviewsTable, usersTable, messagesTable } from "@workspace/db";
 import { and, eq, ne, gte, lte, sql, isNotNull, isNull, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { formatApplication, formatExpert } from "./experts";
@@ -637,6 +637,50 @@ router.get("/admin/stats", adminMiddleware(), async (_req, res): Promise<void> =
     recentBookings: recentBookings.map((b) => formatAdminBooking(b, expertMap, clientMap)),
     testMode: process.env.TEST_MODE === "true",
   });
+});
+
+router.get("/admin/conversations", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "admin") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const summaries = await db
+    .select({
+      bookingId: messagesTable.bookingId,
+      lastMessageAt: sql<string>`MAX(${messagesTable.createdAt})::text`,
+      messageCount: sql<number>`COUNT(*)::int`,
+      hasBlocked: sql<boolean>`BOOL_OR(${messagesTable.blocked})`,
+      lastBody: sql<string>`(ARRAY_AGG(${messagesTable.body} ORDER BY ${messagesTable.createdAt} DESC))[1]`,
+    })
+    .from(messagesTable)
+    .where(isNotNull(messagesTable.bookingId))
+    .groupBy(messagesTable.bookingId);
+
+  const result = await Promise.all(
+    summaries
+      .filter((s) => s.bookingId !== null)
+      .map(async (s) => {
+        const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, s.bookingId!));
+        if (!booking) return null;
+        const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+        const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
+        return {
+          bookingId: s.bookingId!,
+          clientId: booking.clientId,
+          clientName: client?.name ?? "Unknown",
+          expertId: booking.expertId,
+          expertName: expert?.name ?? "Unknown",
+          lastMessage: s.lastBody,
+          lastMessageAt: s.lastMessageAt,
+          messageCount: s.messageCount,
+          hasBlocked: s.hasBlocked ?? false,
+        };
+      })
+  );
+
+  const conversations = result
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+
+  res.json(conversations);
 });
 
 export default router;

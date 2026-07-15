@@ -499,7 +499,20 @@ export interface Message {
   senderName?: string;
   senderRole?: string;
   body: string;
+  blocked?: boolean;
   createdAt: string;
+}
+
+export interface AdminConversation {
+  bookingId: number;
+  clientId: number;
+  clientName: string;
+  expertId: number;
+  expertName: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  messageCount: number;
+  hasBlocked: boolean;
 }
 
 export interface MessageInput {
