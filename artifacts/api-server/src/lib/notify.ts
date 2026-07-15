@@ -34,6 +34,10 @@ export interface CreateNotificationParams {
   payload: NotificationPayload;
   recipientEmail: string;
   recipientName: string;
+  /** When true, skips sending the transactional email. Use when a dedicated
+   *  email (e.g. a booking confirmation with PDF receipt) is already being
+   *  sent separately for this same event. */
+  skipEmail?: boolean;
 }
 
 /**
@@ -64,18 +68,21 @@ export async function createNotification(
 
     // Send the email asynchronously — do not await so the HTTP response is
     // never held up by email provider latency or retries.
-    sendNotificationEmail({
-      notificationType: params.notificationType,
-      recipientEmail: params.recipientEmail,
-      recipientName: params.recipientName,
-      notificationLogId: row.id,
-      payload: params.payload,
-    }).catch((err) =>
-      logger.error(
-        { err, notificationLogId: row.id, type: params.notificationType },
-        "sendNotificationEmail threw unexpectedly"
-      )
-    );
+    // Skip if the caller is sending a more complete dedicated email separately.
+    if (!params.skipEmail) {
+      sendNotificationEmail({
+        notificationType: params.notificationType,
+        recipientEmail: params.recipientEmail,
+        recipientName: params.recipientName,
+        notificationLogId: row.id,
+        payload: params.payload,
+      }).catch((err) =>
+        logger.error(
+          { err, notificationLogId: row.id, type: params.notificationType },
+          "sendNotificationEmail threw unexpectedly"
+        )
+      );
+    }
 
     logger.info(
       {

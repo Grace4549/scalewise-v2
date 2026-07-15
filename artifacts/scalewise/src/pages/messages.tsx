@@ -30,6 +30,7 @@ export default function Messages() {
   const sendMessage = useSendMessage();
   
   const [text, setText] = useState("");
+  const [pendingMsgs, setPendingMsgs] = useState<Array<{ id: number; senderId: number; body: string; createdAt: string }>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Poll for new messages
@@ -47,16 +48,22 @@ export default function Messages() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    
-    sendMessage.mutate({ bookingId, data: { body: text } }, {
+    const msgBody = text.trim();
+    if (!msgBody) return;
+
+    const tempId = -Date.now();
+    setText("");
+    setPendingMsgs((prev) => [...prev, { id: tempId, senderId: user?.id ?? 0, body: msgBody, createdAt: new Date().toISOString() }]);
+
+    sendMessage.mutate({ bookingId, data: { body: msgBody } }, {
       onSuccess: () => {
-        setText("");
+        setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
         refetch();
       },
       onError: (err: any) => {
-        const body = err?.body ?? err?.response?.data ?? {};
-        if (body?.error === "EMAIL_NOT_VERIFIED") {
+        setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
+        const errBody = err?.body ?? err?.response?.data ?? {};
+        if (errBody?.error === "EMAIL_NOT_VERIFIED") {
           toast({
             title: "Email not verified",
             description: "Please verify your email address before sending messages.",
@@ -94,7 +101,7 @@ export default function Messages() {
       </div>
 
       <div className="flex-1 bg-muted/10 border-x overflow-y-auto p-6 space-y-6">
-        {messages?.length === 0 ? (
+        {messages?.length === 0 && pendingMsgs.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground text-center">
             <div>
               <div className="text-4xl mb-4 opacity-50">👋</div>
@@ -102,20 +109,33 @@ export default function Messages() {
             </div>
           </div>
         ) : (
-          messages?.map((msg) => {
-            const isMe = msg.senderId === user?.id;
-            return (
-              <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-sm font-medium">{isMe ? 'You' : msg.senderName}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <>
+            {messages?.map((msg) => {
+              const isMe = msg.senderId === user?.id;
+              return (
+                <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-sm font-medium">{isMe ? 'You' : msg.senderName}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <div className={`px-4 py-3 rounded-2xl max-w-[80%] ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-card border rounded-tl-sm'}`}>
+                    {msg.body}
+                  </div>
                 </div>
-                <div className={`px-4 py-3 rounded-2xl max-w-[80%] ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-card border rounded-tl-sm'}`}>
+              );
+            })}
+            {pendingMsgs.map((msg) => (
+              <div key={msg.id} className="flex flex-col items-end">
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-sm font-medium">You</span>
+                  <span className="text-xs text-muted-foreground">Sending…</span>
+                </div>
+                <div className="px-4 py-3 rounded-2xl max-w-[80%] bg-primary text-primary-foreground rounded-tr-sm opacity-60">
                   {msg.body}
                 </div>
               </div>
-            );
-          })
+            ))}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -128,7 +148,7 @@ export default function Messages() {
             placeholder="Type your message..."
             className="h-12 bg-background rounded-xl"
           />
-          <Button type="submit" size="lg" className="h-12 px-8 rounded-xl" disabled={sendMessage.isPending || !text.trim()}>
+          <Button type="submit" size="lg" className="h-12 px-8 rounded-xl" disabled={!text.trim()}>
             Send
           </Button>
         </form>

@@ -29,21 +29,29 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [body, setBody] = useState("");
+  const [pendingMsgs, setPendingMsgs] = useState<Array<{ id: number; body: string; createdAt: string }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, pendingMsgs]);
 
   const handleSend = () => {
-    if (!body.trim()) return;
-    sendMsg.mutate({ bookingId, data: { body: body.trim() } }, {
+    const msgBody = body.trim();
+    if (!msgBody) return;
+    const tempId = -Date.now();
+    setBody("");
+    setPendingMsgs((prev) => [...prev, { id: tempId, body: msgBody, createdAt: new Date().toISOString() }]);
+    sendMsg.mutate({ bookingId, data: { body: msgBody } }, {
       onSuccess: () => {
-        setBody("");
+        setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
         queryClient.invalidateQueries({ queryKey: getListMessagesQueryKey(bookingId) });
         queryClient.invalidateQueries({ queryKey: getGetInboxQueryKey() });
       },
-      onError: () => toast({ title: "Failed to send", variant: "destructive" }),
+      onError: () => {
+        setPendingMsgs((prev) => prev.filter((m) => m.id !== tempId));
+        toast({ title: "Failed to send", variant: "destructive" });
+      },
     });
   };
 
@@ -52,25 +60,37 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[420px]">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Loading messages…</div>
-        ) : !messages?.length ? (
+        ) : !messages?.length && !pendingMsgs.length ? (
           <div className="p-8 text-center text-muted-foreground text-sm">
             No messages yet. Start the conversation below.
           </div>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className={`flex ${m.senderId === userId ? "justify-end" : "justify-start"}`}>
-              <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm"
-                style={m.senderId === userId
-                  ? { backgroundColor: C.blue, color: "white" }
-                  : { backgroundColor: "#f3f4f6" }}>
-                <div className="text-xs mb-0.5 opacity-70 font-medium">{m.senderName}</div>
-                <p className="leading-snug">{m.body}</p>
-                <div className="text-[10px] mt-1 opacity-50 text-right">
-                  {new Date(m.createdAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+          <>
+            {messages?.map((m) => (
+              <div key={m.id} className={`flex ${m.senderId === userId ? "justify-end" : "justify-start"}`}>
+                <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm"
+                  style={m.senderId === userId
+                    ? { backgroundColor: C.blue, color: "white" }
+                    : { backgroundColor: "#f3f4f6" }}>
+                  <div className="text-xs mb-0.5 opacity-70 font-medium">{m.senderName}</div>
+                  <p className="leading-snug">{m.body}</p>
+                  <div className="text-[10px] mt-1 opacity-50 text-right">
+                    {new Date(m.createdAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+            {pendingMsgs.map((m) => (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm opacity-60"
+                  style={{ backgroundColor: C.blue, color: "white" }}>
+                  <div className="text-xs mb-0.5 opacity-70 font-medium">You</div>
+                  <p className="leading-snug">{m.body}</p>
+                  <div className="text-[10px] mt-1 opacity-50 text-right">Sending…</div>
+                </div>
+              </div>
+            ))}
+          </>
         )}
         <div ref={bottomRef} />
       </div>
@@ -78,7 +98,7 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
         <Input value={body} onChange={(e) => setBody(e.target.value)}
           placeholder="Type a message…"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-        <Button onClick={handleSend} disabled={sendMsg.isPending || !body.trim()}
+        <Button onClick={handleSend} disabled={!body.trim()}
           style={{ backgroundColor: C.blue, color: "white" }} className="hover:opacity-90 shrink-0">
           Send
         </Button>

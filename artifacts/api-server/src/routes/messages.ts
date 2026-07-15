@@ -304,7 +304,15 @@ router.post("/messages/:bookingId", requireAuth, requireEmailVerified, async (re
     })
     .returning();
 
-  const senderMap = await fetchSenderMap([req.userId!]);
+  // Graceful fallback: if the sender-map lookup fails, the message is already
+  // saved — still return a 201 with "Unknown" as the sender name rather than
+  // letting a secondary DB error roll back or 500 the whole request.
+  let senderMap: Record<number, typeof usersTable.$inferSelect> = {};
+  try {
+    senderMap = await fetchSenderMap([req.userId!]);
+  } catch (err) {
+    req.log.warn({ err, bookingId }, "fetchSenderMap failed after message insert; using empty map");
+  }
   const senderName = senderMap[req.userId!]?.name ?? "Someone";
   const senderRole = req.userRole as "client" | "expert" | "admin";
 

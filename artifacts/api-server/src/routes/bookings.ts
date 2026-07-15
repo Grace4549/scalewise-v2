@@ -238,11 +238,14 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
     });
   }
 
-  // Notify the client that their booking is confirmed (in-app)
+  // Notify the client that their booking is confirmed (in-app only).
+  // skipEmail=true because sendClientBookingConfirmationEmail below already
+  // sends a more complete confirmation email with a PDF receipt attached.
   await createNotification({
     bookingId: booking.id,
     recipientUserId: req.userId!,
     notificationType: "booking_confirmed",
+    skipEmail: true,
     recipientEmail: client.email,
     recipientName: client.name,
     payload: {
