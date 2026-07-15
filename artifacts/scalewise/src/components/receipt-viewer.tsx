@@ -101,9 +101,6 @@ export function ClientBookingReceiptView({ data }: { data: any }) {
           <InfoRow label="Rescheduled By" value={b.rescheduledBy} />
         </>
       )}
-      <InfoRow label="Status" value={<span className="capitalize px-2 py-0.5 rounded-full text-xs font-bold"
-        style={{ backgroundColor: C.green + "30", color: "#1a5730" }}>{b.status}</span>} />
-
       <SectionTitle>Payment</SectionTitle>
       <div className="flex justify-between items-center py-3 px-4 rounded-xl text-lg font-bold"
         style={{ backgroundColor: C.blue + "15" }}>

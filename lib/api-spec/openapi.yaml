@@ -539,6 +539,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Booking"
 
+  /bookings/{id}/acknowledge:
+    post:
+      operationId: acknowledgeBooking
+      tags: [bookings]
+      summary: Expert acknowledges an incoming booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
   /bookings/{id}/request-reschedule:
     post:
       operationId: requestReschedule
@@ -1546,6 +1565,8 @@ components:
         rescheduledAt:
           type: ["string", "null"]
         isTestBooking:
+          type: boolean
+        isAcknowledged:
           type: boolean
 
     BookingInput:

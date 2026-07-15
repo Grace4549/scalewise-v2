@@ -34,6 +34,7 @@ export const bookingsTable = pgTable("bookings", {
   rescheduleCount: integer("reschedule_count").notNull().default(0),
 
   isTestBooking: boolean("is_test_booking").notNull().default(false),
+  isAcknowledged: boolean("is_acknowledged").notNull().default(false),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({ id: true, createdAt: true, status: true, meetLink: true });

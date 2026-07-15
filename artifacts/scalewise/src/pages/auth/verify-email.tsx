@@ -100,7 +100,7 @@ export default function VerifyEmail() {
   function redirectDashboard(role: string) {
     if (role === "admin") setLocation("/admin");
     else if (role === "expert") setLocation("/expert/dashboard");
-    else setLocation("/");
+    else setLocation("/dashboard");
   }
 
   return (

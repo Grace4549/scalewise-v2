@@ -108,7 +108,7 @@ export default function Login() {
         refetch();
         if (role === "admin")        setLocation("/admin");
         else if (role === "expert")  setLocation("/expert/dashboard");
-        else                         setLocation("/");
+        else                         setLocation("/dashboard");
       },
       onError: (err: any) => {
         const body = err?.data ?? err?.body ?? err?.response?.data ?? {};

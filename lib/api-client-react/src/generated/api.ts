@@ -2023,6 +2023,76 @@ export const useExpertCancelBooking = <TError = ErrorType<unknown>,
       return useMutation(getExpertCancelBookingMutationOptions(options));
     }
 
+export const getAcknowledgeBookingUrl = (id: number,) => {
+
+
+
+
+  return `/api/bookings/${id}/acknowledge`
+}
+
+/**
+ * @summary Expert acknowledges an incoming booking
+ */
+export const acknowledgeBooking = async (id: number, options?: RequestInit): Promise<Booking> => {
+
+  return customFetch<Booking>(getAcknowledgeBookingUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAcknowledgeBookingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acknowledgeBooking>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acknowledgeBooking>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['acknowledgeBooking'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acknowledgeBooking>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  acknowledgeBooking(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcknowledgeBookingMutationResult = NonNullable<Awaited<ReturnType<typeof acknowledgeBooking>>>
+
+    export type AcknowledgeBookingMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Expert acknowledges an incoming booking
+ */
+export const useAcknowledgeBooking = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acknowledgeBooking>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acknowledgeBooking>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getAcknowledgeBookingMutationOptions(options));
+    }
+
 export const getRequestRescheduleUrl = (id: number,) => {
 
 

@@ -286,6 +286,7 @@ router.get("/expert/dashboard", requireAuth, async (req, res): Promise<void> => 
     expertName: expert.name,
     expertIndustry: expert.industry ?? null,
     createdAt: b.createdAt.toISOString(),
+    isAcknowledged: b.isAcknowledged,
   });
 
   res.json({

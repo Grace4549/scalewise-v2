@@ -312,6 +312,7 @@ export interface Booking {
   /** @nullable */
   rescheduledAt?: string | null;
   isTestBooking?: boolean;
+  isAcknowledged?: boolean;
 }
 
 export type BookingInputSessionType = typeof BookingInputSessionType[keyof typeof BookingInputSessionType];

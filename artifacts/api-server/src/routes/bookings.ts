@@ -70,6 +70,7 @@ export function formatBooking(
     rescheduledFromTime: b.rescheduledFromTime ? b.rescheduledFromTime.toISOString() : null,
     rescheduledAt: b.rescheduledAt ? b.rescheduledAt.toISOString() : null,
     isTestBooking: b.isTestBooking,
+    isAcknowledged: b.isAcknowledged,
   };
   if (includePayoutFields) {
     return {
@@ -145,8 +146,8 @@ router.get("/bookings", requireAuth, async (req, res): Promise<void> => {
   res.json(bookings.map((b) => formatBooking(b, expertMap, clientMap, includePayoutFields)));
 });
 
-function getDurationForSession(sessionType: string): number {
-  return sessionType === "discovery" ? 30 : 60;
+function getDurationForSession(_sessionType: string): number {
+  return 60;
 }
 
 router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Promise<void> => {
@@ -556,6 +557,35 @@ router.patch("/bookings/:id/reschedule", requireAuth, async (req, res): Promise<
   }
 
   res.json(formatBooking(updated, { [expert.id]: expert }, { [client.id]: client }, true));
+});
+
+// ── EXPERT ACKNOWLEDGE BOOKING ────────────────────────────────────────────────
+router.post("/bookings/:id/acknowledge", requireAuth, async (req, res): Promise<void> => {
+  if (req.userRole !== "expert") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, id));
+  if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
+
+  const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.userId, req.userId!));
+  if (!expert || expert.id !== booking.expertId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (booking.status !== "upcoming") {
+    res.status(409).json({ error: "Only upcoming bookings can be acknowledged" });
+    return;
+  }
+
+  const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
+  const [updated] = await db
+    .update(bookingsTable)
+    .set({ isAcknowledged: true })
+    .where(eq(bookingsTable.id, id))
+    .returning();
+
+  res.json(formatBooking(updated, { [expert.id]: expert }, client ? { [client.id]: client } : {}, false));
 });
 
 // ── EXPERT MARK AS NO-SHOW ────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   useGetExpertDashboard, useUpdateBookingStatus,
-  useExpertCancelBooking, useRequestReschedule,
+  useExpertCancelBooking, useRequestReschedule, useAcknowledgeBooking,
   useGetInbox, useListMessages, useSendMessage,
   useListAdminMessages, useSendAdminMessage,
   useListNotifications, useMarkNotificationSeen,
@@ -717,6 +717,7 @@ export default function ExpertDashboard() {
     onError: (err: Error) => toast({ title: "Failed to mark as no-show", description: err.message, variant: "destructive" }),
   });
   const markSeen = useMarkNotificationSeen();
+  const acknowledgeBooking = useAcknowledgeBooking();
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -877,20 +878,82 @@ export default function ExpertDashboard() {
             </div>
           </div>
 
-          {/* Upcoming Sessions */}
+          {/* Incoming Bookings — unacknowledged upcoming */}
+          {(() => {
+            const incomingBookings = dashboard.upcomingBookings.filter((b) => !b.isAcknowledged);
+            if (incomingBookings.length === 0) return null;
+            return (
+              <div className="rounded-3xl border shadow-sm overflow-hidden" style={{ borderColor: "#f59e0b60", backgroundColor: "#fffbeb" }}>
+                <div className="p-6 border-b flex items-center gap-3" style={{ borderColor: "#f59e0b40", backgroundColor: "#fef3c7" }}>
+                  <span className="text-xl">🔔</span>
+                  <h2 className="text-xl font-semibold" style={{ color: "#92400e" }}>
+                    Incoming Bookings ({incomingBookings.length})
+                  </h2>
+                  <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">Needs acknowledgement</span>
+                </div>
+                <div className="divide-y" style={{ borderColor: "#f59e0b30" }}>
+                  {incomingBookings.map((booking) => (
+                    <div key={booking.id} className="p-6 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <h3 className="font-semibold text-lg">{booking.clientName}</h3>
+                          <Badge variant="secondary" className="capitalize">{booking.sessionType.replace(/_/g, " ")}</Badge>
+                          {booking.amount && <span className="text-sm font-semibold" style={{ color: C.green }}>KES {booking.amount.toLocaleString()}</span>}
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>📅 {new Date(booking.scheduledTime).toLocaleString()}</p>
+                          <p>⏱ {booking.durationMinutes} minutes</p>
+                          {booking.meetLink && (
+                            <p className="mt-1" style={{ color: C.blue }}>
+                              🔗 <a href={booking.meetLink} target="_blank" rel="noreferrer" className="hover:underline font-medium">Join Meeting</a>
+                            </p>
+                          )}
+                          {booking.notes && <p className="italic mt-1 text-xs">"{booking.notes}"</p>}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Button size="sm" variant="outline"
+                          onClick={() => { setSelectedThread({ type: "booking", bookingId: booking.id }); setActiveTab("inbox"); }}>
+                          💬 Message Client
+                        </Button>
+                        <Button size="sm"
+                          className="font-semibold shadow-sm hover:opacity-90"
+                          style={{ backgroundColor: "#f59e0b", color: "#1c1917" }}
+                          disabled={acknowledgeBooking.isPending}
+                          onClick={() => acknowledgeBooking.mutate({ id: booking.id }, {
+                            onSuccess: () => {
+                              toast({ title: "Booking acknowledged", description: "Session moved to Upcoming Sessions." });
+                              queryClient.invalidateQueries({ queryKey: getGetExpertDashboardQueryKey() });
+                            },
+                            onError: (err: any) => toast({ title: "Failed to acknowledge", description: err.message, variant: "destructive" }),
+                          })}>
+                          ✓ Acknowledge
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Upcoming Sessions — acknowledged */}
           <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
             <div className="p-6 border-b bg-muted/30">
-              <h2 className="text-xl font-semibold">Upcoming Sessions ({dashboard.upcomingBookings.length})</h2>
+              <h2 className="text-xl font-semibold">
+                Upcoming Sessions ({dashboard.upcomingBookings.filter((b) => b.isAcknowledged).length})
+              </h2>
             </div>
-            {dashboard.upcomingBookings.length ? (
+            {dashboard.upcomingBookings.filter((b) => b.isAcknowledged).length ? (
               <div className="divide-y">
-                {dashboard.upcomingBookings.map((booking) => (
+                {dashboard.upcomingBookings.filter((b) => b.isAcknowledged).map((booking) => (
                   <div key={booking.id} className="p-6 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center hover:bg-muted/10 transition-colors">
                     <div>
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="font-semibold text-lg">{booking.clientName}</h3>
                         <Badge variant="secondary" className="capitalize">{booking.sessionType.replace(/_/g, " ")}</Badge>
                         {booking.amount && <span className="text-sm font-semibold" style={{ color: C.green }}>KES {booking.amount.toLocaleString()}</span>}
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: C.green + "25", color: "#1a5730" }}>✓ Confirmed</span>
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>📅 {new Date(booking.scheduledTime).toLocaleString()}</p>
@@ -950,8 +1013,8 @@ export default function ExpertDashboard() {
             ) : (
               <div className="p-12 text-center text-muted-foreground">
                 <div className="text-4xl mb-3">📅</div>
-                <p className="font-medium">No upcoming sessions.</p>
-                <p className="text-sm mt-1">When clients book sessions with you, they'll appear here.</p>
+                <p className="font-medium">No confirmed upcoming sessions.</p>
+                <p className="text-sm mt-1">Acknowledged bookings will appear here.</p>
               </div>
             )}
           </div>

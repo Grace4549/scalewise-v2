@@ -368,7 +368,8 @@ export const ListMyBookingsResponseItem = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })
 export const ListMyBookingsResponse = zod.array(ListMyBookingsResponseItem)
 
@@ -418,7 +419,8 @@ export const GetBookingResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })
 
 
@@ -460,7 +462,8 @@ export const RescheduleBookingResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })
 
 
@@ -503,7 +506,8 @@ export const UpdateBookingStatusResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })
 
 
@@ -544,7 +548,46 @@ export const ExpertCancelBookingResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Expert acknowledges an incoming booking
+ */
+export const AcknowledgeBookingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AcknowledgeBookingResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "expertId": zod.number(),
+  "sessionType": zod.enum(['discovery', 'consultancy', 'growth_3mo', 'growth_6mo']),
+  "scheduledTime": zod.string(),
+  "durationMinutes": zod.number(),
+  "status": zod.enum(['pending_payment', 'upcoming', 'completed', 'cancelled', 'no-show']),
+  "payoutStatus": zod.enum(['pending', 'paid']),
+  "payoutPaidAt": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "meetLink": zod.string().nullish(),
+  "amount": zod.number().nullish(),
+  "clientName": zod.string().nullish(),
+  "expertName": zod.string().nullish(),
+  "expertIndustry": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "cancelledBy": zod.string().nullish(),
+  "cancellationReason": zod.string().nullish(),
+  "refundStatus": zod.enum(['none', 'pending', 'paid']).optional(),
+  "refundAmount": zod.number().nullish(),
+  "refundPercent": zod.number().nullish(),
+  "expertCancellationEarning": zod.number().nullish(),
+  "rescheduledBy": zod.string().nullish(),
+  "rescheduledFromTime": zod.string().nullish(),
+  "rescheduledAt": zod.string().nullish(),
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })
 
 
@@ -1264,7 +1307,8 @@ export const GetExpertDashboardResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })),
   "completedBookings": zod.array(zod.object({
   "id": zod.number(),
@@ -1292,7 +1336,8 @@ export const GetExpertDashboardResponse = zod.object({
   "rescheduledBy": zod.string().nullish(),
   "rescheduledFromTime": zod.string().nullish(),
   "rescheduledAt": zod.string().nullish(),
-  "isTestBooking": zod.boolean().optional()
+  "isTestBooking": zod.boolean().optional(),
+  "isAcknowledged": zod.boolean().optional()
 })),
   "cancelledWithEarnings": zod.array(zod.record(zod.string(), zod.unknown())),
   "totalEarnings": zod.number(),
