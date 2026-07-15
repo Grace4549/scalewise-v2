@@ -46,22 +46,22 @@ app.use(
 );
 
 function buildAllowedOrigins(): string[] {
-  const domains = (process.env.REPLIT_DOMAINS ?? "")
-    .split(",")
-    .map((d) => d.trim())
-    .filter(Boolean)
-    .map((d) => `https://${d}`);
+  const origins: string[] = [];
+
+  if (process.env.FRONTEND_URL) {
+    origins.push(process.env.FRONTEND_URL);
+  }
 
   if (process.env.NODE_ENV !== "production") {
-    domains.push(
+    origins.push(
       "http://localhost",
-      "http://localhost:80",
       "http://localhost:3000",
+      "http://localhost:5173",
       "http://localhost:18082",
     );
   }
 
-  return domains;
+  return origins;
 }
 
 app.use(
