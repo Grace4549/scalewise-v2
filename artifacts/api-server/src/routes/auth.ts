@@ -57,10 +57,8 @@ async function issueVerificationToken(
     .where(eq(usersTable.id, userId));
 
   // Build the verification link pointing at the frontend verify-email page
-  const proto = (req.headers["x-forwarded-proto"] as string | undefined) ?? req.protocol;
-  const host = req.get("host");
-  const basePath = (process.env.BASE_PATH ?? "").replace(/\/$/, "");
-  const verificationLink = `${proto}://${host}${basePath}/verify-email?token=${token}`;
+  const frontendUrl = (process.env.FRONTEND_URL ?? "").replace(/\/$/, "");
+  const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
 
   const [row] = await db.insert(notificationLogTable).values({
     bookingId: null,

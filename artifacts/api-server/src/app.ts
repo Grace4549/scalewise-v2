@@ -64,6 +64,8 @@ function buildAllowedOrigins(): string[] {
   return origins;
 }
 
+const VERCEL_PREVIEW_ORIGIN = /^https:\/\/scalewise-v2-scalewise-[a-z0-9-]+\.vercel\.app$/;
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -72,7 +74,7 @@ app.use(
         return;
       }
       const allowed = buildAllowedOrigins();
-      if (allowed.includes(origin)) {
+      if (allowed.includes(origin) || VERCEL_PREVIEW_ORIGIN.test(origin)) { 
         callback(null, true);
       } else {
         callback(new Error("CORS policy: origin not allowed"));
