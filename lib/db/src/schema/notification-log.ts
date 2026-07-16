@@ -20,6 +20,9 @@ export const NOTIFICATION_TYPES = [
   "new_message",
   "email_verification",
   "email_verification_resend",
+  "account_deletion_requested",
+  "account_deletion_approved",
+  "account_deletion_denied",
 ] as const;
 
 export type NotificationType = typeof NOTIFICATION_TYPES[number];
