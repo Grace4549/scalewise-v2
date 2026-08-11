@@ -64,6 +64,9 @@ function buildAllowedOrigins(): string[] {
   return origins;
 }
 
+// TODO(rebrand): this matches the current Vercel project's auto-generated preview-URL
+// slug, which still says "scalewise" because the Vercel project itself hasn't been
+// renamed. Update this regex if/when the Vercel project is renamed to GrowPia.
 const VERCEL_PREVIEW_ORIGIN = /^https:\/\/scalewise-v2-scalewise-[a-z0-9-]+\.vercel\.app$/;
 
 app.use(
@@ -124,7 +127,7 @@ app.use(
       tableName: "user_sessions",
       createTableIfMissing: false,
     }),
-    secret: sessionSecret ?? "scalewise-dev-secret-2026",
+    secret: sessionSecret ?? "growpia-dev-secret-2026",
     resave: false,
     saveUninitialized: false,
     cookie: {

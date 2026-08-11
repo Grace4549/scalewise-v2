@@ -66,9 +66,9 @@ router.get("/client/receipts/booking/:bookingId", requireAuth, async (req, res):
 
   res.json({
     receiptType: "client_booking",
-    receiptNumber: `SW-BKG-${String(booking.id).padStart(6, "0")}`,
+    receiptNumber: `GP-BKG-${String(booking.id).padStart(6, "0")}`,
     issuedAt: booking.createdAt.toISOString(),
-    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "GrowPia", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     client: { name: client?.name ?? "—", email: client?.email ?? "—" },
     booking: {
       id: booking.id,
@@ -110,9 +110,9 @@ router.get("/client/receipts/refund/:bookingId", requireAuth, async (req, res): 
 
   res.json({
     receiptType: "client_refund",
-    receiptNumber: `SW-REF-${String(booking.id).padStart(6, "0")}`,
+    receiptNumber: `GP-REF-${String(booking.id).padStart(6, "0")}`,
     issuedAt: booking.refundPaidAt?.toISOString() ?? new Date().toISOString(),
-    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "GrowPia", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     client: { name: client?.name ?? "—", email: client?.email ?? "—" },
     booking: {
       id: booking.id,
@@ -150,7 +150,7 @@ router.get("/client/receipts", requireAuth, async (req, res): Promise<void> => {
     if (b.status !== "pending_payment" && b.amount) {
       receipts.push({
         type: "booking",
-        receiptNumber: `SW-BKG-${String(b.id).padStart(6, "0")}`,
+        receiptNumber: `GP-BKG-${String(b.id).padStart(6, "0")}`,
         date: b.createdAt.toISOString(),
         description: `${SESSION_TYPE_LABELS[b.sessionType] ?? b.sessionType} with ${expertMap[b.expertId]?.name ?? "Expert"}`,
         amount: b.amount,
@@ -162,7 +162,7 @@ router.get("/client/receipts", requireAuth, async (req, res): Promise<void> => {
     if (b.refundStatus === "paid" && b.refundAmount) {
       receipts.push({
         type: "refund",
-        receiptNumber: `SW-REF-${String(b.id).padStart(6, "0")}`,
+        receiptNumber: `GP-REF-${String(b.id).padStart(6, "0")}`,
         date: b.refundPaidAt?.toISOString() ?? b.createdAt.toISOString(),
         description: `Refund for cancelled ${SESSION_TYPE_LABELS[b.sessionType] ?? b.sessionType} with ${expertMap[b.expertId]?.name ?? "Expert"}`,
         amount: b.refundAmount,
@@ -268,7 +268,7 @@ router.get("/expert/receipts/payout/:batchId", requireAuth, async (req, res): Pr
     receiptType: "expert_payout",
     receiptNumber: batch.receiptNumber,
     issuedAt: batch.paidAt.toISOString(),
-    company: { name: "ScaleWise", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
+    company: { name: "GrowPia", email: "hello@scalewise.co.ke", phone: "+254707346331", address: "Nairobi, Kenya" },
     expert: {
       name: expert?.name ?? "—",
       email: expert?.email ?? "—",
@@ -352,7 +352,7 @@ router.get("/admin/receipts", adminMiddleware(), async (_req, res): Promise<void
 
   const refundReceipts = paidRefunds.map(b => ({
     receiptType: "client_refund",
-    receiptNumber: `SW-REF-${String(b.id).padStart(6, "0")}`,
+    receiptNumber: `GP-REF-${String(b.id).padStart(6, "0")}`,
     date: b.refundPaidAt?.toISOString() ?? b.createdAt.toISOString(),
     clientId: b.clientId,
     clientName: clientMap[b.clientId]?.name ?? "—",
@@ -413,7 +413,7 @@ router.post("/admin/experts/:id/payout", adminMiddleware(), async (req, res): Pr
   const totalAmount = subtotal + vatAmount;
 
   const now = new Date();
-  const receiptNumber = `SW-PAY-${expertId}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getTime()).slice(-4)}`;
+  const receiptNumber = `GP-PAY-${expertId}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getTime()).slice(-4)}`;
 
   const derivedStart = periodStart
     ? new Date(periodStart)
@@ -555,7 +555,7 @@ router.post("/admin/bookings/:id/mark-refund-paid", adminMiddleware(), async (re
     // Generate refund receipt PDF and email it (fire and forget)
     ;(async () => {
       try {
-        const receiptNumber = `SW-REF-${String(updated.id).padStart(6, "0")}`;
+        const receiptNumber = `GP-REF-${String(updated.id).padStart(6, "0")}`;
         const pdfBuffer = await generateClientRefundReceiptPdf({
           receiptNumber,
           issuedAt: updated.refundPaidAt?.toISOString() ?? new Date().toISOString(),

@@ -1,5 +1,5 @@
 /**
- * PDF Receipt Generator — ScaleWise
+ * PDF Receipt Generator — GrowPia
  * ─────────────────────────────────────────────────────────────────────────────
  * Generates branded PDF receipts for clients and experts using pdf-lib.
  * All coordinates use pdf-lib's bottom-left origin (y=0 is bottom of page).
@@ -90,7 +90,7 @@ function pct(n: number): string {
 
 function drawHeader(page: PDFPage, bold: PDFFont, regular: PDFFont): void {
   rect(page, 0, PH - 70, PW, 70, C_BLUE);
-  txt(page, "ScaleWise", MARGIN, PH - 46, 22, bold, C_WHITE);
+  txt(page, "GrowPia", MARGIN, PH - 46, 22, bold, C_WHITE);
   txt(page, "scalewise.co.ke", PW - MARGIN - 88, PH - 46, 10, regular, rgb(0.78, 0.88, 1.0));
 }
 
@@ -98,10 +98,10 @@ function drawFooter(page: PDFPage, regular: PDFFont): void {
   hLine(page, 38, MARGIN, PW - MARGIN);
   txt(
     page,
-    "© 2026 ScaleWise  ·  hello@scalewise.co.ke  ·  +254 707 346 331  ·  Nairobi, Kenya",
+    "© 2026 GrowPia  ·  hello@scalewise.co.ke  ·  +254 707 346 331  ·  Nairobi, Kenya",
     MARGIN, 24, 8, regular, C_GRAY,
   );
-  txt(page, "This is an official ScaleWise receipt. Please retain for your records.", MARGIN, 13, 8, regular, C_GRAY);
+  txt(page, "This is an official GrowPia receipt. Please retain for your records.", MARGIN, 13, 8, regular, C_GRAY);
 }
 
 /**
@@ -193,7 +193,7 @@ export async function generateClientBookingReceiptPdf(data: ClientBookingReceipt
   // FROM / TO
   y = drawTwoColBlock(
     page, y,
-    ["ScaleWise", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
+    ["GrowPia", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
     ["Billed To", trunc(data.client.name, 38), trunc(data.client.email, 38)],
     regular, bold,
   );
@@ -230,7 +230,7 @@ export async function generateClientBookingReceiptPdf(data: ClientBookingReceipt
   txt(page, amtStr, PW - MARGIN - amtW - 4, y + 3, 13, bold, C_GREEN_TXT);
   y -= 36;
 
-  txt(page, "Payment is processed securely through ScaleWise.", MARGIN, y, 9, regular, C_GRAY);
+  txt(page, "Payment is processed securely through GrowPia.", MARGIN, y, 9, regular, C_GRAY);
   y -= 13;
   txt(page, "For receipt queries contact hello@scalewise.co.ke or visit scalewise.co.ke.", MARGIN, y, 9, regular, C_GRAY);
 
@@ -278,7 +278,7 @@ export async function generateClientRefundReceiptPdf(data: ClientRefundReceiptDa
 
   y = drawTwoColBlock(
     page, y,
-    ["ScaleWise", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
+    ["GrowPia", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
     ["Refund To", trunc(data.client.name, 38), trunc(data.client.email, 38)],
     regular, bold,
   );
@@ -383,7 +383,7 @@ export async function generateExpertPayoutReceiptPdf(data: ExpertPayoutReceiptDa
   // FROM / TO
   y = drawTwoColBlock(
     page, y,
-    ["ScaleWise", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
+    ["GrowPia", "hello@scalewise.co.ke", "+254 707 346 331", "Nairobi, Kenya"],
     ["Paid To", trunc(data.expert.name, 38), trunc(data.expert.email, 38), trunc(data.expert.industry, 36)],
     regular, bold,
   );

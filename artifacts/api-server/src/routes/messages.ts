@@ -37,8 +37,8 @@ function containsContactInfo(text: string): boolean {
 }
 
 const CONTACT_BLOCKED_ERROR =
-  "This message could not be sent. ScaleWise does not allow sharing of personal contact details through the platform. " +
-  "All sessions must be booked and conducted through ScaleWise. " +
+  "This message could not be sent. GrowPia does not allow sharing of personal contact details through the platform. " +
+  "All sessions must be booked and conducted through GrowPia. " +
   "Contact hello@scalewise.co.ke if you need assistance.";
 
 async function fetchSenderMap(senderIds: number[]) {
@@ -114,7 +114,7 @@ router.get("/messages/inbox", requireAuth, async (req, res): Promise<void> => {
           threadType: "admin",
           bookingId: null,
           expertId: expert.id,
-          otherPartyName: "ScaleWise Admin",
+          otherPartyName: "GrowPia Admin",
           otherPartyRole: "admin",
           lastMessage: last.body,
           lastMessageAt: last.createdAt.toISOString(),
@@ -272,7 +272,7 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
           sendMessageNotificationEmail({
             to: expert.email,
             recipientName: expert.name,
-            senderName: "ScaleWise",
+            senderName: "GrowPia",
             senderRole: "admin",
             messagePreview: parsed.data.body,
             dashboardUrl: "https://scalewise.co.ke/expert/dashboard",
@@ -285,9 +285,9 @@ router.post("/messages/admin/:expertId", requireAuth, async (req, res): Promise<
               recipientEmail: expert.email,
               recipientName: expert.name,
               payload: {
-                title: "New Message from ScaleWise",
-                body: `You have a new message from the ScaleWise team. Open your inbox to reply.`,
-                otherPartyName: "ScaleWise",
+                title: "New Message from GrowPia",
+                body: `You have a new message from the GrowPia team. Open your inbox to reply.`,
+                otherPartyName: "GrowPia",
               },
             }).catch((err: unknown) => logger.error({ err, expertId }, "new_message notification (admin→expert) failed"));
           }

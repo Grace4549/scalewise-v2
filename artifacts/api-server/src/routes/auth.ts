@@ -37,8 +37,8 @@ async function setSessionUser(
  * `recipientEmail` and `verificationLink` needed to compose the message. The email body should
  * match this template:
  *
- *   Subject: "Confirm your ScaleWise account"
- *   Body: "Hi [Name], welcome to ScaleWise. Click the button below to verify your email
+ *   Subject: "Confirm your GrowPia account"
+ *   Body: "Hi [Name], welcome to GrowPia. Click the button below to verify your email
  *          address and activate your account. [Verify My Account] This link expires in 24 hours."
  */
 async function issueVerificationToken(

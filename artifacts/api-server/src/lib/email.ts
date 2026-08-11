@@ -1,10 +1,10 @@
 /**
- * Email service — ScaleWise
+ * Email service — GrowPia
  * ─────────────────────────────────────────────────────────────────────────────
  * Central module for all outbound email via Resend.
  *
  * All automated emails are sent from:
- *   FROM:     ScaleWise <noreply@scalewise.co.ke>
+ *   FROM:     GrowPia <noreply@scalewise.co.ke>
  *   REPLY-TO: hello@scalewise.co.ke
  *
  * Call sites:
@@ -24,7 +24,7 @@ import type { NotificationType } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 
-const FROM = "ScaleWise <noreply@scalewise.co.ke>";
+const FROM = "GrowPia <noreply@scalewise.co.ke>";
 const REPLY_TO = "hello@scalewise.co.ke";
 const SITE_URL = "https://scalewise.co.ke";
 
@@ -109,7 +109,7 @@ function buildHtml(opts: EmailTemplateOpts): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>ScaleWise</title>
+  <title>GrowPia</title>
 </head>
 <body style="margin:0;padding:0;background:#F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;">
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#F3F4F6;mso-hide:all;">
@@ -128,7 +128,7 @@ function buildHtml(opts: EmailTemplateOpts): string {
                 style="background:#6395EE;border-radius:12px 12px 0 0;padding:28px 48px;">
               <span style="font-size:24px;font-weight:700;color:#FFFFFF;
                            letter-spacing:-0.5px;font-family:'Helvetica Neue',Arial,sans-serif;">
-                ScaleWise
+                GrowPia
               </span>
             </td>
           </tr>
@@ -165,7 +165,7 @@ function buildHtml(opts: EmailTemplateOpts): string {
                        border-radius:0 0 12px 12px;padding:24px 48px;">
               <p style="margin:0;font-size:12px;line-height:18px;color:#9CA3AF;
                         font-family:'Helvetica Neue',Arial,sans-serif;">
-                &copy; 2026 ScaleWise. All rights reserved.<br>
+                &copy; 2026 GrowPia. All rights reserved.<br>
                 <a href="${SITE_URL}" style="color:#6395EE;text-decoration:none;">scalewise.co.ke</a>
               </p>
             </td>
@@ -299,12 +299,12 @@ export async function sendVerificationEmail(opts: {
   const first = firstName(recipientName);
 
   const subject = isResend
-    ? "New verification link for your ScaleWise account"
-    : "Confirm your ScaleWise account";
+    ? "New verification link for your GrowPia account"
+    : "Confirm your GrowPia account";
 
   const introLine = isResend
     ? `You requested a new email verification link. Click the button below to verify your email address.`
-    : `Welcome to ScaleWise! Click the button below to verify your email address and activate your account.`;
+    : `Welcome to GrowPia! Click the button below to verify your email address and activate your account.`;
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
@@ -313,7 +313,7 @@ export async function sendVerificationEmail(opts: {
     </p>
     <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
               font-family:'Helvetica Neue',Arial,sans-serif;">
-      This link expires in <strong>24 hours</strong>. If you did not create a ScaleWise account, you can safely ignore this email.
+      This link expires in <strong>24 hours</strong>. If you did not create a GrowPia account, you can safely ignore this email.
     </p>`;
 
   const html = buildHtml({
@@ -337,12 +337,12 @@ export async function sendPasswordResetEmail(opts: {
   const { to, recipientName, resetLink } = opts;
   const first = firstName(recipientName);
 
-  const subject = "Reset your ScaleWise password";
+  const subject = "Reset your GrowPia password";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
               font-family:'Helvetica Neue',Arial,sans-serif;">
-      We received a request to reset your ScaleWise password. Click the button below to choose a new one.
+      We received a request to reset your GrowPia password. Click the button below to choose a new one.
     </p>
     <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
               font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -720,11 +720,11 @@ export async function sendExpertApprovedEmail(opts: {
 
   const setupLink = `${SITE_URL}/register?role=expert&email=${encodeURIComponent(expertEmail)}&token=${inviteToken}`;
 
-  const subject = "Congratulations! Your ScaleWise application has been approved";
+  const subject = "Congratulations! Your GrowPia application has been approved";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-      We're excited to let you know that your application to join ScaleWise as a verified expert
+      We're excited to let you know that your application to join GrowPia as a verified expert
       has been <strong style="color:#166534;">approved</strong>!
     </p>
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -736,7 +736,7 @@ export async function sendExpertApprovedEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: "Your ScaleWise expert application has been approved!",
+    previewText: "Your GrowPia expert application has been approved!",
     recipientFirstName: first,
     bodyHtml,
     ctaUrl: setupLink,
@@ -756,11 +756,11 @@ export async function sendExpertRejectedEmail(opts: {
   const { to, expertName } = opts;
   const first = firstName(expertName);
 
-  const subject = "Update on your ScaleWise application";
+  const subject = "Update on your GrowPia application";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-      Thank you for your interest in joining ScaleWise as an expert. After carefully reviewing
+      Thank you for your interest in joining GrowPia as an expert. After carefully reviewing
       your application, we're unable to move forward at this time.
     </p>
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -772,7 +772,7 @@ export async function sendExpertRejectedEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: "An update on your ScaleWise expert application",
+    previewText: "An update on your GrowPia expert application",
     recipientFirstName: first,
     bodyHtml,
   });
@@ -792,7 +792,7 @@ export async function sendExpertPayoutEmail(opts: {
   const { to, expertName, totalAmount, sessionCount } = opts;
   const first = firstName(expertName);
 
-  const subject = "Your ScaleWise payout has been processed";
+  const subject = "Your GrowPia payout has been processed";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -815,7 +815,7 @@ export async function sendExpertPayoutEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: `Your ScaleWise payout of KES ${totalAmount.toLocaleString()} has been processed`,
+    previewText: `Your GrowPia payout of KES ${totalAmount.toLocaleString()} has been processed`,
     recipientFirstName: first,
     bodyHtml,
     ctaUrl: `${SITE_URL}/expert/dashboard`,
@@ -840,7 +840,7 @@ export async function sendRefundProcessedEmail(opts: {
   const { to, clientName, refundAmount, sessionType, expertName } = opts;
   const first = firstName(clientName);
 
-  const subject = "Your ScaleWise refund has been processed";
+  const subject = "Your GrowPia refund has been processed";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
@@ -956,8 +956,8 @@ export async function sendMessageNotificationEmail(opts: {
   const { to, recipientName, senderName, senderRole, messagePreview, dashboardUrl } = opts;
   const first = firstName(recipientName);
 
-  const senderLabel = senderRole === "admin" ? "the ScaleWise Team" : senderName;
-  const subject = `New message from ${senderRole === "admin" ? "ScaleWise" : senderName}`;
+  const senderLabel = senderRole === "admin" ? "the GrowPia Team" : senderName;
+  const subject = `New message from ${senderRole === "admin" ? "GrowPia" : senderName}`;
 
   const previewBlock = messagePreview.trim()
     ? `<table width="100%" cellpadding="0" cellspacing="0" border="0"
@@ -975,7 +975,7 @@ export async function sendMessageNotificationEmail(opts: {
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
               font-family:'Helvetica Neue',Arial,sans-serif;">
-      You have a new message from <strong>${escHtml(senderLabel)}</strong> on ScaleWise.
+      You have a new message from <strong>${escHtml(senderLabel)}</strong> on GrowPia.
     </p>
     ${previewBlock}
     <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
@@ -984,7 +984,7 @@ export async function sendMessageNotificationEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: `New message from ${senderRole === "admin" ? "ScaleWise" : senderName} — log in to reply`,
+    previewText: `New message from ${senderRole === "admin" ? "GrowPia" : senderName} — log in to reply`,
     recipientFirstName: first,
     bodyHtml,
     ctaUrl: dashboardUrl,
@@ -1008,7 +1008,7 @@ export async function sendExpertPayoutReceiptEmail(opts: {
   const { to, expertName, totalAmount, receiptNumber, pdfBuffer, sessionCount } = opts;
   const first = firstName(expertName);
 
-  const subject = "Your ScaleWise payout receipt is ready";
+  const subject = "Your GrowPia payout receipt is ready";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
@@ -1037,7 +1037,7 @@ export async function sendExpertPayoutReceiptEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: `Your ScaleWise payout of KES ${totalAmount.toLocaleString()} — receipt attached`,
+    previewText: `Your GrowPia payout of KES ${totalAmount.toLocaleString()} — receipt attached`,
     recipientFirstName: first,
     bodyHtml,
     ctaUrl: `${SITE_URL}/expert/dashboard`,
@@ -1059,11 +1059,11 @@ export async function sendLaunchSubscriptionEmail(opts: {
 }): Promise<void> {
   const { to } = opts;
 
-  const subject = "You're on the ScaleWise launch list!";
+  const subject = "You're on the GrowPia launch list!";
 
   const bodyHtml = `
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
-      Thank you for your interest in ScaleWise! You've been added to our launch notification list.
+      Thank you for your interest in GrowPia! You've been added to our launch notification list.
     </p>
     <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;font-family:'Helvetica Neue',Arial,sans-serif;">
       We're building a premium marketplace that connects business owners with verified industry
@@ -1076,7 +1076,7 @@ export async function sendLaunchSubscriptionEmail(opts: {
     </p>`;
 
   const html = buildHtml({
-    previewText: "You're on the ScaleWise launch list — we'll notify you when we go live!",
+    previewText: "You're on the GrowPia launch list — we'll notify you when we go live!",
     recipientFirstName: "there",
     bodyHtml,
     ctaUrl: SITE_URL,

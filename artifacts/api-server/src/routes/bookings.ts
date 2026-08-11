@@ -262,7 +262,7 @@ router.post("/bookings", requireAuth, requireEmailVerified, async (req, res): Pr
   // Send client booking confirmation email with PDF receipt (fire and forget)
   ;(async () => {
     try {
-      const receiptNumber = `SW-BKG-${String(booking.id).padStart(6, "0")}`;
+      const receiptNumber = `GP-BKG-${String(booking.id).padStart(6, "0")}`;
       const pdfBuffer = await generateClientBookingReceiptPdf({
         receiptNumber,
         issuedAt: booking.createdAt.toISOString(),
