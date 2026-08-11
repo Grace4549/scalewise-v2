@@ -654,27 +654,47 @@ router.get("/admin/conversations", requireAuth, async (req, res): Promise<void> 
     .where(isNotNull(messagesTable.bookingId))
     .groupBy(messagesTable.bookingId);
 
-  const result = await Promise.all(
-    summaries
-      .filter((s) => s.bookingId !== null)
-      .map(async (s) => {
-        const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, s.bookingId!));
-        if (!booking) return null;
-        const [client] = await db.select().from(usersTable).where(eq(usersTable.id, booking.clientId));
-        const [expert] = await db.select().from(expertsTable).where(eq(expertsTable.id, booking.expertId));
-        return {
-          bookingId: s.bookingId!,
-          clientId: booking.clientId,
-          clientName: client?.name ?? "Unknown",
-          expertId: booking.expertId,
-          expertName: expert?.name ?? "Unknown",
-          lastMessage: s.lastBody,
-          lastMessageAt: s.lastMessageAt,
-          messageCount: s.messageCount,
-          hasBlocked: s.hasBlocked ?? false,
-        };
-      })
-  );
+  const bookingIds = summaries
+    .map((s) => s.bookingId)
+    .filter((id): id is number => id !== null);
+
+  const bookings = bookingIds.length > 0
+    ? await db.select().from(bookingsTable).where(inArray(bookingsTable.id, bookingIds))
+    : [];
+  const bookingMap = new Map(bookings.map((b) => [b.id, b]));
+
+  const clientIds = [...new Set(bookings.map((b) => b.clientId))];
+  const expertIds = [...new Set(bookings.map((b) => b.expertId))];
+
+  const clients = clientIds.length > 0
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, clientIds))
+    : [];
+  const experts = expertIds.length > 0
+    ? await db.select().from(expertsTable).where(inArray(expertsTable.id, expertIds))
+    : [];
+
+  const clientMap = new Map(clients.map((c) => [c.id, c]));
+  const expertMap = new Map(experts.map((e) => [e.id, e]));
+
+  const result = summaries
+    .filter((s) => s.bookingId !== null)
+    .map((s) => {
+      const booking = bookingMap.get(s.bookingId!);
+      if (!booking) return null;
+      const client = clientMap.get(booking.clientId);
+      const expert = expertMap.get(booking.expertId);
+      return {
+        bookingId: s.bookingId!,
+        clientId: booking.clientId,
+        clientName: client?.name ?? "Unknown",
+        expertId: booking.expertId,
+        expertName: expert?.name ?? "Unknown",
+        lastMessage: s.lastBody,
+        lastMessageAt: s.lastMessageAt,
+        messageCount: s.messageCount,
+        hasBlocked: s.hasBlocked ?? false,
+      };
+    });
 
   const conversations = result
     .filter((c): c is NonNullable<typeof c> => c !== null)
