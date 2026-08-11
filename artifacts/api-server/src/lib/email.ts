@@ -327,6 +327,39 @@ export async function sendVerificationEmail(opts: {
   await sendWithRetry({ to, subject, html }, opts.notificationLogId);
 }
 
+// ── 1b. Password reset ─────────────────────────────────────────────────────────
+
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  recipientName: string;
+  resetLink: string;
+}): Promise<void> {
+  const { to, recipientName, resetLink } = opts;
+  const first = firstName(recipientName);
+
+  const subject = "Reset your ScaleWise password";
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:25px;color:#374151;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      We received a request to reset your ScaleWise password. Click the button below to choose a new one.
+    </p>
+    <p style="margin:0 0 8px;font-size:14px;line-height:22px;color:#6B7280;
+              font-family:'Helvetica Neue',Arial,sans-serif;">
+      This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email.
+    </p>`;
+
+  const html = buildHtml({
+    previewText: subject,
+    recipientFirstName: first,
+    bodyHtml,
+    ctaUrl: resetLink,
+    ctaText: "Reset My Password",
+  });
+
+  await sendWithRetry({ to, subject, html });
+}
+
 // ── 2. Booking notification emails (from createNotification) ──────────────────
 
 export interface NotificationEmailOpts {

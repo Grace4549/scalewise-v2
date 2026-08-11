@@ -4,7 +4,7 @@ import { db, usersTable, expertsTable, passwordResetTokensTable, notificationLog
 import { eq, and, sql } from "drizzle-orm";
 import { hashPassword, verifyPassword, requireAuth } from "../lib/auth";
 import { RegisterBody, LoginBody, VerifyEmailBody, ResendVerificationBody } from "@workspace/api-zod";
-import { sendVerificationEmail } from "../lib/email";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../lib/email";
 
 const ADMIN_EMAIL = "kihongegrace4549@gmail.com";
 
@@ -359,7 +359,13 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
 
   await db.insert(passwordResetTokensTable).values({ userId: user.id, token: tokenHash, expiresAt });
 
-  req.log.info({ email: user.email }, "Password reset token generated");
+  const frontendUrl = (process.env.FRONTEND_URL ?? "").replace(/\/$/, "");
+  const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+  sendPasswordResetEmail({ to: user.email, recipientName: user.name, resetLink })
+    .catch((err) => req.log.error({ err, userId: user.id }, "sendPasswordResetEmail failed"));
+
+  req.log.info({ email: user.email }, "Password reset email sent");
 
   res.json({ ok: true });
 });
