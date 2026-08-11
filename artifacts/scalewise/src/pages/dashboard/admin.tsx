@@ -12,7 +12,7 @@ import {
   getListAdminConversationsQueryKey, getListMessagesQueryKey,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
-  customFetch, ApiError,
+  customFetch, getApiErrorMessage,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -355,8 +355,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : (err as Error).message;
-      toast({ title: "Delete failed", description: message, variant: "destructive" });
+      toast({ title: "Delete failed", description: getApiErrorMessage(err), variant: "destructive" });
     } finally {
       setDeletingId(null);
     }

@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { customFetch, ApiError } from "@workspace/api-client-react";
+import { customFetch, getApiErrorMessage } from "@workspace/api-client-react";
 
 const P = { blue: "#6395EE", mgreen: "#88CFA8" };
 
@@ -24,8 +24,7 @@ export default function ForgotPassword() {
       });
       setSent(true);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : (err as Error).message;
-      toast({ title: "Error", description: message, variant: "destructive" });
+      toast({ title: "Error", description: getApiErrorMessage(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }

@@ -199,6 +199,21 @@ export class ApiError<T = unknown> extends Error {
   }
 }
 
+/**
+ * Pulls a human-readable message out of a caught error for display in UI —
+ * prefers the API's own `error`/`message` field (no "HTTP 400 ..." prefix)
+ * over ApiError.message, which is meant for logs/diagnostics.
+ */
+export function getApiErrorMessage(err: unknown, fallback = "Something went wrong"): string {
+  if (err instanceof ApiError) {
+    const apiField = getStringField(err.data, "error") ?? getStringField(err.data, "message");
+    if (apiField) return apiField;
+    return err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
+
 export class ResponseParseError extends Error {
   readonly name = "ResponseParseError";
   readonly status: number;
