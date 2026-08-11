@@ -4,7 +4,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   useGetExpert, useCreateVerifiedReview, useListMyBookings,
-  useGetExpertAvailability, useCreateBooking,
+  useGetExpertAvailability, useCreateBooking, customFetch,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -321,10 +321,7 @@ export default function ExpertProfile() {
 
   const { data: config } = useQuery({
     queryKey: ["config"],
-    queryFn: async () => {
-      const res = await fetch("/api/config");
-      return res.json() as Promise<{ testMode: boolean }>;
-    },
+    queryFn: () => customFetch<{ testMode: boolean }>("/api/config"),
   });
   const testMode = config?.testMode ?? false;
 

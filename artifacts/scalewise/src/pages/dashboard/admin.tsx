@@ -12,6 +12,7 @@ import {
   getListAdminConversationsQueryKey, getListMessagesQueryKey,
   getListApplicationsQueryKey, getListAllBookingsQueryKey, getGetAdminStatsQueryKey,
   getListReviewsQueryKey, getGetExpertBreakdownQueryKey, getListAdminMessagesQueryKey,
+  customFetch, ApiError,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -348,17 +349,14 @@ export default function AdminDashboard() {
   const handleDeleteExpert = async (id: number) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/admin/experts/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to delete");
-      }
+      await customFetch(`/api/admin/experts/${id}`, { method: "DELETE" });
       toast({ title: "Expert deleted", description: "The expert and their application have been removed." });
       setConfirmDeleteId(null);
       queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
-    } catch (err: any) {
-      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : (err as Error).message;
+      toast({ title: "Delete failed", description: message, variant: "destructive" });
     } finally {
       setDeletingId(null);
     }
@@ -751,9 +749,10 @@ export default function AdminDashboard() {
                         <Button size="sm" variant="outline" className="shrink-0"
                           onClick={async () => {
                             try {
-                              const res = await fetch(`/api/admin/applications/${app.id}/regenerate-invite`, { method: "POST" });
-                              if (!res.ok) throw new Error("Failed to generate invite link");
-                              const { inviteToken } = await res.json();
+                              const { inviteToken } = await customFetch<{ inviteToken: string }>(
+                                `/api/admin/applications/${app.id}/regenerate-invite`,
+                                { method: "POST" },
+                              );
                               const link = `${window.location.origin}/register?role=expert&email=${encodeURIComponent(app.email)}&token=${encodeURIComponent(inviteToken)}`;
                               await navigator.clipboard.writeText(link);
                               toast({ title: "Invite link copied!", description: "Share with the expert so they can create their login." });

@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { customFetch, ApiError } from "@workspace/api-client-react";
 
 const P = { blue: "#6395EE" };
 
@@ -44,16 +45,14 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      await customFetch("/api/auth/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
       setDone(true);
-    } catch (err: any) {
-      toast({ title: "Reset failed", description: err.message, variant: "destructive" });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : (err as Error).message;
+      toast({ title: "Reset failed", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
