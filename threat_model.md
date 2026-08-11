@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-ScaleWise is a marketplace that connects clients with approved experts for paid advisory sessions. The production stack is a React/Vite frontend and an Express 5 API backed by PostgreSQL via Drizzle, with cookie-based session authentication through `express-session`.
+GrowPia is a marketplace that connects clients with approved experts for paid advisory sessions. The production stack is a React/Vite frontend and an Express 5 API backed by PostgreSQL via Drizzle, with cookie-based session authentication through `express-session`.
 
 This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as production scope, treats shared packages under `lib/` as production-shared code when they are consumed by those artifacts, and treats `artifacts/mockup-sandbox/` as dev-only unless a production path proves otherwise. Per platform assumptions, deployed traffic is terminated over TLS by the platform. The application is publicly deployed at `https://scalewise.co.ke` with a Replit fallback domain, so public internet attackers can reach all intentionally exposed routes.
 
@@ -39,7 +39,7 @@ This scan treats `artifacts/api-server/` and `artifacts/scalewise/` as productio
 
 ### Spoofing
 
-ScaleWise relies on server-side sessions stored in cookies. The application must use a high-entropy production session secret, protect session cookies from cross-site abuse, and ensure that only valid authenticated sessions can reach booking, messaging, expert, and admin routes.
+GrowPia relies on server-side sessions stored in cookies. The application must use a high-entropy production session secret, protect session cookies from cross-site abuse, and ensure that only valid authenticated sessions can reach booking, messaging, expert, and admin routes.
 
 Password-based login is also in scope. Password verifiers must resist offline cracking if the user table is exposed, and login endpoints must not allow trivial credential-stuffing or brute-force attacks.
 
@@ -71,4 +71,4 @@ Public signup and waitlist endpoints are in scope for the same abuse category. T
 
 ### Elevation of Privilege
 
-ScaleWise has three meaningful privilege tiers: client, expert, and admin. The backend must enforce role checks and object ownership on every sensitive route. Any flaw that lets a client act as an expert or admin, read another user’s messages or bookings, or forge an authenticated/admin session is a high-priority production risk.
+GrowPia has three meaningful privilege tiers: client, expert, and admin. The backend must enforce role checks and object ownership on every sensitive route. Any flaw that lets a client act as an expert or admin, read another user’s messages or bookings, or forge an authenticated/admin session is a high-priority production risk.

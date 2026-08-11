@@ -1,4 +1,4 @@
-# ScaleWise
+# GrowPia
 
 A premium expert marketplace connecting business owners with verified industry experts for paid consultancy and coaching sessions.
 
