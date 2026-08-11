@@ -238,7 +238,7 @@ const SESSION_TYPES = [
   },
 ];
 
-const WHY_SCALEWISE = [
+const WHY_GROWPIA = [
   {
     icon: (
       <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle piece" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
@@ -251,7 +251,7 @@ const WHY_SCALEWISE = [
       <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Shield/3D/shield_3d.png" alt="Shield" width={56} height={56} style={{ objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }} />
     ),
     label: "Real Operators, Not Theorists",
-    text: "Every expert on ScaleWise has built and run a real business. Their advice comes from experience, not from a textbook or a certification.",
+    text: "Every expert on GrowPia has built and run a real business. Their advice comes from experience, not from a textbook or a certification.",
   },
   {
     icon: (
@@ -616,7 +616,7 @@ function LeaveReviewForm() {
           <div className="mb-6">
             <label className="block text-sm font-medium mb-1">Your Review <span className="text-red-500">*</span></label>
             <Textarea value={body} onChange={e => setBody(e.target.value)}
-              placeholder="Tell us about your experience with ScaleWise…" rows={3} required />
+              placeholder="Tell us about your experience with GrowPia…" rows={3} required />
           </div>
 
           <div className="flex gap-3">
@@ -749,7 +749,7 @@ const CYCLING_PHRASES = [
 ];
 
 export default function Home() {
-  usePageTitle("ScaleWise — Connect With Verified Business Experts");
+  usePageTitle("GrowPia — Connect With Verified Business Experts");
   const [phraseIdx, setPhraseIdx]         = useState(0);
   const [phraseVisible, setPhraseVisible] = useState(true);
   useEffect(() => {
@@ -1024,7 +1024,7 @@ export default function Home() {
               <polyline points="9 12 11 14 15 10"/>
             </svg>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Every expert on ScaleWise is manually reviewed by our team. We check their background, their industry experience, and their track record before approving them. No unverified profiles. No generic advice. Just real experience, matched to your exact challenge.
+              Every expert on GrowPia is manually reviewed by our team. We check their background, their industry experience, and their track record before approving them. No unverified profiles. No generic advice. Just real experience, matched to your exact challenge.
             </p>
           </div>
         </div>
@@ -1082,7 +1082,7 @@ export default function Home() {
                   <span style={{ color: P.mint }}>competitor isn't.</span>
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
-                  The business problem keeping you up tonight? Someone on ScaleWise has already solved it. Help is one call away. Stop losing time to uncertainty.
+                  The business problem keeping you up tonight? Someone on GrowPia has already solved it. Help is one call away. Stop losing time to uncertainty.
                 </p>
               </div>
               <Link href="/experts">
@@ -1138,22 +1138,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── WHY SCALEWISE ── */}
+      {/* ── WHY GROWPIA ── */}
       <section className="py-16" style={{ background: "#F8FAFC" }}>
         <div className="container mx-auto px-4">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-12">
               <div className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.blue }}>
-                Why ScaleWise
+                Why GrowPia
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Not Another Generic Platform</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Most advice platforms connect you with coaches and consultants who've read about your problem. ScaleWise connects you with people who've actually lived it — in your exact industry.
+                Most advice platforms connect you with coaches and consultants who've read about your problem. GrowPia connects you with people who've actually lived it — in your exact industry.
               </p>
             </div>
           </Reveal>
           <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
-            {WHY_SCALEWISE.map((point, i) => (
+            {WHY_GROWPIA.map((point, i) => (
               <Reveal key={point.label} delay={i * 80}>
                 <div className="flex gap-4 p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow h-full">
                   <div className="shrink-0 mt-0.5">{point.icon}</div>
@@ -1261,7 +1261,7 @@ export default function Home() {
                     Into <span style={{ color: P.blue }}>Income</span>
                   </h2>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    You have spent years building something real. Other business owners need exactly what you know. Join ScaleWise as a verified expert, set your own rates, and start earning on your schedule.
+                    You have spent years building something real. Other business owners need exactly what you know. Join GrowPia as a verified expert, set your own rates, and start earning on your schedule.
                   </p>
                   <ul className="space-y-2 text-muted-foreground text-sm">
                     {[

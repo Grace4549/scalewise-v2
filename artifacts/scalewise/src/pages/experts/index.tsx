@@ -17,7 +17,7 @@ const P = {
 };
 
 export default function ExpertsList() {
-  usePageTitle("Browse Experts — ScaleWise");
+  usePageTitle("Browse Experts — GrowPia");
   const [searchParams] = useLocation();
   const queryParams = new URLSearchParams(window.location.search);
 
@@ -55,7 +55,7 @@ export default function ExpertsList() {
                 <span style={{ color: P.blue }}>Expert</span>
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Every expert on ScaleWise has been vetted by our team. Real practitioners, real industries, real results.
+                Every expert on GrowPia has been vetted by our team. Real practitioners, real industries, real results.
               </p>
               <div className="flex items-center gap-5 mt-6 text-sm text-muted-foreground">
                 {[["13", "Industries", P.blue], ["Vetted", "Every Expert", P.mgreen], ["Live", "Google Meet", P.mint]].map(([val, lbl, col]) => (

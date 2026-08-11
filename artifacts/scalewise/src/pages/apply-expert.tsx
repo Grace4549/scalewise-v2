@@ -53,7 +53,7 @@ const applySchema = z.object({
 );
 
 export default function ApplyExpert() {
-  usePageTitle("Become an Expert — ScaleWise");
+  usePageTitle("Become an Expert — GrowPia");
   const [submitted, setSubmitted] = useState(false);
   const applyAsExpert = useApplyAsExpert();
   const { data: industries } = useListIndustries();
@@ -115,7 +115,7 @@ export default function ApplyExpert() {
           </div>
           <h1 className="text-3xl font-bold mb-4">Application Received!</h1>
           <p className="text-muted-foreground mb-3">
-            Thank you for applying to be a Founding Expert on ScaleWise. Our team will carefully review your application.
+            Thank you for applying to be a Founding Expert on GrowPia. Our team will carefully review your application.
           </p>
           <p className="text-muted-foreground mb-8">
             <span className="font-semibold" style={{ color: P.blue }}>If approved</span>, we will send you an email with the next steps to complete your profile and start accepting bookings.

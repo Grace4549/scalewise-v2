@@ -38,7 +38,7 @@ function PolicyCard({ scenario, client, note }: {
 }
 
 export default function RefundPolicy() {
-  usePageTitle("Cancellation & Refund Policy — ScaleWise");
+  usePageTitle("Cancellation & Refund Policy — GrowPia");
   return (
     <div className="min-h-screen">
       {/* Hero */}

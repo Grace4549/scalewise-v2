@@ -32,28 +32,28 @@ const FAQ_SECTIONS: FaqSection[] = [
     color: P.blue,
     faqs: [
       {
-        q: "What is ScaleWise?",
-        a: "ScaleWise is a platform that connects business owners with verified experts who have already solved the exact challenges you are facing. Instead of generic advice from someone who has only read about your problem, you get matched with a real business operator who has lived through it, fixed it, and is ready to walk you through it. Whether you need a quick conversation, focused problem-solving, or a long term growth plan, ScaleWise puts the right person in your corner.",
+        q: "What is GrowPia?",
+        a: "GrowPia is a platform that connects business owners with verified experts who have already solved the exact challenges you are facing. Instead of generic advice from someone who has only read about your problem, you get matched with a real business operator who has lived through it, fixed it, and is ready to walk you through it. Whether you need a quick conversation, focused problem-solving, or a long term growth plan, GrowPia puts the right person in your corner.",
       },
       {
-        q: "Who are the experts at ScaleWise?",
-        a: "Our experts are experienced business owners, operators, and industry professionals who have spent years, often decades, building and running real businesses in their specific sectors. They are not generic consultants or theorists. They are people who have navigated the same pricing pressures, staffing challenges, slow seasons, and growth plateaus that you are facing right now. Every expert on ScaleWise goes through a verification and approval process before appearing on the platform. We review their background, industry experience, and track record before approving them, so you can book with confidence knowing the person on the other side has genuinely been where you are.",
+        q: "Who are the experts at GrowPia?",
+        a: "Our experts are experienced business owners, operators, and industry professionals who have spent years, often decades, building and running real businesses in their specific sectors. They are not generic consultants or theorists. They are people who have navigated the same pricing pressures, staffing challenges, slow seasons, and growth plateaus that you are facing right now. Every expert on GrowPia goes through a verification and approval process before appearing on the platform. We review their background, industry experience, and track record before approving them, so you can book with confidence knowing the person on the other side has genuinely been where you are.",
       },
       {
         q: "What is the difference between Business Discovery, Consultancy, and Growth Strategy?",
         a: "Business Discovery is for when you are not sure exactly what the problem is. You just know something is not working and you need to talk it through with someone experienced. It is an open, unstructured conversation, no agenda required. Consultancy is for when you have already identified a specific challenge and need focused, expert diagnosis and a clear action plan you can implement immediately. Growth Strategy is for business owners who are ready to commit to long term, structured support. You choose either a 3 month plan with 6 bi-weekly sessions, or a 6 month plan with 12 bi-weekly sessions, with a full strategy roadmap and accountability check-ins throughout. If you are unsure which one fits, start with Business Discovery.",
       },
       {
-        q: "Is ScaleWise available outside Kenya?",
-        a: "Yes. Anyone can browse experts and book sessions on ScaleWise. Our payment options currently support M-Pesa only, but the platform itself is open to clients and experts everywhere.",
+        q: "Is GrowPia available outside Kenya?",
+        a: "Yes. Anyone can browse experts and book sessions on GrowPia. Our payment options currently support M-Pesa only, but the platform itself is open to clients and experts everywhere.",
       },
       {
-        q: "Can I change the language on ScaleWise?",
-        a: "ScaleWise is currently available in English only. Additional language support may be introduced in future updates.",
+        q: "Can I change the language on GrowPia?",
+        a: "GrowPia is currently available in English only. Additional language support may be introduced in future updates.",
       },
       {
         q: "Are there community guidelines I should know about?",
-        a: "Yes. ScaleWise has both Community Guidelines for all users and Expert Standards specifically for experts. These cover expected conduct, platform policies, and what happens if they are violated. Links to both are available in the footer.",
+        a: "Yes. GrowPia has both Community Guidelines for all users and Expert Standards specifically for experts. These cover expected conduct, platform policies, and what happens if they are violated. Links to both are available in the footer.",
       },
     ],
   },
@@ -79,7 +79,7 @@ const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How do I pay?",
-        a: "ScaleWise currently accepts M-Pesa only. After selecting your session and time slot, you will receive an M-Pesa STK push prompt on your phone to complete payment. Your booking is only confirmed once payment is successfully completed. No booking record exists in the system until payment goes through.",
+        a: "GrowPia currently accepts M-Pesa only. After selecting your session and time slot, you will receive an M-Pesa STK push prompt on your phone to complete payment. Your booking is only confirmed once payment is successfully completed. No booking record exists in the system until payment goes through.",
       },
       {
         q: "What if I need ongoing help?",
@@ -94,12 +94,12 @@ const FAQ_SECTIONS: FaqSection[] = [
         a: "Calendar sync is not yet available but is on our roadmap. In the meantime, your upcoming sessions, Google Meet link, and session details are always accessible in your Client Dashboard.",
       },
       {
-        q: "Does ScaleWise support screen sharing during a session?",
+        q: "Does GrowPia support screen sharing during a session?",
         a: "Yes. Since all sessions are conducted over Google Meet, both you and your expert can share your screen at any point during the call, just as you would in any standard Google Meet session.",
       },
       {
         q: "Can I conduct sessions outside of Google Meet?",
-        a: "No. All ScaleWise sessions must be conducted through the Google Meet link provided by the platform after booking. Conducting sessions outside of ScaleWise, whether by phone, WhatsApp, another video platform, or in person, is a violation of our platform policy. If you choose to arrange a session outside ScaleWise, the platform accepts no responsibility for any complaints, disputes, or refund requests that arise.",
+        a: "No. All GrowPia sessions must be conducted through the Google Meet link provided by the platform after booking. Conducting sessions outside of GrowPia, whether by phone, WhatsApp, another video platform, or in person, is a violation of our platform policy. If you choose to arrange a session outside GrowPia, the platform accepts no responsibility for any complaints, disputes, or refund requests that arise.",
       },
     ],
   },
@@ -163,11 +163,11 @@ const FAQ_SECTIONS: FaqSection[] = [
     faqs: [
       {
         q: "Is my contact information kept private?",
-        a: "Yes. Clients and experts communicate entirely through ScaleWise's built-in messaging system. Your personal email address and phone number are never shared with the other party at any point.",
+        a: "Yes. Clients and experts communicate entirely through GrowPia's built-in messaging system. Your personal email address and phone number are never shared with the other party at any point.",
       },
       {
-        q: "Are ScaleWise sessions private and confidential?",
-        a: "Yes. Sessions are between you and your expert only, unless you choose to invite someone else via the Google Meet link. ScaleWise does not record or monitor session content.",
+        q: "Are GrowPia sessions private and confidential?",
+        a: "Yes. Sessions are between you and your expert only, unless you choose to invite someone else via the Google Meet link. GrowPia does not record or monitor session content.",
       },
       {
         q: "How do I edit or update my basic information?",
@@ -270,7 +270,7 @@ const FAQ_SECTIONS: FaqSection[] = [
         q: "How do experts apply?",
         a: (
           <>
-            Experienced business owners and operators can apply to become a ScaleWise expert by filling out our expert application form, available on the{" "}
+            Experienced business owners and operators can apply to become a GrowPia expert by filling out our expert application form, available on the{" "}
             <Link href="/apply" className="underline font-medium" style={{ color: P.blue }}>
               Become an Expert
             </Link>{" "}
@@ -295,11 +295,11 @@ const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How and when do I get paid?",
-        a: "ScaleWise processes expert payouts manually via direct bank transfer. Your Expert Dashboard shows your current pending balance, commission deducted, and full payment history. You will be notified once a payout has been marked as paid by our admin team.",
+        a: "GrowPia processes expert payouts manually via direct bank transfer. Your Expert Dashboard shows your current pending balance, commission deducted, and full payment history. You will be notified once a payout has been marked as paid by our admin team.",
       },
       {
         q: "What can I see in my Expert Dashboard?",
-        a: "Your upcoming and completed sessions, total earnings to date, commission paid to ScaleWise, pending payout balance, incoming booking requests with the acknowledge button, your availability calendar, and your permanent inbox for messaging clients and the ScaleWise admin team.",
+        a: "Your upcoming and completed sessions, total earnings to date, commission paid to GrowPia, pending payout balance, incoming booking requests with the acknowledge button, your availability calendar, and your permanent inbox for messaging clients and the GrowPia admin team.",
       },
       {
         q: "How do I set my availability?",
@@ -319,14 +319,14 @@ const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How can I best prepare for a session?",
-        a: "Review any notes or information the client shared when booking. Come ready to listen first before advising. The most valuable sessions on ScaleWise feel like a real, honest conversation between two people who both want the same outcome, not a lecture.",
+        a: "Review any notes or information the client shared when booking. Come ready to listen first before advising. The most valuable sessions on GrowPia feel like a real, honest conversation between two people who both want the same outcome, not a lecture.",
       },
       {
         q: "How do I create a strong profile?",
         a: "Be specific. Instead of saying I help businesses grow, say I grew a restaurant from one location to five over four years. Specific, real experiences build far more trust than broad claims. Use your long bio to tell your actual story, and your short bio to capture the single most compelling thing about your background.",
       },
       {
-        q: "How do I promote my ScaleWise profile?",
+        q: "How do I promote my GrowPia profile?",
         a: "Share your profile link on your social media, with past clients, or anywhere you already talk about your business expertise. Every completed session and every verified review you earn also improves your visibility on the platform naturally over time.",
       },
       {
@@ -335,7 +335,7 @@ const FAQ_SECTIONS: FaqSection[] = [
       },
       {
         q: "How does the commission structure work?",
-        a: "ScaleWise takes a 20% commission on Business Discovery and Consultancy sessions, and 15% on Growth Strategy sessions. You keep the remainder. Commission is deducted before your payout is calculated, and you can see the exact breakdown for every session in your Expert Dashboard.",
+        a: "GrowPia takes a 20% commission on Business Discovery and Consultancy sessions, and 15% on Growth Strategy sessions. You keep the remainder. Commission is deducted before your payout is calculated, and you can see the exact breakdown for every session in your Expert Dashboard.",
       },
       {
         q: "How long can my bio be?",
@@ -346,8 +346,8 @@ const FAQ_SECTIONS: FaqSection[] = [
         a: "If you cancel a confirmed session for any reason, the client receives a full 100% refund automatically. This also applies to rescheduled sessions you cancel. Repeated cancellations may affect your standing on the platform and could result in account review.",
       },
       {
-        q: "What are ScaleWise expert standards?",
-        a: "Every expert on ScaleWise is expected to maintain honest and accurate profile information, acknowledge bookings promptly, show up on time for every confirmed session, and conduct all sessions through the platform's provided Google Meet link. Taking sessions outside the ScaleWise platform is strictly prohibited. If a client and expert arrange a session outside ScaleWise, the platform accepts no responsibility for any complaints, disputes, or refund requests. For experts found conducting off-platform sessions or soliciting clients to bypass the platform, consequences include immediate account suspension, permanent loss of commission protection, and ineligibility for any refund or dispute resolution support from ScaleWise. Repeated cancellations, no-shows, or unprofessional conduct may also result in account suspension or removal from the platform.",
+        q: "What are GrowPia expert standards?",
+        a: "Every expert on GrowPia is expected to maintain honest and accurate profile information, acknowledge bookings promptly, show up on time for every confirmed session, and conduct all sessions through the platform's provided Google Meet link. Taking sessions outside the GrowPia platform is strictly prohibited. If a client and expert arrange a session outside GrowPia, the platform accepts no responsibility for any complaints, disputes, or refund requests. For experts found conducting off-platform sessions or soliciting clients to bypass the platform, consequences include immediate account suspension, permanent loss of commission protection, and ineligibility for any refund or dispute resolution support from GrowPia. Repeated cancellations, no-shows, or unprofessional conduct may also result in account suspension or removal from the platform.",
       },
     ],
   },
@@ -359,7 +359,7 @@ const FAQ_SECTIONS: FaqSection[] = [
         q: "Why do I see an empty state instead of experts or reviews?",
         a: (
           <>
-            ScaleWise is in its early stages and we are carefully onboarding our first verified experts. We would rather show you an honest empty state than populate the platform with fake profiles or fabricated reviews. Real experts and real reviews are on their way. In the meantime, if you are an experienced business owner or operator, consider{" "}
+            GrowPia is in its early stages and we are carefully onboarding our first verified experts. We would rather show you an honest empty state than populate the platform with fake profiles or fabricated reviews. Real experts and real reviews are on their way. In the meantime, if you are an experienced business owner or operator, consider{" "}
             <Link href="/apply" className="underline font-medium" style={{ color: P.blue }}>
               applying as a Founding Expert
             </Link>.
@@ -370,7 +370,7 @@ const FAQ_SECTIONS: FaqSection[] = [
         q: "What happens if a session is marked as a no-show?",
         a: (
           <>
-            A no-show is recorded when a client does not join the session within 15 minutes of the scheduled start time and has not contacted the expert or the ScaleWise team in advance. Please refer to our{" "}
+            A no-show is recorded when a client does not join the session within 15 minutes of the scheduled start time and has not contacted the expert or the GrowPia team in advance. Please refer to our{" "}
             <Link href="/refund-policy" className="underline font-medium" style={{ color: P.blue }}>
               Cancellation and Refund Policy
             </Link>{" "}
@@ -405,7 +405,7 @@ function getAnswerText(a: React.ReactNode): string {
 }
 
 export default function FAQ() {
-  usePageTitle("FAQ — ScaleWise");
+  usePageTitle("FAQ — GrowPia");
   const { user } = useAuth();
   const isExpert = user?.role === "expert";
   const [query, setQuery] = useState("");
@@ -450,7 +450,7 @@ export default function FAQ() {
             <span style={{ color: P.blue }}>Questions</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Everything you need to know about ScaleWise. Can't find what you are looking for?{" "}
+            Everything you need to know about GrowPia. Can't find what you are looking for?{" "}
             <Link href="/contact" className="underline" style={{ color: P.mgreen }}>Contact us.</Link>
           </p>
 

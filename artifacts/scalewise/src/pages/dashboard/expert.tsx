@@ -558,7 +558,7 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
                   <div className="text-xs mb-0.5 font-semibold text-red-600">🚫 Message blocked</div>
                   <p className="leading-snug text-red-800/60 line-through text-xs">{m.body}</p>
                   <div className="text-[10px] mt-1.5 text-red-600/80 leading-tight">
-                    ScaleWise does not allow sharing personal contact details. All sessions must be booked through the platform.
+                    GrowPia does not allow sharing personal contact details. All sessions must be booked through the platform.
                   </div>
                 </div>
               </div>
@@ -625,7 +625,7 @@ function AdminThreadPanel({ expertId, userId }: { expertId: number; userId: numb
         <div ref={bottomRef} />
       </div>
       <div className="p-4 border-t flex gap-2">
-        <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Reply to ScaleWise Admin…"
+        <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Reply to GrowPia Admin…"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
         <Button onClick={handleSend} disabled={sendMsg.isPending || !body.trim()}
           style={{ backgroundColor: C.blue, color: "white" }} className="hover:opacity-90 shrink-0">
@@ -648,7 +648,7 @@ function ExpertReceiptsTab() {
     <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
       <div className="p-6 border-b bg-muted/30">
         <h2 className="text-xl font-semibold">🧾 My Payout Receipts</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Official receipts for all your payouts from ScaleWise</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Official receipts for all your payouts from GrowPia</p>
       </div>
       {isLoading ? (
         <div className="p-8"><Skeleton className="h-48 w-full" /></div>
@@ -656,7 +656,7 @@ function ExpertReceiptsTab() {
         <div className="p-12 text-center text-muted-foreground">
           <div className="text-4xl mb-3">🧾</div>
           <p className="font-medium">No payout receipts yet</p>
-          <p className="text-sm mt-1">Receipts will appear here once ScaleWise processes your first payout.</p>
+          <p className="text-sm mt-1">Receipts will appear here once GrowPia processes your first payout.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -710,7 +710,7 @@ function ExpertReceiptsTab() {
 }
 
 export default function ExpertDashboard() {
-  usePageTitle("Expert Dashboard — ScaleWise");
+  usePageTitle("Expert Dashboard — GrowPia");
   const { user, isLoading: authLoading } = useAuth();
   const isExpert = !authLoading && !!user && user.role === "expert";
   const { data: dashboard, isLoading: dashLoading } = useGetExpertDashboard({
@@ -905,7 +905,7 @@ export default function ExpertDashboard() {
               <div className={`text-2xl font-bold ${dashboard.pendingPayout > 0 ? "text-yellow-700" : "text-foreground"}`}>
                 KES {dashboard.pendingPayout.toLocaleString()}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Awaiting M-Pesa from ScaleWise</div>
+              <div className="text-xs text-muted-foreground mt-1">Awaiting M-Pesa from GrowPia</div>
             </div>
           </div>
 
@@ -1100,7 +1100,7 @@ export default function ExpertDashboard() {
                   Client Compensation Earnings ({(dashboard.cancelledWithEarnings ?? []).length})
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Sessions cancelled by clients or marked as no-show — you keep a portion per our policy. ScaleWise will send these via M-Pesa.
+                  Sessions cancelled by clients or marked as no-show — you keep a portion per our policy. GrowPia will send these via M-Pesa.
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -1296,12 +1296,12 @@ export default function ExpertDashboard() {
                 <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center gap-3">
                   <div className="text-4xl">💬</div>
                   <p className="font-medium">Select a conversation</p>
-                  <p className="text-sm">View messages from clients or ScaleWise admin.</p>
+                  <p className="text-sm">View messages from clients or GrowPia admin.</p>
                 </div>
               ) : selectedThread.type === "admin" ? (
                 <>
                   <div className="p-4 border-b" style={{ backgroundColor: C.blue + "15" }}>
-                    <h3 className="font-semibold text-sm" style={{ color: C.blue }}>ScaleWise Admin</h3>
+                    <h3 className="font-semibold text-sm" style={{ color: C.blue }}>GrowPia Admin</h3>
                     <p className="text-xs text-muted-foreground">Private admin channel</p>
                   </div>
                   <AdminThreadPanel expertId={selectedThread.expertId} userId={user.id} />
@@ -1343,7 +1343,7 @@ export default function ExpertDashboard() {
                 style={{ backgroundColor: "#fef2f2", borderColor: "#fecaca" }}>
                 <p className="font-semibold text-red-800 mb-1">Important: Expert Cancellation Policy</p>
                 <p className="text-red-700">
-                  Expert cancellations always result in a <strong>full 100% refund</strong> to the client, per ScaleWise policy.
+                  Expert cancellations always result in a <strong>full 100% refund</strong> to the client, per GrowPia policy.
                   The client will be notified immediately.
                 </p>
               </div>

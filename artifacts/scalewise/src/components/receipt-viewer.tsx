@@ -33,9 +33,9 @@ function ReceiptHeader({ receiptNumber, issuedAt }: { receiptNumber: string; iss
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b-2" style={{ borderColor: C.blue }}>
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md"
-          style={{ background: `linear-gradient(135deg, ${C.blue}, ${C.mint})` }}>S</div>
+          style={{ background: `linear-gradient(135deg, ${C.blue}, ${C.mint})` }}>G</div>
         <div>
-          <div className="text-2xl font-bold" style={{ color: C.blue }}>ScaleWise</div>
+          <div className="text-2xl font-bold" style={{ color: C.blue }}>GrowPia</div>
           <div className="text-xs text-muted-foreground">Expert Marketplace</div>
         </div>
       </div>
@@ -51,7 +51,7 @@ function ReceiptHeader({ receiptNumber, issuedAt }: { receiptNumber: string; iss
 function ReceiptFooter() {
   return (
     <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground space-y-1">
-      <p className="font-semibold" style={{ color: C.blue }}>ScaleWise — Expert Marketplace</p>
+      <p className="font-semibold" style={{ color: C.blue }}>GrowPia — Expert Marketplace</p>
       <p>hello@scalewise.co.ke · +254707346331 · Nairobi, Kenya</p>
       <p className="mt-2">This is an official payment receipt. Please retain for your records.</p>
     </div>
@@ -300,7 +300,7 @@ function usePrint(contentRef: React.RefObject<HTMLDivElement | null>) {
     const html = contentRef.current.innerHTML;
     const w = window.open("", "_blank")!;
     w.document.write(`<!DOCTYPE html><html><head>
-      <title>ScaleWise Receipt</title>
+      <title>GrowPia Receipt</title>
       <meta charset="utf-8">
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');

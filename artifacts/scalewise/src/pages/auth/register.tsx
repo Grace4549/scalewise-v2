@@ -88,7 +88,7 @@ function CheckInboxScreen({ email, role }: { email: string; role: "client" | "ex
 }
 
 export default function Register() {
-  usePageTitle("Sign Up — ScaleWise");
+  usePageTitle("Sign Up — GrowPia");
   const registerMutation = useRegister();
   const { toast }        = useToast();
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);

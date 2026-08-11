@@ -29,7 +29,7 @@ const SECTIONS = [
   {
     title: "For Experts",
     color: P.mblue,
-    body: "Your scars and successes have value. ScaleWise gives you a platform to monetize your experience on your own terms, helping the next generation of businesses succeed while building a meaningful second revenue stream.",
+    body: "Your scars and successes have value. GrowPia gives you a platform to monetize your experience on your own terms, helping the next generation of businesses succeed while building a meaningful second revenue stream.",
   },
 ];
 
@@ -205,7 +205,7 @@ function BeforeAfterImage({ wide = false }: { wide?: boolean }) {
 }
 
 export default function About() {
-  usePageTitle("About Us — ScaleWise");
+  usePageTitle("About Us — GrowPia");
   return (
     <div className="min-h-screen">
 
@@ -226,7 +226,7 @@ export default function About() {
                 <span style={{ color: P.blue }}>Better Than Guesswork</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                ScaleWise is not another consulting firm. It is the partner you wish you had — one who has already been exactly where you are, and is one call away.
+                GrowPia is not another consulting firm. It is the partner you wish you had — one who has already been exactly where you are, and is one call away.
               </p>
               <div className="flex gap-3 mt-8">
                 <Link href="/experts">
@@ -275,11 +275,11 @@ export default function About() {
         >
           <div className="text-5xl mb-6">✨</div>
           <h3 className="text-2xl md:text-3xl font-bold mb-5 text-foreground">
-            "We built ScaleWise because brilliant ideas deserve brilliant counsel. Our promise is simple: bring you the right expert, at the right moment, for the decisions that matter most."
+            "We built GrowPia because brilliant ideas deserve brilliant counsel. Our promise is simple: bring you the right expert, at the right moment, for the decisions that matter most."
           </h3>
           <div>
             <p className="font-semibold text-foreground">Grace Kihonge</p>
-            <p className="text-muted-foreground text-sm">Founder & CEO, ScaleWise</p>
+            <p className="text-muted-foreground text-sm">Founder & CEO, GrowPia</p>
           </div>
         </div>
 

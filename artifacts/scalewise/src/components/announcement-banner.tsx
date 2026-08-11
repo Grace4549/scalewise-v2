@@ -80,7 +80,7 @@ export function AnnouncementBanner({ inline }: { inline?: boolean } = {}) {
       style={{ backgroundColor: "#88CFA8", color: "#0f3d25" }}
     >
       <p className="font-medium leading-tight flex-1 min-w-[200px]" style={{ color: "#0f3d25" }}>
-        🚀 ScaleWise is launching soon — be first in line to connect with Africa's most trusted business experts.
+        🚀 GrowPia is launching soon — be first in line to connect with Africa's most trusted business experts.
       </p>
 
       <div className="flex items-center gap-2 flex-shrink-0">

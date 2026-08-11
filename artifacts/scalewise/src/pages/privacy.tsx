@@ -1,13 +1,13 @@
 import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function Privacy() {
-  usePageTitle("Privacy Policy — ScaleWise");
+  usePageTitle("Privacy Policy — GrowPia");
   return (
     <div className="py-14 container mx-auto px-4 max-w-3xl prose prose-slate dark:prose-invert">
       <h1>Privacy Policy</h1>
       <p className="lead">Last updated: October 2023</p>
       
-      <p>At ScaleWise, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our platform.</p>
+      <p>At GrowPia, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our platform.</p>
       
       <h2>1. Information We Collect</h2>
       <p>We may collect information about you in a variety of ways. The information we may collect on the Site includes:</p>
@@ -33,7 +33,7 @@ export default function Privacy() {
 
       <h2>4. Contact Us</h2>
       <p>If you have questions or comments about this Privacy Policy, please contact us at:</p>
-      <p><a href="mailto:hello@scalewise.co.ke?subject=Privacy%20Enquiry%20-%20ScaleWise">hello@scalewise.co.ke</a></p>
+      <p><a href="mailto:hello@scalewise.co.ke?subject=Privacy%20Enquiry%20-%20GrowPia">hello@scalewise.co.ke</a></p>
     </div>
   );
 }

@@ -55,7 +55,7 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold sw-logo-breathe">ScaleWise</span>
+            <span className="text-xl font-bold gp-logo-breathe">GrowPia</span>
           </Link>
           <div className="hidden md:flex gap-5 text-sm font-medium">
             {NAV_LINKS.map(({ href, label, color }) => (
@@ -217,7 +217,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="text-xl font-bold" style={{ color: P.blue }}>ScaleWise</span>
+              <span className="text-xl font-bold" style={{ color: P.blue }}>GrowPia</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The partner you have been missing — connecting business owners with people who have actually done it.
@@ -266,7 +266,7 @@ export function Footer() {
             <h4 className="font-semibold mt-6 mb-4" style={{ color: P.mblue }}>Support</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
-              <li><a href="mailto:hello@scalewise.co.ke?subject=Enquiry%20-%20ScaleWise" className="hover:text-foreground transition-colors">hello@scalewise.co.ke</a></li>
+              <li><a href="mailto:hello@scalewise.co.ke?subject=Enquiry%20-%20GrowPia" className="hover:text-foreground transition-colors">hello@scalewise.co.ke</a></li>
               <li><a href="tel:+254707346331" className="hover:text-foreground transition-colors">+254 707 346 331</a></li>
             </ul>
           </div>
@@ -274,7 +274,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center gap-4">
           <p>Your business does not have to figure this out alone. Neither do you.</p>
-          <p>© 2026 ScaleWise. All rights reserved.</p>
+          <p>© 2026 GrowPia. All rights reserved.</p>
         </div>
       </div>
     </footer>

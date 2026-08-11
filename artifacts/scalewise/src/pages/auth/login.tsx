@@ -79,7 +79,7 @@ function UnverifiedEmailBanner({ email }: { email: string }) {
 }
 
 export default function Login() {
-  usePageTitle("Log In — ScaleWise");
+  usePageTitle("Log In — GrowPia");
   const login           = useLogin();
   const { user, isLoading: authLoading, refetch } = useAuth();
   const [, setLocation] = useLocation();

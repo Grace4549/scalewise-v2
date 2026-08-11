@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Messages() {
-  usePageTitle("Messages — ScaleWise");
+  usePageTitle("Messages — GrowPia");
   const { bookingId: bookingIdStr } = useParams();
   const bookingId = parseInt(bookingIdStr!);
   const { user, isLoading: authLoading } = useAuth();
@@ -159,7 +159,7 @@ export default function Messages() {
                   style={{ backgroundColor: "#fef2f2", borderColor: "#fca5a5" }}>
                   <p className="text-red-800/60 line-through text-sm">{msg.body}</p>
                   <p className="text-xs text-red-600/80 mt-1.5 leading-snug">
-                    ScaleWise does not allow sharing of personal contact details through the platform. All sessions must be booked and conducted through ScaleWise. Contact hello@scalewise.co.ke if you need assistance.
+                    GrowPia does not allow sharing of personal contact details through the platform. All sessions must be booked and conducted through GrowPia. Contact hello@scalewise.co.ke if you need assistance.
                   </p>
                 </div>
               </div>

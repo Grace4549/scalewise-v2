@@ -102,7 +102,7 @@ function SlotPicker({
 type Section = "pick" | "keep" | "cancel";
 
 export default function ReschedulePage() {
-  usePageTitle("Respond to Reschedule Request — ScaleWise");
+  usePageTitle("Respond to Reschedule Request — GrowPia");
   const { id } = useParams();
   const bookingId = parseInt(id!, 10);
   const { user, isLoading: authLoading } = useAuth();
@@ -153,7 +153,7 @@ export default function ReschedulePage() {
           <div className="text-5xl mb-4">🔒</div>
           <h1 className="text-2xl font-bold mb-2">Sign in to continue</h1>
           <p className="text-muted-foreground text-sm mb-6">
-            Please sign in to your ScaleWise account to respond to this reschedule request.
+            Please sign in to your GrowPia account to respond to this reschedule request.
           </p>
           <Link href={`/login?redirect=/reschedule/${bookingId}`}>
             <Button style={{ backgroundColor: C.blue, color: "white" }} className="w-full hover:opacity-90">

@@ -113,7 +113,7 @@ function BookingThreadPanel({ bookingId, userId }: { bookingId: number; userId: 
                   <div className="text-xs mb-0.5 font-semibold text-red-600">🚫 Message blocked</div>
                   <p className="leading-snug text-red-800/60 line-through text-xs">{m.body}</p>
                   <div className="text-[10px] mt-1.5 text-red-600/80 leading-tight">
-                    ScaleWise does not allow sharing personal contact details. All sessions must be booked through the platform.
+                    GrowPia does not allow sharing personal contact details. All sessions must be booked through the platform.
                   </div>
                 </div>
               </div>
@@ -236,7 +236,7 @@ const NOTIF_ICON: Record<string, string> = {
 };
 
 export default function ClientDashboard() {
-  usePageTitle("My Dashboard — ScaleWise");
+  usePageTitle("My Dashboard — GrowPia");
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();

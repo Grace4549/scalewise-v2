@@ -208,7 +208,7 @@ function MonitorThreadView({
 }
 
 export default function AdminDashboard() {
-  usePageTitle("Admin — ScaleWise");
+  usePageTitle("Admin — GrowPia");
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1444,7 +1444,7 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <h2 className="text-lg font-bold" style={{ color: C.green }}>Waiting for Launch</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Visitors who signed up to be notified when ScaleWise launches. Polled every 30 seconds.
+                Visitors who signed up to be notified when GrowPia launches. Polled every 30 seconds.
               </p>
             </div>
             <div className="px-5 py-3 rounded-2xl border text-center"
@@ -1694,7 +1694,7 @@ function AdminReceiptsTab() {
       <div className="bg-card rounded-3xl border shadow-sm overflow-hidden">
         <div className="p-6 border-b bg-muted/30">
           <h2 className="text-xl font-semibold">🧾 All Payout Receipts</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">All expert payout batches processed through ScaleWise</p>
+          <p className="text-sm text-muted-foreground mt-0.5">All expert payout batches processed through GrowPia</p>
         </div>
         {isLoading ? (
           <div className="p-8"><Skeleton className="h-48 w-full" /></div>

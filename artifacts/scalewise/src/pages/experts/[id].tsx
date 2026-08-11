@@ -307,7 +307,7 @@ function SlotPicker({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ExpertProfile() {
-  usePageTitle("Expert Profile — ScaleWise");
+  usePageTitle("Expert Profile — GrowPia");
   const { id } = useParams();
   const expertId = parseInt(id!);
   const { user } = useAuth();

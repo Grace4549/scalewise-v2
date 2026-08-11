@@ -42,7 +42,7 @@ export default function ForgotPassword() {
               <div className="text-5xl mb-4">📬</div>
               <h1 className="text-2xl font-bold mb-2">Check your inbox</h1>
               <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                If <strong>{email}</strong> is registered with ScaleWise, we've sent a password reset link. It expires in 1 hour.
+                If <strong>{email}</strong> is registered with GrowPia, we've sent a password reset link. It expires in 1 hour.
               </p>
               <p className="text-xs text-muted-foreground mb-6">
                 Didn't receive it? Check your spam folder, or try again with the correct email address.

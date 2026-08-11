@@ -5,15 +5,15 @@ html {
   scroll-behavior: smooth;
 }
 
-@keyframes sw-logo-breathe {
+@keyframes gp-logo-breathe {
   0%   { color: #6395EE; }
   25%  { color: #90B8D6; }
   50%  { color: #88CFA8; }
   75%  { color: #85DECB; }
   100% { color: #6395EE; }
 }
-.sw-logo-breathe {
-  animation: sw-logo-breathe 5s linear infinite;
+.gp-logo-breathe {
+  animation: gp-logo-breathe 5s linear infinite;
 }
 @plugin "@tailwindcss/typography";
 
