@@ -54,7 +54,7 @@ export function ExpertProfile() {
 
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b border-white/40 bg-white/30 backdrop-blur-md">
-        <span className="text-lg font-bold tracking-tight text-[#1a2540]">ScaleWise</span>
+        <span className="text-lg font-bold tracking-tight text-[#1a2540]">GrowPia</span>
         <nav className="flex items-center gap-6 text-sm text-[#4a5568]">
           <a href="#" className="hover:text-[#6395EE] transition-colors">Browse Experts</a>
           <a href="#" className="hover:text-[#6395EE] transition-colors">About</a>

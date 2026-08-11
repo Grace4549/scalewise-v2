@@ -48,7 +48,7 @@ export function BrowseExperts() {
 
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-4 border-b border-white/40 bg-white/30 backdrop-blur-md">
-        <span className="text-lg font-bold tracking-tight text-[#1a2540]">ScaleWise</span>
+        <span className="text-lg font-bold tracking-tight text-[#1a2540]">GrowPia</span>
         <div className="flex items-center gap-3 rounded-xl border border-white/60 bg-white/60 px-4 py-2 backdrop-blur-md max-w-sm flex-1 mx-8">
           <Search className="h-4 w-4 text-[#6395EE] shrink-0" />
           <input

@@ -398,7 +398,7 @@ export function HomepageV2() {
                 Every minute you wait is a minute your <span style={{ color: PALETTE.mint }}>competitor isn't.</span>
               </h3>
               <p className="text-[#6b7a99] text-sm leading-relaxed max-w-lg">
-                The business problem keeping you up tonight? Someone on ScaleWise has already solved it. Help is one call away. Stop losing time to uncertainty.
+                The business problem keeping you up tonight? Someone on GrowPia has already solved it. Help is one call away. Stop losing time to uncertainty.
               </p>
             </div>
             <a href="/experts" className="cta-glow shrink-0 flex items-center gap-2 rounded-2xl px-6 py-3.5 font-semibold text-white text-sm transition-all duration-200 whitespace-nowrap" style={{ background: PALETTE.mint, color: "#0d4a3e" }}>
@@ -518,7 +518,7 @@ export function HomepageV2() {
                   Into <span style={{ color: PALETTE.blue }}>Income</span>
                 </h2>
                 <p className="text-[#6b7a99] text-base leading-relaxed mb-6">
-                  You have spent years building something real. Other business owners need exactly what you know. Join ScaleWise as a verified expert, set your own rates, and start earning on your schedule.
+                  You have spent years building something real. Other business owners need exactly what you know. Join GrowPia as a verified expert, set your own rates, and start earning on your schedule.
                 </p>
                 <ul className="space-y-2 text-sm text-[#6b7a99]">
                   {[
@@ -601,7 +601,7 @@ export function HomepageV2() {
           ))}
         </div>
         <div className="border-t border-white/30 pt-6 flex items-center justify-between text-xs text-[#a0aec0]">
-          <span>© 2026 ScaleWise. All rights reserved.</span>
+          <span>© 2026 GrowPia. All rights reserved.</span>
           <div className="flex gap-4">
             <a href="/privacy" className="hover:text-[#6395EE] transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-[#6395EE] transition-colors">Terms</a>

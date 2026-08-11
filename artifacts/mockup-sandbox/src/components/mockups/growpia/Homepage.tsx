@@ -60,7 +60,7 @@ export function Homepage() {
 
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-10 py-5">
-        <span className="text-xl font-bold tracking-tight text-[#1a2540]">ScaleWise</span>
+        <span className="text-xl font-bold tracking-tight text-[#1a2540]">GrowPia</span>
         <div className="flex items-center gap-8 text-sm text-[#4a5568]">
           <a href="#" className="hover:text-[#6395EE] transition-colors">Browse Experts</a>
           <a href="#" className="hover:text-[#6395EE] transition-colors">About</a>
